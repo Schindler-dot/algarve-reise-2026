@@ -1,7 +1,7 @@
 {
   "name": "Algarve Reise 2026",
   "short_name": "Algarve 2026",
-  "description": "Reise-Cockpit für die Algarve-Reise 06.–19. September 2026",
+  "description": "Reise-Cockpit Algarve 2026 mit auswählbaren, bebilderten Zielen",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

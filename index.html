@@ -31,6 +31,27 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 .notice{font-size:12px;color:var(--muted);padding:0 4px 10px}
 
 .dayphoto{width:100%;height:180px;object-fit:cover;border-radius:14px;margin:12px 0 4px;background:#dfe5e5}.photocredit{font-size:10px;color:var(--muted);margin:0 2px 9px}.photocredit a{color:inherit}.favbtn{border:0;background:#fff3c4;border-radius:999px;padding:8px 11px;font-size:13px;font-weight:800;color:#654f00}.favbtn.on{background:#f5d85d}.notearea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:14px;background:#fff;resize:vertical}.saved{font-size:11px;color:var(--muted);margin-top:4px}.photoHero{background-size:cover;background-position:center}.photoHero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(18,63,74,.92),rgba(18,63,74,.25));}.photoHero>*{position:relative;z-index:1}
+
+nav{grid-template-columns:repeat(6,1fr)}
+nav button{font-size:10px}
+.destgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.destcard{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.025);cursor:pointer}
+.destcard img{width:100%;height:118px;object-fit:cover;display:block;background:#dfe5e5}
+.destbody{padding:10px}.desttitle{font-size:14px;font-weight:850;line-height:1.2}.destmeta{font-size:11px;color:var(--muted);margin-top:4px}
+.destactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.destactions .btn{padding:7px 9px;font-size:11px}
+.destfilter{display:flex;gap:7px;overflow:auto;padding:0 0 10px;scrollbar-width:none}.destfilter::-webkit-scrollbar{display:none}
+.chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:750;color:var(--muted)}
+.chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.destcredit{font-size:9px;color:var(--muted);padding:5px 8px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.destlink{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:inherit;font-weight:800}
+.destinline{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
+.destpill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:750;color:var(--accent);cursor:pointer}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:none;align-items:flex-end;justify-content:center;padding:0}
+.modal.show{display:flex}.modalbox{width:100%;max-width:760px;max-height:88vh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:12px 12px calc(20px + env(safe-area-inset-bottom))}
+.modalhero{width:100%;height:230px;object-fit:cover;border-radius:16px;background:#dfe5e5}
+.modalclose{position:sticky;top:0;float:right;border:0;background:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;z-index:2;box-shadow:0 2px 10px rgba(0,0,0,.15)}
+@media(min-width:620px){.destgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.destcard img{height:145px}.modal{align-items:center;padding:20px}.modalbox{border-radius:22px;max-height:90vh}}
+
 </style>
 </head>
 <body>
@@ -38,6 +59,13 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <main>
 <section id="today" class="view active"></section>
 <section id="days" class="view"><input id="search" class="search" placeholder="Tag, Ort oder Restaurant suchen …"><div class="notice">Fahrzeiten sind Näherungswerte ab Monchique/Quinta und können je nach Route und Verkehr abweichen.</div><div id="daysList"></div></section>
+<section id="destinations" class="view">
+<div class="hero"><h2>Alle Ziele</h2><p>Antippen → Foto, Kurzinfo, Karte und Route</p><div class="heroEmoji">🗺️</div></div>
+<input id="destSearch" class="search" placeholder="Ziel suchen …">
+<div id="destFilters" class="destfilter"></div>
+<div id="destGrid" class="destgrid"></div>
+<div class="notice" style="margin-top:10px">Die Fotos werden aus Wikimedia Commons geladen. Beim ersten Öffnen eines Ziels wird die Aufnahme für die Offline-Nutzung zwischengespeichert, soweit der Browser dies zulässt.</div>
+</section>
 <section id="food" class="view"><div class="hero"><h2>Restaurant-Favoriten</h2><p>Direkt zu Karte, Telefon und Website</p><div class="heroEmoji">🍴</div></div><div id="restaurantList" class="card"></div></section>
 <section id="bookings" class="view"><div class="hero"><h2>Buchungen</h2><p>Die wichtigsten Daten ohne Suchen</p><div class="heroEmoji">🎫</div></div><div id="bookingList"></div></section>
 <section id="tips" class="view"><div class="hero"><h2>Wetter & wichtig</h2><p>Für spontane Entscheidungen unterwegs</p><div class="heroEmoji">🌦️</div></div>
@@ -51,17 +79,132 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <div class="tip">Restaurants 1–2 Tage vorher reservieren und Öffnungszeiten kurz prüfen.</div>
 <div class="tip">19.09.: Mietwagen möglichst schon gegen 13:00–13:30 zurückgeben; 14:30 ist für den 16:00-Abflug sehr knapp.</div>
 </div></section>
+<div id="destModal" class="modal" onclick="if(event.target===this)closeDestination()">
+  <div class="modalbox">
+    <button class="modalclose" onclick="closeDestination()" aria-label="Schließen">×</button>
+    <img id="modalImg" class="modalhero" alt="">
+    <div id="modalCredit" class="photocredit"></div>
+    <div class="card" style="margin-top:8px">
+      <div id="modalTitle" class="daytitle"></div>
+      <div id="modalArea" class="route"></div>
+      <p id="modalText" class="small" style="font-size:14px;color:var(--ink)"></p>
+      <div id="modalActions" class="actions"></div>
+    </div>
+  </div>
+</div>
 </main>
 <nav>
 <button class="active" data-view="today">📍<br>Heute</button>
 <button data-view="days">📅<br>Tage</button>
+<button data-view="destinations">🗺️<br>Ziele</button>
 <button data-view="food">🍴<br>Essen</button>
-<button data-view="bookings">🎫<br>Buchungen</button>
+<button data-view="bookings">🎫<br>Buchung</button>
 <button data-view="tips">🌦️<br>Wetter</button>
 </nav>
 <script>
 const DAYS=[{"date": "2026-09-06", "label": "So, 06.09.", "title": "Anreise nach Faro", "place": "Faro", "drive": "—", "hero": "✈️", "route": "Wien → Faro", "map_dest": "THE MODERNIST Faro", "items": [["✈️", "20:50", "Abflug Wien · Ryanair FR 727"], ["🛬", "23:30", "Ankunft Faro"], ["🏨", "danach", "Direkt zum THE MODERNIST und einchecken."]], "food": "Kein fixes Restaurant mehr einplanen. Wegen der späten Ankunft höchstens einen kleinen Snack am Flughafen bzw. etwas mitnehmen.", "restaurants": [], "tips": ["Erster Abend bewusst ohne weiteres Programm halten."]}, {"date": "2026-09-07", "label": "Mo, 07.09.", "title": "Faro → Monchique", "place": "Faro / Monchique", "drive": "Faro → Monchique ca. 1 h 10 min", "hero": "🏛️", "route": "Faro Altstadt → Flughafen → Monchique", "map_dest": "Quinta da Lila Monchique Tojal", "items": [["🏛️", "Vormittag", "Vila Adentro, Arco da Vila, Kathedrale, Hafen und modernistische Architektur rund um THE MODERNIST."], ["🍴", "Mittag", "Leicht und unkompliziert in Faro essen."], ["🚗", "15:00", "Mietwagenübernahme am Flughafen Faro."], ["🏡", "ab 16:00", "Check-in The Baker’s Cottage. Etwa 1 Stunde vorher Judith anrufen."]], "food": "Am Abend lieber ein unkompliziertes Lokal in Monchique statt eines langen Menüs.", "restaurants": [], "tips": ["THE MODERNIST Check-out bis 11:00."]}, {"date": "2026-09-08", "label": "Di, 08.09.", "title": "Monchique · Caldas · Fóia", "place": "Monchique", "drive": "lokale Etappen ca. 10–25 min", "hero": "⛰️", "route": "Quinta → Monchique → Caldas de Monchique → Fóia → Quinta", "map_dest": "Fóia Monchique Portugal", "items": [["🚶", "Vormittag", "Monchique zu Fuß erkunden."], ["🌿", "Mittag/Nachmittag", "Caldas de Monchique."], ["⛰️", "Später Nachmittag", "Hinauf zur Fóia."], ["🏊", "flexibel", "Zeit für Pool und Quinta."]], "food": "O Luar da Fóia – regionale Bergküche, lokale Produkte, porco preto und Wild. Alternativ Café Império für bodenständiges Piri-Piri-Huhn.", "restaurants": ["O Luar da Fóia", "Café Império"], "tips": ["O Luar da Fóia: aktuell Dienstag–Samstag geöffnet; besser reservieren."]}, {"date": "2026-09-09", "label": "Mi, 09.09.", "title": "Lagos · Ponta da Piedade · Baden", "place": "Lagos", "drive": "ca. 55–65 min je Richtung", "hero": "🌊", "route": "Monchique → Lagos → Ponta da Piedade → Strand → Monchique", "map_dest": "Ponta da Piedade Lagos Portugal", "items": [["🏛️", "Vormittag", "Lagos Altstadt mit Stadtmauer, Praça Infante Dom Henrique, Gassen und Hafen."], ["🌊", "Danach", "Ponta da Piedade."], ["🏖️", "Baden", "Praia do Camilo, Dona Ana oder Porto de Mós – je nach Wind und Wellengang."]], "food": "Casinha do Petisco – klassische portugiesische Küche; besonders passend für Cataplana.", "restaurants": ["Casinha do Petisco"], "tips": ["Frühes Abendessen ist sinnvoll; Rückfahrt nach Monchique möglichst nicht zu spät."]}, {"date": "2026-09-10", "label": "Do, 10.09.", "title": "Westküste · Aljezur · Arrifana · Amoreira", "place": "Aljezur / Arrifana", "drive": "Aljezur ca. 45–55 min", "hero": "🏄", "route": "Monchique → Aljezur → Arrifana / Amoreira → Monchique", "map_dest": "Praia da Arrifana Portugal", "items": [["🏰", "Vormittag", "Aljezur mit Burg, Altstadt und Blick über das Tal."], ["🏖️", "Baden", "Arrifana für Felskulisse; Amoreira für mehr Platz und längeren Strandaufenthalt."]], "food": "Pont’a Pé in Aljezur – regionale Costa-Vicentina-Küche: Oktopus mit Süßkartoffel, Cataplana, Fisch und schwarzes Schwein.", "restaurants": ["Pont’a Pé"], "tips": ["Bei starkem Nordwestwind lieber mit einem Inlandstag tauschen."]}, {"date": "2026-09-11", "label": "Fr, 11.09.", "title": "Freier Tag · Quinta & Monchique", "place": "Monchique", "drive": "—", "hero": "🌿", "route": "Quinta / Monchique", "map_dest": "Monchique Portugal", "items": [["😴", "Vormittag", "Ausschlafen, Pool, kurzer Spaziergang."], ["🛒", "Optional", "Markt- oder Lebensmitteleinkauf in Monchique."], ["🌦️", "Puffer", "Kann jederzeit gegen einen Küsten- oder Strandtag getauscht werden."]], "food": "Guter Tag für ein langes Mittagessen. Falls O Luar da Fóia am 08.09. nicht geklappt hat, hier nachholen.", "restaurants": ["O Luar da Fóia"], "tips": []}, {"date": "2026-09-12", "label": "Sa, 12.09.", "title": "Silves · maurisches Erbe · Arade", "place": "Silves", "drive": "ca. 35–45 min je Richtung", "hero": "🏰", "route": "Monchique → Silves → optional Ferragudo → Monchique", "map_dest": "Castelo de Silves Portugal", "items": [["🏰", "Vormittag", "Castelo, Kathedrale, Altstadt und maurische Stadtstruktur."], ["🌅", "Nachmittag", "Je nach Lust Arade / Ferragudo oder zurück zur Quinta."]], "food": "Marisqueira Rui – traditionsreiche Adresse für frischen Fisch, Meeresfrüchte, Cataplana und arroz de marisco.", "restaurants": ["Marisqueira Rui"], "tips": ["Samstag passt gut; Öffnungszeiten kurz vorher prüfen."]}, {"date": "2026-09-13", "label": "So, 13.09.", "title": "Tavira · Cacela Velha · Ria Formosa", "place": "Tavira / Cacela Velha", "drive": "ca. 1 h 35–1 h 50 min je Richtung", "hero": "🌾", "route": "Monchique → Tavira → Cacela Velha → Monchique", "map_dest": "Cacela Velha Portugal", "items": [["🚗", "Früh", "Längerer Tagesausflug – früh starten."], ["🏛️", "Vormittag", "Tavira mit Brücken, Kirchen und ruhiger Altstadt."], ["🌾", "Danach", "Cacela Velha und Blick über die Ria Formosa."], ["🏖️", "Baden", "Bei ruhigem Wetter an einem Strand der östlichen Algarve."]], "food": "Noélia & Jerónimo in Cabanas de Tavira für regionale Küche. A Ver Tavira für einen deutlich gehobeneren, besonderen Abend.", "restaurants": ["Noélia & Jerónimo", "A Ver Tavira"], "tips": ["Noélia & Jerónimo: Reservierung im Sommer sehr empfehlenswert.", "A Ver Tavira ist sonntags geschlossen – daher für diesen Tag nicht als fixe Option einplanen."]}, {"date": "2026-09-14", "label": "Mo, 14.09.", "title": "Sagres · Cabo de São Vicente", "place": "Sagres", "drive": "ca. 1 h 10–1 h 20 min je Richtung", "hero": "🌅", "route": "Monchique → Vila do Bispo → Sagres → Cabo de São Vicente → Monchique", "map_dest": "Cabo de São Vicente Portugal", "items": [["🏛️", "Vormittag", "Fortaleza de Sagres."], ["🌊", "Danach", "Cabo de São Vicente und Südwestspitze."], ["🏖️", "Baden", "Praia do Beliche oder Praia do Martinhal."]], "food": "A Tasca am Hafen – authentische portugiesische Küche, gegrillter Fisch, Oktopus und Muscheln.", "restaurants": ["A Tasca"], "tips": ["Beim Fisch nach dem Tagesfang fragen.", "Sonnenuntergang am Cabo nur, wenn die längere Rückfahrt im Dunkeln nicht stört."]}, {"date": "2026-09-15", "label": "Di, 15.09.", "title": "Entspannung · Monchique", "place": "Monchique", "drive": "—", "hero": "🏊", "route": "Quinta / Monchique", "map_dest": "Monchique Portugal", "items": [["🏊", "Vormittag", "Quinta, Pool, kurze Wanderung."], ["🍷", "Optional", "Langes Mittagessen oder schöner Abend."]], "food": "Ungezwungen: Café Império. Schöner Abend: O Luar da Fóia.", "restaurants": ["Café Império", "O Luar da Fóia"], "tips": ["Wetterpuffer – jederzeit mit einem anderen Tag tauschbar."]}, {"date": "2026-09-16", "label": "Mi, 16.09.", "title": "Loulé · Hinterland · Alte", "place": "Loulé / Alte", "drive": "Loulé ca. 1 h 10–1 h 20 min", "hero": "🧺", "route": "Monchique → Loulé → Alte → Monchique", "map_dest": "Mercado Municipal de Loulé Portugal", "items": [["🏛️", "Vormittag", "Loulé mit Markthalle, Altstadt und Alltagsleben."], ["🌿", "Danach", "Über kleinere Orte, z. B. Alte, durchs Hinterland zurück."]], "food": "11 da Villa – Petiscos/Tapas, gute Weinauswahl und kreative portugiesische Kleingerichte.", "restaurants": ["11 da Villa"], "tips": ["Markthalle ist vormittags interessanter.", "Für einen ganz lokalen Snack spontan rund um den Markt schauen."]}, {"date": "2026-09-17", "label": "Do, 17.09.", "title": "Ferragudo · Carvoeiro · Felsküste", "place": "Ferragudo / Carvoeiro", "drive": "ca. 45–60 min je Richtung", "hero": "🪨", "route": "Monchique → Ferragudo → Carvoeiro → Algar Seco / Praia da Marinha → Monchique", "map_dest": "Praia da Marinha Portugal", "items": [["🚶", "Vormittag", "Ferragudo zu Fuß."], ["🪨", "Danach", "Carvoeiro und Algar Seco."], ["🥾", "Aktiv", "Wenn es nicht zu heiß ist: Abschnitt des Seven Hanging Valleys Trail."], ["🏖️", "Baden", "Praia da Marinha oder eine ruhigere Bucht."]], "food": "O Barril in Ferragudo – traditionelle portugiesische Küche, frischer Fisch, Cataplana und arroz de tamboril.", "restaurants": ["O Barril"], "tips": ["Für O Barril reservieren.", "Lieber einen Küstenabschnitt ausführlich genießen als mehrere abhaken."]}, {"date": "2026-09-18", "label": "Fr, 18.09.", "title": "Flexibler Lieblingstag", "place": "nach Wetter & Lust", "drive": "je nach Ziel", "hero": "⭐", "route": "Nach Wetter und Lust", "map_dest": "Lagos Portugal", "items": [["A", "Option", "Westküste wiederholen, falls der 10.09. wetterbedingt schwach war."], ["B", "Option", "Lagos + Badetag oder Bootsfahrt/Sunset-Sailing."], ["C", "Option", "Komplett frei in Quinta und Monchique."]], "food": "Das Restaurant wiederholen, das euch bis dahin am besten gefallen hat – oder bewusst spontan bleiben.", "restaurants": [], "tips": ["Abends in Ruhe packen."]}, {"date": "2026-09-19", "label": "Sa, 19.09.", "title": "Rückreise", "place": "Faro Airport", "drive": "Monchique → Flughafen ca. 1 h 10 min", "hero": "✈️", "route": "Monchique → Faro Airport → Wien", "map_dest": "Faro Airport Portugal", "items": [["🏡", "vor 10:00", "Check-out Quinta da Lila."], ["🚗", "ca. 13:00–13:30", "Empfohlene Ankunft bei der Mietwagenstation."], ["⚠️", "14:30", "Vertraglich gebuchte Rückgabezeit – für den 16:00-Abflug sehr knapp."], ["✈️", "16:00", "Rückflug Faro → Wien · Ryanair FR 728."], ["🛬", "20:25", "Ankunft Wien."]], "food": "Unterwegs nur leicht essen, damit genug Zeitreserve bleibt.", "restaurants": [], "tips": ["Shuttle von der Mietwagenstation zum Terminal einrechnen."]}];
 const PHOTOS={"2026-09-06":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Old%20Faro.jpg?width=1200","credit":"Marc Ryckaert","page":"https://commons.wikimedia.org/wiki/File:Old_Faro.jpg"},"2026-09-07":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Old%20Faro.jpg?width=1200","credit":"Marc Ryckaert","page":"https://commons.wikimedia.org/wiki/File:Old_Faro.jpg"},"2026-09-09":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Algarve%20Ponta%20da%20piedade.jpg?width=1200","credit":"Jiròni B. · CC BY-SA 4.0","page":"https://commons.wikimedia.org/wiki/File:Algarve_Ponta_da_piedade.jpg"},"2026-09-10":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Aljezur%20Arrifana%20playa.jpg?width=1200","credit":"Wikimedia Commons","page":"https://commons.wikimedia.org/wiki/File:Aljezur_Arrifana_playa.jpg"},"2026-09-12":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Castelo%20de%20Silves.jpg?width=1200","credit":"Wikimedia Commons","page":"https://commons.wikimedia.org/wiki/File:Castelo_de_Silves.jpg"},"2026-09-13":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Cacela%20Velha%20Fortress2.jpg?width=1200","credit":"Wikimedia Commons","page":"https://commons.wikimedia.org/wiki/File:Cacela_Velha_Fortress2.jpg"},"2026-09-14":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Sagres%20Fortaleza%20de%20Sagres%20%2850509807563%29.jpg?width=1200","credit":"Ana Rey · CC BY-SA 2.0","page":"https://commons.wikimedia.org/wiki/File:Sagres_Fortaleza_de_Sagres_(50509807563).jpg"},"2026-09-17":{"src":"https://commons.wikimedia.org/wiki/Special:Redirect/file/Carvoeiro%2C%20Portugal.jpg?width=1200","credit":"Wikimedia Commons · Public Domain","page":"https://commons.wikimedia.org/wiki/File:Carvoeiro,_Portugal.jpg"}};
+
+const DESTINATIONS=[
+{id:'faro-altstadt',name:'Faro Altstadt',area:'Faro',cat:'Stadt & Architektur',q:'Faro old town Portugal',map:'Faro Old Town Portugal',text:'Vila Adentro, Arco da Vila, Kathedrale und die ruhigen Gassen der historischen Altstadt.'},
+{id:'arco-vila',name:'Arco da Vila',area:'Faro',cat:'Architektur',q:'Arco da Vila Faro Portugal',map:'Arco da Vila Faro Portugal',text:'Neoklassizistisches Stadttor und einer der markantesten Zugänge zur Altstadt.'},
+{id:'se-faro',name:'Kathedrale von Faro',area:'Faro',cat:'Architektur',q:'Faro Cathedral Portugal',map:'Faro Cathedral Portugal',text:'Kathedrale im Herzen der Vila Adentro; vom Turm schöner Blick über Stadt und Ria Formosa.'},
+{id:'monchique',name:'Monchique',area:'Serra de Monchique',cat:'Ort',q:'Monchique Portugal town',map:'Monchique Portugal',text:'Bergort mit engen Gassen, kleinen Plätzen und ruhiger Atmosphäre.'},
+{id:'caldas',name:'Caldas de Monchique',area:'Monchique',cat:'Natur & Ort',q:'Caldas de Monchique Portugal',map:'Caldas de Monchique Portugal',text:'Historischer Thermalort im grünen Tal; gut für einen kurzen Spaziergang.'},
+{id:'foia',name:'Fóia',area:'Monchique',cat:'Aussicht',q:'Foia Monchique Portugal',map:'Foia Monchique Portugal',text:'Höchster Punkt der Algarve mit weitem Blick Richtung Südküste und Atlantik.'},
+{id:'lagos-altstadt',name:'Lagos Altstadt',area:'Lagos',cat:'Stadt & Architektur',q:'Lagos Portugal old town',map:'Lagos Old Town Portugal',text:'Kompakte historische Altstadt mit Plätzen, Stadtmauer und guter Mischung aus Architektur und Gastronomie.'},
+{id:'ponta',name:'Ponta da Piedade',area:'Lagos',cat:'Küste',q:'Ponta da Piedade Lagos Portugal',map:'Ponta da Piedade Lagos Portugal',text:'Spektakuläre Felsformationen, Klippenwege und Aussichtspunkte südlich von Lagos.'},
+{id:'dona-ana',name:'Praia Dona Ana',area:'Lagos',cat:'Strand',q:'Praia Dona Ana Lagos Portugal',map:'Praia Dona Ana Lagos Portugal',text:'Klassischer Algarve-Strand zwischen goldfarbenen Felsen – gut mit Lagos kombinierbar.'},
+{id:'aljezur',name:'Aljezur',area:'Costa Vicentina',cat:'Ort',q:'Aljezur Portugal town',map:'Aljezur Portugal',text:'Kleiner Ort mit weißer Bebauung, Burgruine und Blick über die Flusslandschaft.'},
+{id:'arrifana',name:'Praia da Arrifana',area:'Aljezur',cat:'Strand',q:'Praia da Arrifana Portugal',map:'Praia da Arrifana Portugal',text:'Dramatische Bucht unter hohen Klippen – einer der charakteristischen Strände der Westküste.'},
+{id:'amoreira',name:'Praia da Amoreira',area:'Aljezur',cat:'Strand',q:'Praia da Amoreira Portugal',map:'Praia da Amoreira Portugal',text:'Breiter Strand an einer Flussmündung; besonders schön bei wechselndem Licht und Ebbe.'},
+{id:'silves',name:'Silves',area:'Silves',cat:'Stadt & Architektur',q:'Silves Portugal town',map:'Silves Portugal',text:'Historische Stadt am Arade mit rotem Sandstein und maurischem Erbe.'},
+{id:'silves-castle',name:'Castelo de Silves',area:'Silves',cat:'Architektur',q:'Castelo de Silves Portugal',map:'Castelo de Silves Portugal',text:'Große maurische Burganlage aus rotem Sandstein oberhalb der Stadt.'},
+{id:'arade',name:'Rio Arade',area:'Silves',cat:'Landschaft',q:'Rio Arade Silves Portugal',map:'Rio Arade Silves Portugal',text:'Flusslandschaft zwischen Silves und der Küste; ruhiger Gegenpol zur Burg und Altstadt.'},
+{id:'tavira',name:'Tavira',area:'Ostalgarve',cat:'Stadt & Architektur',q:'Tavira Portugal town',map:'Tavira Portugal',text:'Elegante Stadt am Gilão mit Brücken, Kirchen und kleinteiliger historischer Struktur.'},
+{id:'caco',name:'Cacela Velha',area:'Ostalgarve',cat:'Ort & Aussicht',q:'Cacela Velha Portugal',map:'Cacela Velha Portugal',text:'Winziges weißes Dorf auf einer Anhöhe mit grandiosem Blick über Lagune und Sandinseln.'},
+{id:'ria-formosa',name:'Ria Formosa',area:'Ostalgarve',cat:'Natur',q:'Ria Formosa Portugal',map:'Ria Formosa Natural Park Portugal',text:'Lagunen- und Inselwelt mit Salzwiesen, Vogelbeobachtung und ruhigen Wasserflächen.'},
+{id:'cabanas',name:'Cabanas de Tavira',area:'Ostalgarve',cat:'Ort',q:'Cabanas de Tavira Portugal',map:'Cabanas de Tavira Portugal',text:'Kleiner Ort an der Lagune; ideal in Kombination mit Noélia & Jerónimo und Ria Formosa.'},
+{id:'sagres',name:'Sagres',area:'Westalgarve',cat:'Ort & Küste',q:'Sagres Portugal',map:'Sagres Portugal',text:'Raue Westküstenstimmung, Hafen und Ausgangspunkt für Fortaleza und Cabo de São Vicente.'},
+{id:'fortaleza',name:'Fortaleza de Sagres',area:'Sagres',cat:'Architektur',q:'Fortaleza de Sagres Portugal',map:'Fortaleza de Sagres Portugal',text:'Monumentale Festungsanlage auf dem windigen Kapplateau.'},
+{id:'cabo',name:'Cabo de São Vicente',area:'Sagres',cat:'Aussicht',q:'Cabo de Sao Vicente Portugal lighthouse',map:'Cabo de São Vicente Portugal',text:'Leuchtturm und schroffe Klippen am äußersten Südwesten Portugals.'},
+{id:'loule',name:'Loulé',area:'Zentralalgarve',cat:'Stadt & Architektur',q:'Loule Portugal market town',map:'Loulé Portugal',text:'Lebendige Marktstadt mit historischer Markthalle, Altstadt und weniger touristischem Alltag.'},
+{id:'mercado-loule',name:'Mercado Municipal de Loulé',area:'Loulé',cat:'Architektur & Markt',q:'Mercado Municipal Loule Portugal',map:'Mercado Municipal de Loulé Portugal',text:'Markante historistische Markthalle – architektonisch und kulinarisch sehenswert.'},
+{id:'alte',name:'Alte',area:'Zentralalgarve',cat:'Ort',q:'Alte Algarve Portugal village',map:'Alte Portugal',text:'Weißes Dorf mit gepflasterten Gassen, traditionellen Schornsteinen und Quellen.'},
+{id:'ferragudo',name:'Ferragudo',area:'Lagoa',cat:'Ort',q:'Ferragudo Portugal village',map:'Ferragudo Portugal',text:'Kompaktes Fischerdorf gegenüber von Portimão, gut zu Fuß zu erkunden.'},
+{id:'carvoeiro',name:'Carvoeiro',area:'Lagoa',cat:'Ort & Küste',q:'Carvoeiro Portugal coast',map:'Carvoeiro Portugal',text:'Küstenort zwischen Felsbuchten – guter Ausgangspunkt für kurze Klippenwege.'},
+{id:'algar-seco',name:'Algar Seco',area:'Carvoeiro',cat:'Küste',q:'Algar Seco Carvoeiro Portugal',map:'Algar Seco Carvoeiro Portugal',text:'Felsformationen, natürliche Fenster und kurze Wege direkt an der Klippenkante.'}
+];
+
+const DAY_DESTS={
+'2026-09-07':['faro-altstadt','arco-vila','se-faro','monchique'],
+'2026-09-08':['monchique','caldas','foia'],
+'2026-09-09':['lagos-altstadt','ponta','dona-ana'],
+'2026-09-10':['aljezur','arrifana','amoreira'],
+'2026-09-12':['silves','silves-castle','arade'],
+'2026-09-13':['tavira','caco','ria-formosa','cabanas'],
+'2026-09-14':['sagres','fortaleza','cabo'],
+'2026-09-16':['loule','mercado-loule','alte'],
+'2026-09-17':['ferragudo','carvoeiro','algar-seco']
+};
+
+const IMG_CACHE={};
+async function fetchCommonsImage(dest){
+  if(IMG_CACHE[dest.id]) return IMG_CACHE[dest.id];
+  const api='https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrnamespace=6&gsrlimit=6&gsrsearch='+encodeURIComponent(dest.q)+'&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=900&format=json';
+  try{
+    const res=await fetch(api);
+    const data=await res.json();
+    const pages=Object.values((data.query&&data.query.pages)||{});
+    const page=pages.find(p=>p.imageinfo&&p.imageinfo[0]&&p.imageinfo[0].thumburl);
+    if(!page) throw new Error('no image');
+    const ii=page.imageinfo[0], meta=ii.extmetadata||{};
+    const val=k=>meta[k]&&meta[k].value?String(meta[k].value).replace(/<[^>]*>/g,''):'';
+    const obj={src:ii.thumburl,page:ii.descriptionurl||('https://commons.wikimedia.org/?curid='+page.pageid),credit:val('Artist')||'Wikimedia Commons',license:val('LicenseShortName')||''};
+    IMG_CACHE[dest.id]=obj;
+    return obj;
+  }catch(e){
+    return {src:'',page:'https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search='+encodeURIComponent(dest.q),credit:'Wikimedia Commons',license:''};
+  }
+}
+function placeholderData(name){
+  const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540"><rect width="100%" height="100%" fill="%23123f4a"/><circle cx="720" cy="130" r="65" fill="%23f4d06f"/><path d="M0 370 Q180 310 360 370 T720 370 T1080 370 V540 H0Z" fill="%23e7f0f0"/><text x="50" y="100" font-size="52" font-family="Arial" fill="white" font-weight="700">${name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text></svg>`;
+  return 'data:image/svg+xml;charset=utf-8,'+svg;
+}
+async function hydrateDestImage(dest,img,credit){
+  if(!img) return;
+  img.src=placeholderData(dest.name);
+  const p=await fetchCommonsImage(dest);
+  if(p.src){img.src=p.src; img.dataset.real='1';}
+  if(credit) credit.innerHTML=`Foto: <a target="_blank" href="${p.page}">${p.credit}${p.license?' · '+p.license:''}</a>`;
+}
+function openDestination(id){
+  const d=DESTINATIONS.find(x=>x.id===id); if(!d)return;
+  const modal=document.getElementById('destModal');
+  document.getElementById('modalTitle').textContent=d.name;
+  document.getElementById('modalArea').textContent=d.area+' · '+d.cat;
+  document.getElementById('modalText').textContent=d.text;
+  const img=document.getElementById('modalImg'); img.alt=d.name;
+  hydrateDestImage(d,img,document.getElementById('modalCredit'));
+  document.getElementById('modalActions').innerHTML=`<a class="btn" target="_blank" href="${mapsSearch(d.map)}">In Google Maps</a><a class="btn secondary" target="_blank" href="${mapsDir(d.map)}">Route ab Quinta</a><a class="btn sand" target="_blank" href="${weather(d.area)}">Wetter</a>`;
+  modal.classList.add('show'); document.body.style.overflow='hidden';
+}
+function closeDestination(){document.getElementById('destModal').classList.remove('show');document.body.style.overflow='';}
+function destinationPills(date){
+  const ids=DAY_DESTS[date]||[];
+  if(!ids.length)return '';
+  return `<div class="sectiontitle">Ziele antippen</div><div class="destinline">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);return d?`<button class="destpill" onclick="openDestination('${id}')">📍 ${d.name}</button>`:''}).join('')}</div>`;
+}
+let destCategory='Alle';
+function renderDestinations(){
+  const q=(document.getElementById('destSearch')?.value||'').toLowerCase();
+  const cats=['Alle',...Array.from(new Set(DESTINATIONS.map(d=>d.cat)))];
+  document.getElementById('destFilters').innerHTML=cats.map(c=>`<button class="chip ${c===destCategory?'active':''}" onclick="destCategory='${c.replace(/'/g,"\\'")}';renderDestinations()">${c}</button>`).join('');
+  const list=DESTINATIONS.filter(d=>(destCategory==='Alle'||d.cat===destCategory)&&JSON.stringify(d).toLowerCase().includes(q));
+  document.getElementById('destGrid').innerHTML=list.map(d=>`<article class="destcard" onclick="openDestination('${d.id}')"><img id="img-${d.id}" alt="${d.name}" loading="lazy"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div></div><div id="credit-${d.id}" class="destcredit">Foto wird geladen …</div></article>`).join('');
+  list.forEach(d=>hydrateDestImage(d,document.getElementById('img-'+d.id),document.getElementById('credit-'+d.id)));
+}
+
 const REST={"O Luar da Fóia": {"place": "Monchique", "kind": "Regionale Bergküche", "phone": "+351 922 235 456", "website": "https://www.luardafoia.com/", "maps": "Restaurante O Luar da Foia Monchique Portugal", "note": "Lokale Produkte, porco preto, Wild. Aktuell Dienstag–Samstag geöffnet."}, "Café Império": {"place": "Monchique", "kind": "Bodenständig · Grill", "phone": "+351 282 912 290", "website": "", "maps": "Cafe Imperio Monchique Portugal", "note": "Unkompliziert und lokal; bekannt für Piri-Piri-Huhn."}, "Casinha do Petisco": {"place": "Lagos", "kind": "Klassisch portugiesisch", "phone": "+351 282 084 285", "website": "", "maps": "Casinha do Petisco Lagos Portugal", "note": "Sehr beliebt für Cataplana. Reservieren bzw. früh hingehen."}, "Pont’a Pé": {"place": "Aljezur", "kind": "Costa-Vicentina-Küche", "phone": "+351 282 998 104", "website": "https://pontape.pt/en/home/", "maps": "Pont'a Pé Aljezur Portugal", "note": "Fisch, Meeresfrüchte, Süßkartoffel, porco preto; Online-Reservierung möglich."}, "Marisqueira Rui": {"place": "Silves", "kind": "Fisch & Meeresfrüchte", "phone": "+351 282 442 682", "website": "", "maps": "Marisqueira Rui Silves Portugal", "note": "Traditionsreiche Adresse für Fisch, Meeresfrüchte und Cataplana."}, "Noélia & Jerónimo": {"place": "Cabanas de Tavira", "kind": "Regionale Algarve-Küche", "phone": "+351 281 370 649", "website": "https://www.facebook.com/noeliaejeronimorestaurante", "maps": "Noelia e Jeronimo Cabanas de Tavira Portugal", "note": "Fisch und Meeresfrüchte; mittwochs geschlossen. Im Sommer Reservierung notwendig."}, "A Ver Tavira": {"place": "Tavira", "kind": "Gehoben · Michelin", "phone": "+351 912 950 019", "website": "https://avertavira.com/en/", "maps": "A Ver Tavira Portugal", "note": "Zeitgenössische Algarve-Küche. Sonntags und montags geschlossen."}, "A Tasca": {"place": "Sagres", "kind": "Fisch am Hafen", "phone": "+351 282 624 177", "website": "", "maps": "A Tasca Sagres Porto da Baleeira Portugal", "note": "Familienbetrieb am Hafen; Tagesfang, Cataplana und Meeresfrüchte."}, "11 da Villa": {"place": "Loulé", "kind": "Petiscos · Wein", "phone": "+351 915 744 972", "website": "", "maps": "11 da Villa Loule Portugal", "note": "Kleine Gerichte, Wein und angenehme Lage im historischen Zentrum."}, "O Barril": {"place": "Ferragudo", "kind": "Traditionell portugiesisch", "phone": "+351 936 943 325", "website": "", "maps": "O Barril Ferragudo Portugal", "note": "Fisch, Cataplana und arroz de tamboril; Reservierung empfehlenswert."}};
 const BOOKINGS=[["✈️ Flüge", "Ryanair H255QZ · FR 727 / FR 728 · Sitze 12A / 12B · je 20 kg Aufgabegepäck"], ["🏨 Faro", "THE MODERNIST · 06.–07.09. · Rua Dom Francisco Gomes 27"], ["🏡 Monchique", "Quinta da Lila – The Baker’s Cottage · 07.–19.09."], ["🚗 Mietwagen", "Auto Rent / AurumCars · Abholung 07.09. 15:00 · Rückgabe gebucht 19.09. 14:30"], ["☎️ Judith", "+351 916 978 072 · ca. 1 Stunde vor Ankunft anrufen"], ["☎️ Mietwagenstation", "+351 2898 18580"]];
 const ORIGIN='Quinta da Lila Monchique Tojal Portugal';
@@ -84,7 +227,7 @@ function dayCard(d,open=true){
  const fav=localStorage.getItem('fav-'+d.date)==='1';
  return `<details class="card" ${open?'open':''}><summary><div class="dayhead"><div class="datepill">${d.label}</div><div><div class="daytitle">${d.title}</div><div class="route">${d.route}</div><div class="drive">🚗 ${d.drive}</div><div class="badge"><span class="chev">›</span> Details</div></div></div></summary>${photo}
  <div class="actions"><button class="favbtn ${fav?'on':''}" onclick="toggleFav('${d.date}',this)">${fav?'★ Favorit':'☆ Favorit'}</button><a class="btn" target="_blank" href="${mapsDir(d.map_dest)}">Route in Maps</a><a class="btn secondary" target="_blank" href="${mapsSearch(d.map_dest)}">Ziel anzeigen</a><a class="btn sand" target="_blank" href="${weather(d.place)}">Wetter</a></div>
- <div class="sectiontitle">Tagesablauf</div>${items}
+ ${destinationPills(d.date)}<div class="sectiontitle">Tagesablauf</div>${items}
  <div class="sectiontitle">Lokalempfehlung</div><div class="food">${d.food}</div>${restaurantButtons(d.restaurants)}
  ${tips?`<div class="sectiontitle">Tipp</div>${tips}`:''}<div class="sectiontitle">Meine Notiz</div><textarea class="notearea" placeholder="Notiz zu diesem Tag …" oninput="saveNote('${d.date}',this.value)">${localStorage.getItem('note-'+d.date)||''}</textarea><div class="saved">Wird nur auf diesem Gerät gespeichert.</div></details>`;
 }
@@ -108,7 +251,8 @@ function renderRest(){
 function renderBookings(){document.getElementById('bookingList').innerHTML=BOOKINGS.map(b=>`<div class="card"><b>${b[0]}</b><div class="small" style="margin-top:6px">${b[1]}</div></div>`).join('');}
 document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(btn.dataset.view).classList.add('active');});
 document.getElementById('search').addEventListener('input',e=>renderDays(e.target.value));
-renderToday();renderDays();renderRest();renderBookings();
+document.getElementById('destSearch').addEventListener('input',()=>renderDestinations());
+renderToday();renderDays();renderDestinations();renderRest();renderBookings();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body></html>
