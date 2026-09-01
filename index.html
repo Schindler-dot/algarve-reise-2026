@@ -52,6 +52,9 @@ nav button{font-size:10px}
 .modalclose{position:sticky;top:0;float:right;border:0;background:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;z-index:2;box-shadow:0 2px 10px rgba(0,0,0,.15)}
 @media(min-width:620px){.destgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.destcard img{height:145px}.modal{align-items:center;padding:20px}.modalbox{border-radius:22px;max-height:90vh}}
 
+
+.timelinegroup{margin:12px 0 18px}.timeheading{font-size:15px;font-weight:900;color:var(--accent);margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.schedule-dests{display:flex;flex-direction:column;gap:10px;margin:8px 0 14px}.schedule-dest{display:grid;grid-template-columns:112px 1fr;background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 2px 9px rgba(0,0,0,.025);cursor:pointer;text-align:left;width:100%;padding:0;color:inherit}.schedule-dest img{width:112px;height:92px;object-fit:cover;background:#dfe5e5}.schedule-dest-body{padding:9px 10px}.schedule-dest-title{font-weight:900;font-size:14px;line-height:1.2}.schedule-dest-meta{font-size:11px;color:var(--muted);margin-top:4px;display:block}.schedule-dest-hint{font-size:11px;color:var(--accent);font-weight:800;margin-top:7px;display:block}
 </style>
 </head>
 <body>
@@ -204,6 +207,23 @@ function renderDestinations(){
   document.getElementById('destGrid').innerHTML=list.map(d=>`<article class="destcard" onclick="openDestination('${d.id}')"><img id="img-${d.id}" alt="${d.name}" loading="lazy"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div></div><div id="credit-${d.id}" class="destcredit">Foto wird geladen …</div></article>`).join('');
   list.forEach(d=>hydrateDestImage(d,document.getElementById('img-'+d.id),document.getElementById('credit-'+d.id)));
 }
+
+
+const DAYPART_DESTS={
+'2026-09-07':{Vormittag:['faro-altstadt','arco-vila','se-faro'],Nachmittag:['monchique']},
+'2026-09-08':{Vormittag:['monchique','caldas'],Nachmittag:['foia']},
+'2026-09-09':{Vormittag:['lagos-altstadt','ponta'],Nachmittag:['dona-ana']},
+'2026-09-10':{Vormittag:['aljezur','arrifana'],Nachmittag:['amoreira']},
+'2026-09-12':{Vormittag:['silves','silves-castle'],Nachmittag:['arade']},
+'2026-09-13':{Vormittag:['tavira'],Nachmittag:['caco','ria-formosa','cabanas']},
+'2026-09-14':{Vormittag:['sagres','fortaleza'],Nachmittag:['cabo']},
+'2026-09-16':{Vormittag:['loule','mercado-loule'],Nachmittag:['alte']},
+'2026-09-17':{Vormittag:['ferragudo'],Nachmittag:['carvoeiro','algar-seco']}
+};
+function scheduleDestCards(date,part){
+ const ids=((DAYPART_DESTS[date]||{})[part]||[]);
+ return ids.length?`<div class="schedule-dests">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);return d?`<button class="schedule-dest" onclick="openDestination('${id}')"><img data-dest="${id}" alt="${d.name}" loading="lazy"><span class="schedule-dest-body"><span class="schedule-dest-title">${d.name}</span><span class="schedule-dest-meta">${d.area} · ${d.cat}</span><span class="schedule-dest-hint">Antippen für Details & Karte ›</span></span></button>`:''}).join('')}</div>`:'';}
+function hydrateScheduleImages(){document.querySelectorAll('.schedule-dest img[data-dest]').forEach(img=>{const d=DESTINATIONS.find(x=>x.id===img.dataset.dest);if(d&&!img.dataset.loaded){img.dataset.loaded='1';hydrateDestImage(d,img,null);}});}
 
 const REST={"O Luar da Fóia": {"place": "Monchique", "kind": "Regionale Bergküche", "phone": "+351 922 235 456", "website": "https://www.luardafoia.com/", "maps": "Restaurante O Luar da Foia Monchique Portugal", "note": "Lokale Produkte, porco preto, Wild. Aktuell Dienstag–Samstag geöffnet."}, "Café Império": {"place": "Monchique", "kind": "Bodenständig · Grill", "phone": "+351 282 912 290", "website": "", "maps": "Cafe Imperio Monchique Portugal", "note": "Unkompliziert und lokal; bekannt für Piri-Piri-Huhn."}, "Casinha do Petisco": {"place": "Lagos", "kind": "Klassisch portugiesisch", "phone": "+351 282 084 285", "website": "", "maps": "Casinha do Petisco Lagos Portugal", "note": "Sehr beliebt für Cataplana. Reservieren bzw. früh hingehen."}, "Pont’a Pé": {"place": "Aljezur", "kind": "Costa-Vicentina-Küche", "phone": "+351 282 998 104", "website": "https://pontape.pt/en/home/", "maps": "Pont'a Pé Aljezur Portugal", "note": "Fisch, Meeresfrüchte, Süßkartoffel, porco preto; Online-Reservierung möglich."}, "Marisqueira Rui": {"place": "Silves", "kind": "Fisch & Meeresfrüchte", "phone": "+351 282 442 682", "website": "", "maps": "Marisqueira Rui Silves Portugal", "note": "Traditionsreiche Adresse für Fisch, Meeresfrüchte und Cataplana."}, "Noélia & Jerónimo": {"place": "Cabanas de Tavira", "kind": "Regionale Algarve-Küche", "phone": "+351 281 370 649", "website": "https://www.facebook.com/noeliaejeronimorestaurante", "maps": "Noelia e Jeronimo Cabanas de Tavira Portugal", "note": "Fisch und Meeresfrüchte; mittwochs geschlossen. Im Sommer Reservierung notwendig."}, "A Ver Tavira": {"place": "Tavira", "kind": "Gehoben · Michelin", "phone": "+351 912 950 019", "website": "https://avertavira.com/en/", "maps": "A Ver Tavira Portugal", "note": "Zeitgenössische Algarve-Küche. Sonntags und montags geschlossen."}, "A Tasca": {"place": "Sagres", "kind": "Fisch am Hafen", "phone": "+351 282 624 177", "website": "", "maps": "A Tasca Sagres Porto da Baleeira Portugal", "note": "Familienbetrieb am Hafen; Tagesfang, Cataplana und Meeresfrüchte."}, "11 da Villa": {"place": "Loulé", "kind": "Petiscos · Wein", "phone": "+351 915 744 972", "website": "", "maps": "11 da Villa Loule Portugal", "note": "Kleine Gerichte, Wein und angenehme Lage im historischen Zentrum."}, "O Barril": {"place": "Ferragudo", "kind": "Traditionell portugiesisch", "phone": "+351 936 943 325", "website": "", "maps": "O Barril Ferragudo Portugal", "note": "Fisch, Cataplana und arroz de tamboril; Reservierung empfehlenswert."}};
 const BOOKINGS=[["✈️ Flüge", "Ryanair H255QZ · FR 727 / FR 728 · Sitze 12A / 12B · je 20 kg Aufgabegepäck"], ["🏨 Faro", "THE MODERNIST · 06.–07.09. · Rua Dom Francisco Gomes 27"], ["🏡 Monchique", "Quinta da Lila – The Baker’s Cottage · 07.–19.09."], ["🚗 Mietwagen", "Auto Rent / AurumCars · Abholung 07.09. 15:00 · Rückgabe gebucht 19.09. 14:30"], ["☎️ Judith", "+351 916 978 072 · ca. 1 Stunde vor Ankunft anrufen"], ["☎️ Mietwagenstation", "+351 2898 18580"]];
