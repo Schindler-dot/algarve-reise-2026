@@ -56,7 +56,7 @@ nav button{font-size:10px}
 .timelinegroup{margin:12px 0 18px}.timeheading{font-size:15px;font-weight:900;color:var(--accent);margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .schedule-dests{display:flex;flex-direction:column;gap:10px;margin:8px 0 14px}.schedule-dest{display:grid;grid-template-columns:112px 1fr;background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 2px 9px rgba(0,0,0,.025);cursor:pointer;text-align:left;width:100%;padding:0;color:inherit}.schedule-dest img{width:112px;height:92px;object-fit:cover;background:#dfe5e5}.schedule-dest-body{padding:9px 10px}.schedule-dest-title{font-weight:900;font-size:14px;line-height:1.2}.schedule-dest-meta{font-size:11px;color:var(--muted);margin-top:4px;display:block}.schedule-dest-hint{font-size:11px;color:var(--accent);font-weight:800;margin-top:7px;display:block}
 
-.visual-dests{display:flex;flex-direction:column;gap:14px;margin:10px 0 20px}.visual-dest{display:block;width:100%;padding:0;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;color:inherit;box-shadow:0 3px 12px rgba(0,0,0,.04);cursor:pointer}.visual-dest img{display:block;width:100%;height:190px;object-fit:cover;background:#dfe5e5}.visual-dest-copy{display:block;padding:12px 14px 14px}.visual-dest-title{display:block;font-size:17px;font-weight:900;color:var(--accent)}.visual-dest-desc{display:block;font-size:13px;line-height:1.45;margin-top:5px;color:var(--ink)}.visual-dest-open{display:block;font-size:12px;font-weight:850;color:var(--accent);margin-top:9px}.partlabel{font-size:16px;font-weight:900;color:var(--accent);margin:16px 0 7px;padding-bottom:6px;border-bottom:1px solid var(--line)}@media(min-width:600px){.visual-dest img{height:260px}}
+.visual-dests{display:flex;flex-direction:column;gap:14px;margin:10px 0 20px}.visual-dest{display:block;width:100%;padding:0;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;color:inherit;box-shadow:0 3px 12px rgba(0,0,0,.04);cursor:pointer}.visual-dest img{display:block;width:100%;height:160px;object-fit:cover;background:#dfe5e5}.visual-dest-copy{display:block;padding:12px 14px 14px}.visual-dest-title{display:block;font-size:17px;font-weight:900;color:var(--accent)}.visual-dest-desc{display:block;font-size:13px;line-height:1.45;margin-top:5px;color:var(--ink)}.visual-dest-open{display:block;font-size:12px;font-weight:850;color:var(--accent);margin-top:9px}.partlabel{font-size:16px;font-weight:900;color:var(--accent);margin:16px 0 7px;padding-bottom:6px;border-bottom:1px solid var(--line)}@media(min-width:600px){.visual-dest img{height:220px}}
 </style>
 </head>
 <body>
@@ -153,24 +153,45 @@ const DAY_DESTS={
 '2026-09-17':['ferragudo','carvoeiro','algar-seco']
 };
 
+const STATIC_DEST_IMAGES={
+'faro-altstadt':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Old%20Faro.jpg?width=1000',
+'arco-vila':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Faro-Arco-da-Vila.jpg?width=1000',
+'se-faro':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Faro%20Cathedral%2C%20Portugal.jpg?width=1000',
+'monchique':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Monchique-Portugal.jpg?width=1000',
+'caldas':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Caldas%20de%20Monchique.jpg?width=1000',
+'foia':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Alto%20da%20F%C3%B3ia%20-%20Serra%20de%20Monchique%20-%20Portugal%20%2880153838%29.jpg?width=1000',
+'lagos-altstadt':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Algarve%20Ponta%20da%20piedade.jpg?width=1000',
+'ponta':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Algarve%20Ponta%20da%20piedade.jpg?width=1000',
+'dona-ana':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Praia%20da%20Dona%20Ana.jpg?width=1000',
+'aljezur':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Arrifana.JPG?width=1000',
+'arrifana':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Arrifana.JPG?width=1000',
+'amoreira':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Arrifana.JPG?width=1000',
+'silves':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Castelo%20de%20Silves.jpg?width=1000',
+'silves-castle':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Castelo%20de%20Silves.jpg?width=1000',
+'arade':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Rio%20Arade%20-%20Portugal%20%2827576137673%29.jpg?width=1000',
+'tavira':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Cacela%20Velha%20Houses.jpg?width=1000',
+'caco':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Cacela%20Velha%20Fortress.jpg?width=1000',
+'ria-formosa':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Cacela%20Velha%2C%20Ria%20Formosa%2C%20Algarve%20%286045747312%29.jpg?width=1000',
+'cabanas':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Cacela%20velha.jpg?width=1000',
+'sagres':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Portugal%20Sagres.jpg?width=1000',
+'fortaleza':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Fortaleza%20de%20Sagres%2C%20Algarve%2C%20Portugal.jpg?width=1000',
+'cabo':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Fortaleza%20de%20Sagres%20-%20Entrada.jpg?width=1000',
+'loule':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Castelo%20de%20Silves.jpg?width=1000',
+'mercado-loule':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Castelo%20de%20Silves.jpg?width=1000',
+'alte':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Monchique-Portugal.jpg?width=1000',
+'ferragudo':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Algarve%20Ferragudo.JPG?width=1000',
+'carvoeiro':'https://commons.wikimedia.org/wiki/Special:Redirect/file/Algarve%20Carvoeiro.JPG?width=1000',
+'algar-seco':'https://commons.wikimedia.org/wiki/Special:Redirect/file/AlgarSecoAlgarve.jpg?width=1000'
+};
 const IMG_CACHE={};
 async function fetchCommonsImage(dest){
-  if(IMG_CACHE[dest.id]) return IMG_CACHE[dest.id];
-  const api='https://commons.wikimedia.org/w/api.php?origin=*&action=query&generator=search&gsrnamespace=6&gsrlimit=6&gsrsearch='+encodeURIComponent(dest.q)+'&prop=imageinfo&iiprop=url|extmetadata&iiurlwidth=900&format=json';
-  try{
-    const res=await fetch(api);
-    const data=await res.json();
-    const pages=Object.values((data.query&&data.query.pages)||{});
-    const page=pages.find(p=>p.imageinfo&&p.imageinfo[0]&&p.imageinfo[0].thumburl);
-    if(!page) throw new Error('no image');
-    const ii=page.imageinfo[0], meta=ii.extmetadata||{};
-    const val=k=>meta[k]&&meta[k].value?String(meta[k].value).replace(/<[^>]*>/g,''):'';
-    const obj={src:ii.thumburl,page:ii.descriptionurl||('https://commons.wikimedia.org/?curid='+page.pageid),credit:val('Artist')||'Wikimedia Commons',license:val('LicenseShortName')||''};
-    IMG_CACHE[dest.id]=obj;
-    return obj;
-  }catch(e){
-    return {src:'',page:'https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search='+encodeURIComponent(dest.q),credit:'Wikimedia Commons',license:''};
-  }
+  const src=STATIC_DEST_IMAGES[dest.id];
+  return {
+    src:src||'',
+    page:'https://commons.wikimedia.org/wiki/Special:MediaSearch?type=image&search='+encodeURIComponent(dest.q),
+    credit:'Wikimedia Commons',
+    license:''
+  };
 }
 function placeholderData(name){
   const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540"><rect width="100%" height="100%" fill="%23123f4a"/><circle cx="720" cy="130" r="65" fill="%23f4d06f"/><path d="M0 370 Q180 310 360 370 T720 370 T1080 370 V540 H0Z" fill="%23e7f0f0"/><text x="50" y="100" font-size="52" font-family="Arial" fill="white" font-weight="700">${name.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text></svg>`;
