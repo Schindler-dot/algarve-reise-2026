@@ -1,0 +1,9 @@
+{
+  "name": "Algarve Reise 2026",
+  "short_name": "Algarve 2026",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#123f4a",
+  "description": "Reise-Cockpit für die Algarve-Reise 06.–19. September 2026"
+}
