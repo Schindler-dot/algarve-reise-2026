@@ -1,5 +1,5 @@
-const CACHE='algarve-reise-v9';
-const STATIC=['./manifest.webmanifest','./icon-192.png','./icon-512.png'];
+const CACHE='algarve-reise-v11';
+const STATIC=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 
 self.addEventListener('install', event => {
   self.skipWaiting();
