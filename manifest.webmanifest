@@ -1,9 +1,25 @@
 {
   "name": "Algarve Reise 2026",
   "short_name": "Algarve 2026",
-  "start_url": "./index.html",
+  "description": "Reise-Cockpit für die Algarve-Reise 06.–19. September 2026",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f4f1ea",
   "theme_color": "#123f4a",
-  "description": "Reise-Cockpit für die Algarve-Reise 06.–19. September 2026"
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
 }
