@@ -55,6 +55,8 @@ nav button{font-size:10px}
 
 .timelinegroup{margin:12px 0 18px}.timeheading{font-size:15px;font-weight:900;color:var(--accent);margin:14px 0 8px;padding-bottom:6px;border-bottom:1px solid var(--line)}
 .schedule-dests{display:flex;flex-direction:column;gap:10px;margin:8px 0 14px}.schedule-dest{display:grid;grid-template-columns:112px 1fr;background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 2px 9px rgba(0,0,0,.025);cursor:pointer;text-align:left;width:100%;padding:0;color:inherit}.schedule-dest img{width:112px;height:92px;object-fit:cover;background:#dfe5e5}.schedule-dest-body{padding:9px 10px}.schedule-dest-title{font-weight:900;font-size:14px;line-height:1.2}.schedule-dest-meta{font-size:11px;color:var(--muted);margin-top:4px;display:block}.schedule-dest-hint{font-size:11px;color:var(--accent);font-weight:800;margin-top:7px;display:block}
+
+.visual-dests{display:flex;flex-direction:column;gap:14px;margin:10px 0 20px}.visual-dest{display:block;width:100%;padding:0;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;color:inherit;box-shadow:0 3px 12px rgba(0,0,0,.04);cursor:pointer}.visual-dest img{display:block;width:100%;height:190px;object-fit:cover;background:#dfe5e5}.visual-dest-copy{display:block;padding:12px 14px 14px}.visual-dest-title{display:block;font-size:17px;font-weight:900;color:var(--accent)}.visual-dest-desc{display:block;font-size:13px;line-height:1.45;margin-top:5px;color:var(--ink)}.visual-dest-open{display:block;font-size:12px;font-weight:850;color:var(--accent);margin-top:9px}.partlabel{font-size:16px;font-weight:900;color:var(--accent);margin:16px 0 7px;padding-bottom:6px;border-bottom:1px solid var(--line)}@media(min-width:600px){.visual-dest img{height:260px}}
 </style>
 </head>
 <body>
@@ -225,6 +227,21 @@ function scheduleDestCards(date,part){
  return ids.length?`<div class="schedule-dests">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);return d?`<button class="schedule-dest" onclick="openDestination('${id}')"><img data-dest="${id}" alt="${d.name}" loading="lazy"><span class="schedule-dest-body"><span class="schedule-dest-title">${d.name}</span><span class="schedule-dest-meta">${d.area} · ${d.cat}</span><span class="schedule-dest-hint">Antippen für Details & Karte ›</span></span></button>`:''}).join('')}</div>`:'';}
 function hydrateScheduleImages(){document.querySelectorAll('.schedule-dest img[data-dest]').forEach(img=>{const d=DESTINATIONS.find(x=>x.id===img.dataset.dest);if(d&&!img.dataset.loaded){img.dataset.loaded='1';hydrateDestImage(d,img,null);}});}
 
+
+function visualDestCards(date,part){
+ const ids=((DAYPART_DESTS[date]||{})[part]||[]);
+ if(!ids.length)return '';
+ return `<div class="visual-dests">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);if(!d)return '';return `<button class="visual-dest" onclick="openDestination('${id}')"><img data-visualdest="${id}" alt="${d.name}" loading="lazy"><span class="visual-dest-copy"><span class="visual-dest-title">${d.name}</span><span class="visual-dest-desc">${d.text}</span><span class="visual-dest-open">Antippen für Details, Karte & Route ›</span></span></button>`}).join('')}</div>`;
+}
+function hydrateVisualImages(){document.querySelectorAll('img[data-visualdest]').forEach(img=>{const d=DESTINATIONS.find(x=>x.id===img.dataset.visualdest);if(d&&!img.dataset.loaded){img.dataset.loaded='1';hydrateDestImage(d,img,null);}});}
+function itemPart(label){
+ label=String(label||'');
+ if(/vormittag|morgen|früh/i.test(label))return 'Vormittag';
+ if(/mittag|nachmittag/i.test(label))return 'Nachmittag';
+ if(/abend/i.test(label))return 'Abend';
+ return '';
+}
+
 const REST={"O Luar da Fóia": {"place": "Monchique", "kind": "Regionale Bergküche", "phone": "+351 922 235 456", "website": "https://www.luardafoia.com/", "maps": "Restaurante O Luar da Foia Monchique Portugal", "note": "Lokale Produkte, porco preto, Wild. Aktuell Dienstag–Samstag geöffnet."}, "Café Império": {"place": "Monchique", "kind": "Bodenständig · Grill", "phone": "+351 282 912 290", "website": "", "maps": "Cafe Imperio Monchique Portugal", "note": "Unkompliziert und lokal; bekannt für Piri-Piri-Huhn."}, "Casinha do Petisco": {"place": "Lagos", "kind": "Klassisch portugiesisch", "phone": "+351 282 084 285", "website": "", "maps": "Casinha do Petisco Lagos Portugal", "note": "Sehr beliebt für Cataplana. Reservieren bzw. früh hingehen."}, "Pont’a Pé": {"place": "Aljezur", "kind": "Costa-Vicentina-Küche", "phone": "+351 282 998 104", "website": "https://pontape.pt/en/home/", "maps": "Pont'a Pé Aljezur Portugal", "note": "Fisch, Meeresfrüchte, Süßkartoffel, porco preto; Online-Reservierung möglich."}, "Marisqueira Rui": {"place": "Silves", "kind": "Fisch & Meeresfrüchte", "phone": "+351 282 442 682", "website": "", "maps": "Marisqueira Rui Silves Portugal", "note": "Traditionsreiche Adresse für Fisch, Meeresfrüchte und Cataplana."}, "Noélia & Jerónimo": {"place": "Cabanas de Tavira", "kind": "Regionale Algarve-Küche", "phone": "+351 281 370 649", "website": "https://www.facebook.com/noeliaejeronimorestaurante", "maps": "Noelia e Jeronimo Cabanas de Tavira Portugal", "note": "Fisch und Meeresfrüchte; mittwochs geschlossen. Im Sommer Reservierung notwendig."}, "A Ver Tavira": {"place": "Tavira", "kind": "Gehoben · Michelin", "phone": "+351 912 950 019", "website": "https://avertavira.com/en/", "maps": "A Ver Tavira Portugal", "note": "Zeitgenössische Algarve-Küche. Sonntags und montags geschlossen."}, "A Tasca": {"place": "Sagres", "kind": "Fisch am Hafen", "phone": "+351 282 624 177", "website": "", "maps": "A Tasca Sagres Porto da Baleeira Portugal", "note": "Familienbetrieb am Hafen; Tagesfang, Cataplana und Meeresfrüchte."}, "11 da Villa": {"place": "Loulé", "kind": "Petiscos · Wein", "phone": "+351 915 744 972", "website": "", "maps": "11 da Villa Loule Portugal", "note": "Kleine Gerichte, Wein und angenehme Lage im historischen Zentrum."}, "O Barril": {"place": "Ferragudo", "kind": "Traditionell portugiesisch", "phone": "+351 936 943 325", "website": "", "maps": "O Barril Ferragudo Portugal", "note": "Fisch, Cataplana und arroz de tamboril; Reservierung empfehlenswert."}};
 const BOOKINGS=[["✈️ Flüge", "Ryanair H255QZ · FR 727 / FR 728 · Sitze 12A / 12B · je 20 kg Aufgabegepäck"], ["🏨 Faro", "THE MODERNIST · 06.–07.09. · Rua Dom Francisco Gomes 27"], ["🏡 Monchique", "Quinta da Lila – The Baker’s Cottage · 07.–19.09."], ["🚗 Mietwagen", "Auto Rent / AurumCars · Abholung 07.09. 15:00 · Rückgabe gebucht 19.09. 14:30"], ["☎️ Judith", "+351 916 978 072 · ca. 1 Stunde vor Ankunft anrufen"], ["☎️ Mietwagenstation", "+351 2898 18580"]];
 const ORIGIN='Quinta da Lila Monchique Tojal Portugal';
@@ -241,13 +258,13 @@ function restaurantButtons(names){
   }).join('');
 }
 function dayCard(d,open=true){
- const items=d.items.map(x=>`<div class="item"><div class="icon">${x[0]}</div><div class="time">${x[1]}</div><div class="desc">${x[2]}</div></div>`).join('');
+ let shownParts=new Set();const items=d.items.map(x=>{const part=itemPart(x[1]);const head=(part&&!shownParts.has(part))?`<div class="partlabel">${part}</div>`:'';if(part)shownParts.add(part);const cards=part?visualDestCards(d.date,part):'';return `${head}<div class="item"><div class="icon">${x[0]}</div><div class="time">${x[1]}</div><div class="desc">${x[2]}</div></div>${cards}`;}).join('');
  const tips=(d.tips||[]).map(t=>`<div class="tip">${t}</div>`).join('');
  const p=PHOTOS[d.date]; const photo=p?`<img class="dayphoto" src="${p.src}" alt="${d.place}" loading="lazy"><div class="photocredit">Foto: <a href="${p.page}" target="_blank">${p.credit}</a></div>`:'';
  const fav=localStorage.getItem('fav-'+d.date)==='1';
  return `<details class="card" ${open?'open':''}><summary><div class="dayhead"><div class="datepill">${d.label}</div><div><div class="daytitle">${d.title}</div><div class="route">${d.route}</div><div class="drive">🚗 ${d.drive}</div><div class="badge"><span class="chev">›</span> Details</div></div></div></summary>${photo}
  <div class="actions"><button class="favbtn ${fav?'on':''}" onclick="toggleFav('${d.date}',this)">${fav?'★ Favorit':'☆ Favorit'}</button><a class="btn" target="_blank" href="${mapsDir(d.map_dest)}">Route in Maps</a><a class="btn secondary" target="_blank" href="${mapsSearch(d.map_dest)}">Ziel anzeigen</a><a class="btn sand" target="_blank" href="${weather(d.place)}">Wetter</a></div>
- ${destinationPills(d.date)}<div class="sectiontitle">Tagesablauf</div>${items}
+ <div class="sectiontitle">Tagesablauf</div>${items}
  <div class="sectiontitle">Lokalempfehlung</div><div class="food">${d.food}</div>${restaurantButtons(d.restaurants)}
  ${tips?`<div class="sectiontitle">Tipp</div>${tips}`:''}<div class="sectiontitle">Meine Notiz</div><textarea class="notearea" placeholder="Notiz zu diesem Tag …" oninput="saveNote('${d.date}',this.value)">${localStorage.getItem('note-'+d.date)||''}</textarea><div class="saved">Wird nur auf diesem Gerät gespeichert.</div></details>`;
 }
