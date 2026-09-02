@@ -306,11 +306,10 @@ function requestLocation(which){
   if(btn)btn.disabled=true;
   navigator.geolocation.getCurrentPosition(pos=>{
     if(btn){btn.disabled=false;btn.classList.add('active');}
-    const isFirstFix=!userLoc;
     userLoc={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy};
     if(destMap)updateUserMarker('dest');
     if(foodMap)updateUserMarker('food');
-    if(isFirstFix)fitMapToUser(which);
+    fitMapToUser(which);
     updateDistances();
   },err=>{
     if(btn)btn.disabled=false;
