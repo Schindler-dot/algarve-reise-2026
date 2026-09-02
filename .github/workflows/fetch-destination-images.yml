@@ -1,0 +1,45 @@
+name: Fetch destination images
+
+# Downloads real, destination-matched photographs from Wikimedia Commons into /images.
+# Must run on GitHub-hosted runners because those have outbound internet access to
+# commons.wikimedia.org (the Copilot coding-agent sandbox that edits this repo does not).
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  fetch-images:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install --disable-pip-version-check --quiet Pillow
+
+      - name: Fetch destination images from Wikimedia Commons
+        run: python .github/scripts/fetch_images.py
+
+      - name: Show downloaded files
+        run: ls -la images
+
+      - name: Commit and push images
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add images
+          if git diff --cached --quiet; then
+            echo "No image changes to commit."
+          else
+            git commit -m "Add real destination photos from Wikimedia Commons"
+            git push
+          fi
