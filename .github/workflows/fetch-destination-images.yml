@@ -5,6 +5,13 @@ name: Fetch destination images
 # commons.wikimedia.org (the Copilot coding-agent sandbox that edits this repo does not).
 on:
   workflow_dispatch: {}
+  push:
+    branches:
+      - copilot/improve-local-image-reliability
+    paths:
+      - '.github/workflows/fetch-destination-images.yml'
+      - '.github/scripts/fetch_images.py'
+      - '.github/scripts/destination_images.json'
 
 permissions:
   contents: write
