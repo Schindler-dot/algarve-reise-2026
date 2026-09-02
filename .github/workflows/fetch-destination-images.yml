@@ -34,7 +34,7 @@ jobs:
         run: pip install --disable-pip-version-check --quiet Pillow
 
       - name: Fetch destination images from Wikimedia Commons
-        timeout-minutes: 12
+        timeout-minutes: 15
         run: python -u .github/scripts/fetch_images.py
 
       - name: Show downloaded files

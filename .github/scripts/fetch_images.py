@@ -68,6 +68,7 @@ def imageinfo_for_title(title):
         "titles": "File:" + title,
         "prop": "imageinfo",
         "iiprop": "url|size|extmetadata|mime",
+        "iiurlwidth": str(MAX_WIDTH),
         "format": "json",
     })
     pages = data.get("query", {}).get("pages", {})
@@ -85,7 +86,7 @@ def imageinfo_for_title(title):
             continue
         return {
             "title": page.get("title", "File:" + title),
-            "url": info["url"],
+            "url": info.get("thumburl") or info["url"],
             "descriptionurl": info.get("descriptionurl", ""),
             "extmetadata": info.get("extmetadata", {}),
         }
@@ -139,7 +140,7 @@ def extmeta_value(extmetadata, key, default=""):
 
 
 def download_and_convert(url, dest_path):
-    time.sleep(REQUEST_DELAY)
+    time.sleep(REQUEST_DELAY * 2)
     raw = http_get_with_retry(url)
     img = Image.open(io.BytesIO(raw))
     img = img.convert("RGB")
