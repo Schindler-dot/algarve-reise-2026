@@ -30,14 +30,32 @@ ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_FILE = Path(__file__).resolve().parent / "destination_images.json"
 IMAGES_DIR = ROOT / "images"
 MAX_WIDTH = 1600
+REQUEST_DELAY = 1.5
 USER_AGENT = "algarve-reise-2026-image-fetch/1.0 (GitHub Actions; contact via repository issues)"
+
+
+def http_get_with_retry(url, max_retries=6, base_delay=3):
+    """GET a URL, retrying with backoff on HTTP 429 (respecting Retry-After if present)."""
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    for attempt in range(max_retries):
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                return resp.read()
+        except urllib.error.HTTPError as exc:
+            if exc.code == 429 and attempt < max_retries - 1:
+                retry_after = exc.headers.get("Retry-After")
+                delay = float(retry_after) if retry_after else base_delay * (2 ** attempt)
+                print(f"    429 rate limited, waiting {delay:.0f}s before retry {attempt + 1}/{max_retries}...")
+                time.sleep(delay)
+                continue
+            raise
+    raise RuntimeError("unreachable")
 
 
 def api_get(params):
     url = API + "?" + urllib.parse.urlencode(params)
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    time.sleep(REQUEST_DELAY)
+    return json.loads(http_get_with_retry(url).decode("utf-8"))
 
 
 def imageinfo_for_title(title):
@@ -117,9 +135,8 @@ def extmeta_value(extmetadata, key, default=""):
 
 
 def download_and_convert(url, dest_path):
-    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
-    with urllib.request.urlopen(req, timeout=60) as resp:
-        raw = resp.read()
+    time.sleep(REQUEST_DELAY)
+    raw = http_get_with_retry(url)
     img = Image.open(io.BytesIO(raw))
     img = img.convert("RGB")
     if img.width > MAX_WIDTH:
@@ -165,7 +182,6 @@ def main():
             "license": extmeta_value(extmeta, "LicenseShortName", ""),
         }
         print(f"  OK -> {dest_path.relative_to(ROOT)} ({sources[dest_id]['commons_file']})")
-        time.sleep(1)
 
     sources_path = IMAGES_DIR / "SOURCES.json"
     sources_path.write_text(json.dumps(sources, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
