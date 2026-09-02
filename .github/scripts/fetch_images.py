@@ -34,7 +34,10 @@ REQUEST_DELAY = 1.5
 USER_AGENT = "algarve-reise-2026-image-fetch/1.0 (GitHub Actions; contact via repository issues)"
 
 
-def http_get_with_retry(url, max_retries=6, base_delay=3):
+MAX_BACKOFF_DELAY = 20
+
+
+def http_get_with_retry(url, max_retries=4, base_delay=2):
     """GET a URL, retrying with backoff on HTTP 429 (respecting Retry-After if present)."""
     req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
     for attempt in range(max_retries):
@@ -45,6 +48,7 @@ def http_get_with_retry(url, max_retries=6, base_delay=3):
             if exc.code == 429 and attempt < max_retries - 1:
                 retry_after = exc.headers.get("Retry-After")
                 delay = float(retry_after) if retry_after else base_delay * (2 ** attempt)
+                delay = min(delay, MAX_BACKOFF_DELAY)
                 print(f"    429 rate limited, waiting {delay:.0f}s before retry {attempt + 1}/{max_retries}...")
                 time.sleep(delay)
                 continue
