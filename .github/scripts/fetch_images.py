@@ -154,12 +154,7 @@ def main():
 
     for dest_id, meta in destinations.items():
         print(f"Resolving {dest_id} ({meta['name']}) ...")
-        info = None
-        for attempt in range(3):
-            info = resolve_destination(dest_id, meta)
-            if info:
-                break
-            time.sleep(2)
+        info = resolve_destination(dest_id, meta)
         if not info:
             failures.append(dest_id)
             print(f"  FAILED to resolve a real photo for {dest_id}")
