@@ -40,6 +40,11 @@ nav button{font-size:10px}
 #destMap{width:100%;height:100%}
 #destMapOffline{display:none;position:absolute;left:8px;right:8px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}
 .leaflet-popup-content{margin:8px 10px}.leaflet-popup-content .destpill{padding:6px 9px}
+.locate-btn{position:absolute;right:8px;bottom:8px;z-index:1000;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:17px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.locate-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.locate-btn:disabled{opacity:.6;cursor:wait}
+.locate-msg{display:none;position:absolute;left:8px;right:54px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}
+.dist-badge{display:inline-block;font-size:11px;font-weight:800;color:var(--accent);background:var(--accent2);border-radius:999px;padding:2px 8px;margin-top:4px}
 .destcard{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.025);cursor:pointer}
 .destcard img{width:100%;height:118px;object-fit:cover;display:block;background:#dfe5e5}
 .destbody{padding:10px}.desttitle{font-size:14px;font-weight:850;line-height:1.2}.destmeta{font-size:11px;color:var(--muted);margin-top:4px}
@@ -92,7 +97,7 @@ nav button{font-size:10px}
 <section id="days" class="view"><input id="search" class="search" placeholder="Tag, Ort oder Restaurant suchen …"><div class="notice">Fahrzeiten sind Näherungswerte ab Monchique/Quinta und können je nach Route und Verkehr abweichen.</div><div id="daysList"></div></section>
 <section id="destinations" class="view">
 <div class="hero"><h2>Alle Ziele</h2><p>Antippen → Foto, Kurzinfo, Karte und Route</p><div class="heroEmoji">🗺️</div></div>
-<div id="destMapWrap"><div id="destMap"></div><div id="destMapOffline">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div></div>
+<div id="destMapWrap"><div id="destMap"></div><div id="destMapOffline">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div><div id="destLocateMsg" class="locate-msg"></div><button id="destLocateBtn" type="button" class="locate-btn" title="Meinen Standort anzeigen" aria-label="Meinen Standort anzeigen" onclick="requestLocation('dest')">📍</button></div>
 <input id="destSearch" class="search" placeholder="Ziel suchen …">
 <div id="destFilters" class="destfilter"></div>
 <div id="destGrid" class="destgrid"></div>
@@ -100,7 +105,7 @@ nav button{font-size:10px}
 </section>
 <section id="food" class="view">
 <div class="hero"><h2>Algarve Restaurantführer</h2><p>Ca. 35–40 kuratierte Adressen · Karte, Filter & Details</p><div class="heroEmoji">🍴</div></div>
-<div id="foodMapWrap"><div id="foodMap"></div><div id="foodMapOffline">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div></div>
+<div id="foodMapWrap"><div id="foodMap"></div><div id="foodMapOffline">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div><div id="foodLocateMsg" class="locate-msg"></div><button id="foodLocateBtn" type="button" class="locate-btn" title="Meinen Standort anzeigen" aria-label="Meinen Standort anzeigen" onclick="requestLocation('food')">📍</button></div>
 <input id="foodSearch" class="search" placeholder="Restaurant, Ort oder Gericht suchen …">
 <div class="foodfilters">
 <div id="foodCatFilters" class="destfilter"></div>
@@ -238,6 +243,83 @@ function hydrateDestImage(dest,img,credit){
   img.src=STATIC_DEST_IMAGES[dest.id]||placeholderData(dest.name);
   if(credit){const c=CREDITS[dest.id];credit.innerHTML=c?`Foto: ${c.author||'Wikimedia Commons'}${c.license?' · '+c.license:''}`:'';}
 }
+let userLoc=null;
+const mapUserLayers={};
+function toRad(deg){return deg*Math.PI/180;}
+function distanceKm(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=toRad(lat2-lat1),dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2+Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function formatDistance(km){
+  if(km<1)return Math.round(km*1000)+' m';
+  return km.toFixed(km<10?1:0)+' km';
+}
+function updateDistances(){
+  document.querySelectorAll('.dist-badge').forEach(el=>{
+    const kind=el.dataset.kind,id=el.dataset.id;
+    if(!userLoc){el.style.display='none';el.textContent='';return;}
+    const arr=kind==='dest'?DESTINATIONS:RESTAURANTS;
+    const item=arr.find(x=>x.id===id);
+    if(!item||typeof item.lat!=='number'||typeof item.lng!=='number'){el.style.display='none';return;}
+    el.textContent='📍 '+formatDistance(distanceKm(userLoc.lat,userLoc.lng,item.lat,item.lng));
+    el.style.display='inline-block';
+  });
+}
+function showLocateMsg(which,text){
+  const el=document.getElementById(which+'LocateMsg'); if(!el)return;
+  el.textContent=text; el.style.display='flex';
+  clearTimeout(el._hideTimer);
+  el._hideTimer=setTimeout(()=>{el.style.display='none';},4500);
+}
+function updateUserMarker(which){
+  const map=which==='dest'?destMap:foodMap;
+  if(!map||!userLoc)return;
+  let layer=mapUserLayers[which];
+  const latlng=[userLoc.lat,userLoc.lng];
+  if(!layer){
+    layer={
+      circle:L.circle(latlng,{radius:userLoc.accuracy||30,color:'#1a73e8',weight:1,fillColor:'#1a73e8',fillOpacity:.15}).addTo(map),
+      dot:L.circleMarker(latlng,{radius:8,color:'#fff',weight:2,fillColor:'#1a73e8',fillOpacity:1}).addTo(map)
+    };
+    layer.dot.bindPopup('📍 Dein Standort');
+    mapUserLayers[which]=layer;
+  } else {
+    layer.circle.setLatLng(latlng).setRadius(userLoc.accuracy||30);
+    layer.dot.setLatLng(latlng);
+  }
+}
+function fitMapToUser(which){
+  const map=which==='dest'?destMap:foodMap;
+  if(!map||!userLoc)return;
+  const pts=[[userLoc.lat,userLoc.lng]];
+  const arr=which==='dest'?DESTINATIONS:RESTAURANTS;
+  arr.forEach(x=>{
+    if(typeof x.lat==='number'&&typeof x.lng==='number'&&distanceKm(userLoc.lat,userLoc.lng,x.lat,x.lng)<=30)pts.push([x.lat,x.lng]);
+  });
+  if(pts.length>1)map.fitBounds(pts,{padding:[30,30],maxZoom:13});
+  else map.setView([userLoc.lat,userLoc.lng],13);
+}
+function requestLocation(which){
+  const btn=document.getElementById(which+'LocateBtn');
+  if(!('geolocation' in navigator)){showLocateMsg(which,'Standortbestimmung wird von diesem Gerät nicht unterstützt.');return;}
+  if(btn)btn.disabled=true;
+  navigator.geolocation.getCurrentPosition(pos=>{
+    if(btn){btn.disabled=false;btn.classList.add('active');}
+    userLoc={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy};
+    if(destMap)updateUserMarker('dest');
+    if(foodMap)updateUserMarker('food');
+    fitMapToUser(which);
+    updateDistances();
+  },err=>{
+    if(btn)btn.disabled=false;
+    let msg='Standort konnte nicht ermittelt werden.';
+    if(err.code===err.PERMISSION_DENIED)msg='Standortzugriff wurde verweigert.';
+    else if(err.code===err.POSITION_UNAVAILABLE)msg='Standort ist derzeit nicht verfügbar.';
+    else if(err.code===err.TIMEOUT)msg='Standortbestimmung hat zu lange gedauert.';
+    showLocateMsg(which,msg);
+  },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
+}
 let destMap=null;
 function ensureDestMap(){
   if(destMap||typeof L==='undefined')return;
@@ -261,6 +343,7 @@ function ensureDestMap(){
   window.addEventListener('offline',showOffline);
   window.addEventListener('online',()=>{hideOffline();destMap.invalidateSize();});
   if(!navigator.onLine)showOffline();
+  if(userLoc)updateUserMarker('dest');
   setTimeout(()=>destMap.invalidateSize(),50);
 }
 function openDestination(id){
@@ -287,7 +370,8 @@ let destCategory='Alle';
 function renderDestinations(){
  const q=(document.getElementById('destSearch').value||'').toLowerCase();
  const list=DESTINATIONS.filter(d=>(d.name+' '+d.area+' '+d.cat+' '+d.text).toLowerCase().includes(q));
- document.getElementById('destGrid').innerHTML=list.map(d=>`<article class="destcard" onclick="openDestination('${d.id}')"><img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div></div></article>`).join('');
+ document.getElementById('destGrid').innerHTML=list.map(d=>`<article class="destcard" onclick="openDestination('${d.id}')"><img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div><div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div></div></article>`).join('');
+ updateDistances();
 }
 const DAYPART_DESTS={
 '2026-09-07':{Vormittag:['faro-altstadt','arco-vila','se-faro'],Nachmittag:['monchique']},
@@ -385,6 +469,7 @@ function ensureFoodMap(){
   window.addEventListener('offline',showOffline);
   window.addEventListener('online',()=>{hideOffline();foodMap.invalidateSize();});
   if(!navigator.onLine)showOffline();
+  if(userLoc)updateUserMarker('food');
   setTimeout(()=>foodMap.invalidateSize(),50);
 }
 let foodCat='Alle',foodPrice='Alle';
@@ -408,10 +493,11 @@ function renderFood(){
   if(!list.length){el.innerHTML='<div class="foodempty">Keine Restaurants gefunden – Filter oder Suche anpassen.</div>';return;}
   el.innerHTML=list.map(r=>`<button class="foodcard" onclick="openRestaurant('${r.id}')">
     <div class="fname">${r.star?'<span class="foodstar">⭐</span>':''}${r.name}<span class="foodprice">${r.price}</span></div>
-    <div class="foodmeta">${r.place}</div>
+    <div class="foodmeta">${r.place} <span class="dist-badge" data-kind="food" data-id="${r.id}" style="display:none"></span></div>
     <div class="foodtags">${r.cats.map(c=>`<span class="foodtag">${FOOD_CAT_LABELS[c]}</span>`).join('')}</div>
     <div class="foodwhy">${r.why}</div>
   </button>`).join('');
+  updateDistances();
 }
 function openRestaurant(id){
   const r=FOOD_BY_ID[id]; if(!r)return;
