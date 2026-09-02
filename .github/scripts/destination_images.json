@@ -1,30 +1,209 @@
 {
-  "faro-altstadt": {"name": "Faro Altstadt", "candidates": ["Old Faro.jpg", "Centro-histórico-Faro.jpg"], "search": "Faro old town Portugal Vila Adentro"},
-  "arco-vila": {"name": "Arco da Vila", "candidates": ["Arco da Vila - Faro - Portugal (4773518487).jpg", "Arco da Vila (Faro).jpg"], "search": "Arco da Vila Faro Portugal gate"},
-  "se-faro": {"name": "Kathedrale von Faro", "candidates": ["Faro Igreja da Sé.jpg"], "search": "Faro Cathedral Sé Portugal"},
-  "monchique": {"name": "Monchique", "candidates": ["Monchique - 19.09.2019.jpg"], "search": "Monchique Portugal town Algarve"},
-  "caldas": {"name": "Caldas de Monchique", "candidates": ["Caldas de Monchique - The Algarve, Portugal (1388557366).jpg"], "search": "Caldas de Monchique Portugal spa valley"},
-  "foia": {"name": "Fóia", "candidates": ["Alto da Fóia - Portugal (51805385927).jpg", "Foia - Highest Mountain in Algarve - The Algarve, Portugal (1387687955).jpg"], "search": "Foia Monchique Portugal viewpoint summit"},
-  "lagos-altstadt": {"name": "Lagos Altstadt", "candidates": [], "search": "Lagos Algarve Portugal old town street wall"},
-  "ponta": {"name": "Ponta da Piedade", "candidates": ["Algarve Ponta da Piedade 1.jpg", "Lagos - Ponta da Piedade.jpg"], "search": "Ponta da Piedade Lagos Portugal cliffs"},
-  "dona-ana": {"name": "Praia Dona Ana", "candidates": ["Dona Ana beach, Lagos, Portugal.jpg"], "search": "Praia Dona Ana Lagos Portugal beach"},
-  "aljezur": {"name": "Aljezur", "candidates": ["Aljezur - castle (13424578775).jpg"], "search": "Aljezur Portugal town castle hill"},
-  "arrifana": {"name": "Praia da Arrifana", "candidates": ["Praia da Arrifana.JPG"], "search": "Praia da Arrifana Portugal beach cliffs"},
-  "amoreira": {"name": "Praia da Amoreira", "candidates": ["Praia da Amoreira (2831692478).jpg", "Praia da Amoreira - I.jpg"], "search": "Praia da Amoreira Aljezur Portugal beach river"},
-  "silves": {"name": "Silves", "candidates": [], "search": "Silves Portugal town Arade river panorama"},
-  "silves-castle": {"name": "Castelo de Silves", "candidates": ["Castelo de Silves - Portugal (51848995450).jpg", "Castelo de Silves - Algarve, Portugal - 11.03.2023.jpg"], "search": "Castelo de Silves castle red sandstone Portugal"},
-  "arade": {"name": "Rio Arade", "candidates": ["Arade River at Silves Portugal (25080504054).jpg", "Rio Arade em Silves 2012.jpg"], "search": "Rio Arade Silves Portugal river"},
-  "tavira": {"name": "Tavira", "candidates": ["Tavira - Roman Bridge.jpg", "Roman bridge, Tavira, Portugal (14583478126).jpg"], "search": "Tavira Portugal town bridge Gilao river"},
-  "caco": {"name": "Cacela Velha", "candidates": ["Cacela Velha, Portugal (4898317992).jpg"], "search": "Cacela Velha Portugal village lagoon"},
-  "ria-formosa": {"name": "Ria Formosa", "candidates": ["RiaFormosaQtaLagoPortugal.JPG", "Ria Formosa - Portugal (28182956811).jpg"], "search": "Ria Formosa Portugal lagoon natural park"},
-  "cabanas": {"name": "Cabanas de Tavira", "candidates": [], "search": "Cabanas de Tavira Portugal village lagoon"},
-  "sagres": {"name": "Sagres", "candidates": ["Porto de Pesca da Baleeira, Sagres.jpg"], "search": "Sagres Algarve Portugal harbour town"},
-  "fortaleza": {"name": "Fortaleza de Sagres", "candidates": ["Fortaleza de Sagres, Algarve, Portugal.jpg", "Fortaleza de Sagres - Portugal (48644608616).jpg"], "search": "Fortaleza de Sagres fortress Portugal"},
-  "cabo": {"name": "Cabo de São Vicente", "candidates": ["Cabo São Vicente.jpg", "Cape St. Vincent Lighthouse.jpg", "CSV Lighthouse.jpg"], "search": "Cabo de Sao Vicente lighthouse Portugal cliff"},
-  "loule": {"name": "Loulé", "candidates": [], "search": "Loule Algarve Portugal town street market"},
-  "mercado-loule": {"name": "Mercado Municipal de Loulé", "candidates": ["Mercado Municipal de Loulé 1.jpg", "Mercado Municipal de Loulé (Portugal).JPG"], "search": "Mercado Municipal Loule Portugal market hall building"},
-  "alte": {"name": "Alte", "candidates": ["Alte 08.JPG"], "search": "Alte Algarve Portugal village whitewashed"},
-  "ferragudo": {"name": "Ferragudo", "candidates": ["Ferragudo1.jpg"], "search": "Ferragudo Portugal village fishing"},
-  "carvoeiro": {"name": "Carvoeiro", "candidates": ["Carvoeiro Portugal February 2015 03.jpg"], "search": "Carvoeiro Portugal coast village cliffs"},
-  "algar-seco": {"name": "Algar Seco", "candidates": ["Algar Seco (Algarve) (3739403559).jpg"], "search": "Algar Seco Carvoeiro Portugal rock formations"}
+  "algar-seco": {
+    "candidates": [
+      "Algar Seco (Algarve) (3739403559).jpg"
+    ],
+    "name": "Algar Seco",
+    "search": "Algar Seco Carvoeiro Portugal rock formations"
+  },
+  "aljezur": {
+    "candidates": [
+      "Aljezur - castle (13424578775).jpg"
+    ],
+    "name": "Aljezur",
+    "search": "Aljezur Portugal town castle hill"
+  },
+  "alte": {
+    "candidates": [
+      "Alte 08.JPG"
+    ],
+    "name": "Alte",
+    "search": "Alte Algarve Portugal village whitewashed"
+  },
+  "amoreira": {
+    "candidates": [
+      "Praia da Amoreira (2831692478).jpg",
+      "Praia da Amoreira - I.jpg"
+    ],
+    "name": "Praia da Amoreira",
+    "search": "Praia da Amoreira Aljezur Portugal beach river"
+  },
+  "arade": {
+    "candidates": [
+      "Arade River at Silves Portugal (25080504054).jpg",
+      "Rio Arade em Silves 2012.jpg"
+    ],
+    "name": "Rio Arade",
+    "search": "Rio Arade Silves Portugal river"
+  },
+  "arco-vila": {
+    "candidates": [
+      "Arco da Vila - Faro - Portugal (4773518487).jpg",
+      "Arco da Vila (Faro).jpg"
+    ],
+    "name": "Arco da Vila",
+    "search": "Arco da Vila Faro Portugal gate"
+  },
+  "arrifana": {
+    "candidates": [
+      "Praia da Arrifana.JPG"
+    ],
+    "name": "Praia da Arrifana",
+    "search": "Praia da Arrifana Portugal beach cliffs"
+  },
+  "cabanas": {
+    "candidates": [
+      "Ria Formosa - Cabanas - Portugal (29901899827).jpg"
+    ],
+    "name": "Cabanas de Tavira",
+    "search": "Cabanas de Tavira Portugal"
+  },
+  "cabo": {
+    "candidates": [
+      "Cabo São Vicente.jpg",
+      "Cape St. Vincent Lighthouse.jpg",
+      "CSV Lighthouse.jpg"
+    ],
+    "name": "Cabo de São Vicente",
+    "search": "Cabo de Sao Vicente lighthouse Portugal cliff"
+  },
+  "caco": {
+    "candidates": [
+      "Cacela Velha, Portugal (4898317992).jpg"
+    ],
+    "name": "Cacela Velha",
+    "search": "Cacela Velha Portugal village lagoon"
+  },
+  "caldas": {
+    "candidates": [
+      "Caldas de Monchique - The Algarve, Portugal (1388557366).jpg"
+    ],
+    "name": "Caldas de Monchique",
+    "search": "Caldas de Monchique Portugal spa valley"
+  },
+  "carvoeiro": {
+    "candidates": [
+      "Carvoeiro Portugal February 2015 03.jpg"
+    ],
+    "name": "Carvoeiro",
+    "search": "Carvoeiro Portugal coast village cliffs"
+  },
+  "dona-ana": {
+    "candidates": [
+      "Dona Ana beach, Lagos, Portugal.jpg"
+    ],
+    "name": "Praia Dona Ana",
+    "search": "Praia Dona Ana Lagos Portugal beach"
+  },
+  "faro-altstadt": {
+    "candidates": [
+      "Old Faro.jpg",
+      "Centro-histórico-Faro.jpg"
+    ],
+    "name": "Faro Altstadt",
+    "search": "Faro old town Portugal Vila Adentro"
+  },
+  "ferragudo": {
+    "candidates": [
+      "Ferragudo1.jpg"
+    ],
+    "name": "Ferragudo",
+    "search": "Ferragudo Portugal village fishing"
+  },
+  "foia": {
+    "candidates": [
+      "Alto da Fóia - Portugal (51805385927).jpg",
+      "Foia - Highest Mountain in Algarve - The Algarve, Portugal (1387687955).jpg"
+    ],
+    "name": "Fóia",
+    "search": "Foia Monchique Portugal viewpoint summit"
+  },
+  "fortaleza": {
+    "candidates": [
+      "Fortaleza de Sagres, Algarve, Portugal.jpg",
+      "Fortaleza de Sagres - Portugal (48644608616).jpg"
+    ],
+    "name": "Fortaleza de Sagres",
+    "search": "Fortaleza de Sagres fortress Portugal"
+  },
+  "lagos-altstadt": {
+    "candidates": [
+      "Lagos (Portugal) (15096761953).jpg",
+      "Lagos (40939860814).jpg"
+    ],
+    "name": "Lagos Altstadt",
+    "search": "Lagos Portugal town street"
+  },
+  "loule": {
+    "candidates": [
+      "\"Rua das Lojas\" - Loulé - Portugal (4406307250).jpg"
+    ],
+    "name": "Loulé",
+    "search": "Loule Portugal street"
+  },
+  "mercado-loule": {
+    "candidates": [
+      "Mercado Municipal de Loulé (2019) 09.jpg"
+    ],
+    "name": "Mercado Municipal de Loulé",
+    "search": "Mercado Municipal Loule market building"
+  },
+  "monchique": {
+    "candidates": [
+      "Monchique - 19.09.2019.jpg"
+    ],
+    "name": "Monchique",
+    "search": "Monchique Portugal town Algarve"
+  },
+  "ponta": {
+    "candidates": [
+      "Algarve Ponta da Piedade 1.jpg",
+      "Lagos - Ponta da Piedade.jpg"
+    ],
+    "name": "Ponta da Piedade",
+    "search": "Ponta da Piedade Lagos Portugal cliffs"
+  },
+  "ria-formosa": {
+    "candidates": [
+      "RiaFormosaQtaLagoPortugal.JPG",
+      "Ria Formosa - Portugal (28182956811).jpg"
+    ],
+    "name": "Ria Formosa",
+    "search": "Ria Formosa Portugal lagoon natural park"
+  },
+  "sagres": {
+    "candidates": [
+      "Sagres04.jpg"
+    ],
+    "name": "Sagres",
+    "search": "Sagres Portugal harbour"
+  },
+  "se-faro": {
+    "candidates": [
+      "Faro Igreja da Sé.jpg"
+    ],
+    "name": "Kathedrale von Faro",
+    "search": "Faro Cathedral Sé Portugal"
+  },
+  "silves": {
+    "candidates": [],
+    "name": "Silves",
+    "search": "Silves Portugal Arade river bridge town"
+  },
+  "silves-castle": {
+    "candidates": [
+      "Castelo de Silves - Portugal (51848995450).jpg",
+      "Castelo de Silves - Algarve, Portugal - 11.03.2023.jpg"
+    ],
+    "name": "Castelo de Silves",
+    "search": "Castelo de Silves castle red sandstone Portugal"
+  },
+  "tavira": {
+    "candidates": [
+      "Tavira - Roman Bridge.jpg",
+      "Roman bridge, Tavira, Portugal (14583478126).jpg"
+    ],
+    "name": "Tavira",
+    "search": "Tavira Portugal town bridge Gilao river"
+  }
 }
