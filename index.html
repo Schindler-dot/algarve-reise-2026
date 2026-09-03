@@ -8,13 +8,13 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="vendor/leaflet/leaflet.css">
 <style>
-:root{--bg:#f4f1ea;--card:#fff;--ink:#192126;--muted:#6a7478;--accent:#123f4a;--accent2:#e7f0f0;--line:#dfe5e5;--sand:#efe4ce}
-*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink)}
+:root{--bg:#f4f1ea;--card:#fff;--ink:#192126;--muted:#526066;--accent:#123f4a;--accent2:#e7f0f0;--line:#dfe5e5;--sand:#efe4ce}
+html{overflow-x:hidden}*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}body.modal-open{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 header{position:sticky;top:0;z-index:20;background:rgba(244,241,234,.94);backdrop-filter:blur(12px);padding:calc(13px + env(safe-area-inset-top)) 15px 10px;border-bottom:1px solid var(--line)}
 h1{margin:0;font-size:21px}.sub{font-size:12px;color:var(--muted);margin-top:2px}
 main{padding:12px 12px 100px;max-width:760px;margin:auto}.view{display:none}.view.active{display:block}
 nav{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:9px 9px calc(9px + env(safe-area-inset-bottom));position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:30}
-nav button{border:0;background:transparent;padding:7px 1px;font-size:11px;color:var(--muted);border-radius:10px}nav button.active{background:var(--accent2);color:var(--accent);font-weight:800}
+nav button{border:0;background:transparent;padding:7px 1px;min-height:44px;font-size:11px;color:var(--muted);border-radius:10px}nav button.active{background:var(--accent2);color:var(--accent);font-weight:800}
 .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#123f4a,#326d73);color:#fff;padding:20px;border-radius:20px;margin-bottom:12px;min-height:125px}
 .hero:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-35px;top:-35px;background:rgba(255,255,255,.08)}
 .heroEmoji{font-size:48px;position:absolute;right:20px;bottom:11px}.hero h2{margin:0 0 5px;font-size:25px;max-width:78%}.hero p{margin:0;opacity:.9;font-size:13px;max-width:78%}
@@ -24,14 +24,14 @@ nav button{border:0;background:transparent;padding:7px 1px;font-size:11px;color:
 .sectiontitle{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);font-weight:850;margin:14px 0 6px}
 .item{display:grid;grid-template-columns:34px 78px 1fr;gap:5px;padding:7px 0;border-top:1px solid #edf0f0}.item:first-of-type{border-top:0}.icon{font-size:19px}.time{font-weight:750;font-size:12px}.desc{font-size:14px;line-height:1.38}
 .food{background:#fff8e8;border-radius:12px;padding:10px 12px;line-height:1.42;font-size:14px}.tip{background:#eef7f4;border-radius:12px;padding:9px 11px;margin-top:6px;font-size:13px}
-.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.btn{display:inline-block;text-decoration:none;border:0;border-radius:999px;padding:9px 12px;background:var(--accent);color:#fff;font-size:12px;font-weight:800}.btn.secondary{background:var(--accent2);color:var(--accent)}.btn.sand{background:var(--sand);color:#5e4b2b}
+.actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px;max-width:100%}.btn{display:inline-flex;align-items:center;justify-content:center;text-align:center;text-decoration:none;border:0;border-radius:999px;padding:9px 12px;min-width:44px;min-height:44px;background:var(--accent);color:#fff;font-size:12px;font-weight:800}.btn.secondary{background:var(--accent2);color:var(--accent)}.btn.sand{background:var(--sand);color:#5e4b2b}.btn.is-active{background:var(--accent);color:#fff}.btn.is-disabled,.btn.is-offline,.btn[aria-disabled='true']{opacity:.55;pointer-events:none}
 .search{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:12px;font-size:16px;background:#fff;margin-bottom:10px}
 .small{font-size:12px;color:var(--muted);line-height:1.4}.restaurant{padding:13px 0;border-bottom:1px solid var(--line)}.restaurant:last-child{border-bottom:0}.restaurant b{display:block;font-size:16px}.rkind{font-size:12px;color:var(--accent);font-weight:800;margin:3px 0}
 details summary{cursor:pointer;list-style:none}details summary::-webkit-details-marker{display:none}details[open] .chev{transform:rotate(90deg)}.chev{display:inline-block;transition:.2s}
 .badge{display:inline-block;background:var(--accent2);color:var(--accent);padding:4px 8px;border-radius:999px;font-size:11px;font-weight:800;margin-top:7px}
-.notice{font-size:12px;color:var(--muted);padding:0 4px 10px}
+.notice{font-size:12px;color:var(--muted);padding:0 4px 10px}.offline-banner{display:none;position:sticky;top:0;z-index:25;margin:0 auto;padding:10px 12px;background:#fff4cf;color:#5f4600;border-bottom:1px solid #e2d39d;font-size:12px;font-weight:700}.offline-banner.show{display:block}button:focus-visible,a:focus-visible,select:focus-visible,textarea:focus-visible,input:focus-visible,[tabindex]:focus-visible{outline:3px solid #1a73e8;outline-offset:2px}.daytitle,.route,.drive,.desc,.food,.tip,.desttitle,.destmeta,.schedule-dest-title,.schedule-dest-meta,.visual-dest-title,.visual-dest-desc,.fname,.rname,.foodmeta,.foodwhy,.small,.btn,.chip,.destpill{overflow-wrap:anywhere;word-break:break-word}
 
-.dayphoto{width:100%;height:180px;object-fit:cover;border-radius:14px;margin:12px 0 4px;background:#dfe5e5}.photocredit{font-size:10px;color:var(--muted);margin:0 2px 9px}.photocredit a{color:inherit}.favbtn{border:0;background:#fff3c4;border-radius:999px;padding:8px 11px;font-size:13px;font-weight:800;color:#654f00}.favbtn.on{background:#f5d85d}.notearea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:14px;background:#fff;resize:vertical}.saved{font-size:11px;color:var(--muted);margin-top:4px}.photoHero{background-size:cover;background-position:center}.photoHero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(18,63,74,.92),rgba(18,63,74,.25));}.photoHero>*{position:relative;z-index:1}
+.dayphoto{width:100%;height:180px;object-fit:cover;border-radius:14px;margin:12px 0 4px;background:#dfe5e5}.photocredit{font-size:10px;color:var(--muted);margin:0 2px 9px}.photocredit a{color:inherit}.favbtn{border:0;background:#fff3c4;border-radius:999px;padding:8px 11px;min-width:44px;min-height:44px;font-size:13px;font-weight:800;color:#654f00}.favbtn.on{background:#f5d85d}.notearea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:14px;background:#fff;resize:vertical}.saved{font-size:11px;color:var(--muted);margin-top:4px}.photoHero{background-size:cover;background-position:center}.photoHero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(18,63,74,.92),rgba(18,63,74,.25));}.photoHero>*{position:relative;z-index:1}
 
 nav{grid-template-columns:repeat(6,1fr)}
 nav button{font-size:10px}
@@ -40,10 +40,10 @@ nav button{font-size:10px}
 #destMap{width:100%;height:100%}
 #destMapOffline{display:none;position:absolute;left:8px;right:8px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}
 .leaflet-popup-content{margin:8px 10px}.leaflet-popup-content .destpill{padding:6px 9px}
-.locate-btn{position:absolute;right:8px;bottom:8px;z-index:1000;width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:17px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
+.locate-btn{position:absolute;right:8px;bottom:8px;z-index:1000;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:17px;line-height:1;box-shadow:0 2px 8px rgba(0,0,0,.2);cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0}
 .locate-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .locate-btn:disabled{opacity:.6;cursor:wait}
-.locate-msg{display:none;position:absolute;left:8px;right:54px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}
+.locate-msg{display:none;position:absolute;left:8px;right:60px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}.locate-inline{display:block;flex:1;min-width:0;padding:4px 2px}
 .dist-badge{display:inline-block;font-size:11px;font-weight:800;color:var(--accent);background:var(--accent2);border-radius:999px;padding:2px 8px;margin-top:4px}
 .destcard{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.025);cursor:pointer}
 .destcard img{width:100%;height:118px;object-fit:cover;display:block;background:#dfe5e5}
@@ -56,11 +56,7 @@ nav button{font-size:10px}
 .destlink{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:inherit;font-weight:800}
 .destinline{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
 .destpill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:750;color:var(--accent);cursor:pointer}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;display:none;align-items:flex-end;justify-content:center;padding:0}
-.modal.show{display:flex}.modalbox{width:100%;max-width:760px;max-height:88vh;overflow:auto;background:var(--bg);border-radius:22px 22px 0 0;padding:12px 12px calc(20px + env(safe-area-inset-bottom))}
-.modalhero{width:100%;height:230px;object-fit:cover;border-radius:16px;background:#dfe5e5}
-.modalclose{position:sticky;top:0;float:right;border:0;background:#fff;border-radius:999px;width:38px;height:38px;font-size:20px;z-index:2;box-shadow:0 2px 10px rgba(0,0,0,.15)}
-@media(min-width:620px){.destgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.destcard img{height:145px}.modal{align-items:center;padding:20px}.modalbox{border-radius:22px;max-height:90vh}}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3200;display:none;align-items:flex-end;justify-content:center;padding:0}.modal.show{display:flex}.modalbox{position:relative;width:100%;max-width:760px;max-height:94vh;overflow-y:auto;overflow-x:hidden;background:var(--bg);border-radius:22px 22px 0 0;padding:12px 12px calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modalhero{width:100%;height:230px;object-fit:cover;border-radius:16px;background:#dfe5e5}.modalclose{position:sticky;top:0;right:0;margin-left:auto;display:flex;align-items:center;justify-content:center;border:0;background:#fff;border-radius:999px;min-width:44px;min-height:44px;padding:0;font-size:24px;z-index:3;box-shadow:0 2px 10px rgba(0,0,0,.15)}body.modal-open #destMapWrap,body.modal-open #foodMapWrap,body.modal-open .leaflet-control-container,body.modal-open .locate-btn,body.modal-open #destMapOffline,body.modal-open #foodMapOffline,body.modal-open .locate-msg{pointer-events:none!important}@media(max-width:619px){.modal{align-items:flex-end}.modalbox{width:100%;max-height:94vh;border-radius:22px 22px 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom))}}@media(min-width:620px){.destgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.destcard img{height:145px}.modal{align-items:center;padding:20px}.modalbox{border-radius:22px;max-height:90vh}}
 
 #foodMapWrap{position:relative;height:290px;border-radius:17px;overflow:hidden;margin-bottom:12px;border:1px solid var(--line);background:var(--accent2)}
 #foodMap{width:100%;height:100%}
@@ -72,7 +68,7 @@ nav button{font-size:10px}
 .foodcard .fname{font-size:15px;font-weight:900;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .foodstar{color:#c8930b}
 .foodmeta{font-size:12px;color:var(--muted);margin-top:3px}
-.foodtags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
+#foodModalInfo{white-space:pre-line}.foodtags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px}
 .foodtag{font-size:10px;font-weight:800;background:var(--accent2);color:var(--accent);border-radius:999px;padding:3px 8px}
 .foodprice{font-size:11px;font-weight:800;color:var(--muted);background:#f1efe6;border-radius:999px;padding:3px 8px}
 .foodwhy{font-size:13px;margin-top:8px;line-height:1.4}
@@ -89,16 +85,12 @@ nav button{font-size:10px}
 
 .visual-dests{display:flex;flex-direction:column;gap:14px;margin:10px 0 20px}.visual-dest{display:block;width:100%;padding:0;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;color:inherit;box-shadow:0 3px 12px rgba(0,0,0,.04);cursor:pointer}.visual-dest img{display:block;width:100%;height:160px;object-fit:cover;background:#dfe5e5}.visual-dest-copy{display:block;padding:12px 14px 14px}.visual-dest-title{display:block;font-size:17px;font-weight:900;color:var(--accent)}.visual-dest-desc{display:block;font-size:13px;line-height:1.45;margin-top:5px;color:var(--ink)}.visual-dest-open{display:block;font-size:12px;font-weight:850;color:var(--accent);margin-top:9px}.partlabel{font-size:16px;font-weight:900;color:var(--accent);margin:16px 0 7px;padding-bottom:6px;border-bottom:1px solid var(--line)}@media(min-width:600px){.visual-dest img{height:220px}}
 
-.daypicker-row{display:flex;align-items:center;gap:8px}
-.daypicker-nav{border:1px solid var(--line);background:#fff;border-radius:12px;width:42px;height:42px;flex:none;font-size:19px;font-weight:800;color:var(--accent);cursor:pointer}
-.daypicker-nav:disabled{opacity:.35;cursor:default}
-.daypicker-select{flex:1;min-width:0;padding:10px 10px;border:1px solid var(--line);border-radius:12px;font-size:13px;background:#fff;color:var(--ink);font-weight:750}
-.todayflag{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
-.routecta{display:block;text-align:center;font-size:14px;padding:13px 14px;border-radius:14px}
+.daypicker{overflow:hidden}.daypicker-row{display:flex;align-items:center;gap:8px;min-width:0}.daypicker-nav{border:1px solid var(--line);background:#fff;border-radius:12px;width:44px;height:44px;flex:none;font-size:19px;font-weight:800;color:var(--accent);cursor:pointer}.daypicker-nav:disabled{opacity:.35;cursor:default}.daypicker-select{flex:1;min-width:0;max-width:100%;padding:10px 10px;border:1px solid var(--line);border-radius:12px;font-size:13px;background:#fff;color:var(--ink);font-weight:750}.todayflag{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;flex-wrap:wrap}.routecta{display:flex;text-align:center;font-size:14px;padding:13px 14px;border-radius:14px}.today-actions{align-items:center}.daypicker-row,.destfilter,.pricefilter{overflow-x:auto;scrollbar-width:none}.daypicker-row::-webkit-scrollbar,.destfilter::-webkit-scrollbar,.pricefilter::-webkit-scrollbar{display:none}
 </style>
 </head>
 <body>
 <header><h1>Algarve · Portugal</h1><div class="sub">06.–19. September 2026 · Reise-Cockpit</div></header>
+<div id="offlineBanner" class="offline-banner" role="status" aria-live="polite" hidden>Reiseprogramm und Bilder sind verfügbar. Karten, Routen und Wetter benötigen Internet.</div>
 <main>
 <section id="today" class="view active"></section>
 <section id="days" class="view"><input id="search" class="search" placeholder="Tag, Ort oder Restaurant suchen …"><div class="notice">Fahrzeiten sind Näherungswerte ab Monchique/Quinta und können je nach Route und Verkehr abweichen.</div><div id="daysList"></div></section>
@@ -133,9 +125,9 @@ nav button{font-size:10px}
 <div class="tip">Restaurants 1–2 Tage vorher reservieren und Öffnungszeiten kurz prüfen.</div>
 <div class="tip">19.09.: Mietwagen möglichst schon gegen 13:00–13:30 zurückgeben; 14:30 ist für den 16:00-Abflug sehr knapp.</div>
 </div></section>
-<div id="destModal" class="modal" onclick="if(event.target===this)closeDestination()">
-  <div class="modalbox">
-    <button class="modalclose" onclick="closeDestination()" aria-label="Schließen">×</button>
+<div id="destModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="modalTitle" onclick="if(event.target===this)closeDestination()">
+  <div class="modalbox" tabindex="-1">
+    <button type="button" class="modalclose" onclick="closeDestination()" aria-label="Schließen">×</button>
     <img id="modalImg" class="modalhero" alt="">
     <div id="modalCredit" class="photocredit"></div>
     <div class="card" style="margin-top:8px">
@@ -146,9 +138,9 @@ nav button{font-size:10px}
     </div>
   </div>
 </div>
-<div id="foodModal" class="modal" onclick="if(event.target===this)closeRestaurant()">
-  <div class="modalbox">
-    <button class="modalclose" onclick="closeRestaurant()" aria-label="Schließen">×</button>
+<div id="foodModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="foodModalTitle" onclick="if(event.target===this)closeRestaurant()">
+  <div class="modalbox" tabindex="-1">
+    <button type="button" class="modalclose" onclick="closeRestaurant()" aria-label="Schließen">×</button>
     <div class="card">
       <div id="foodModalTitle" class="daytitle"></div>
       <div id="foodModalArea" class="route"></div>
@@ -165,12 +157,12 @@ nav button{font-size:10px}
 </div>
 </main>
 <nav>
-<button class="active" data-view="today">📍<br>Heute</button>
-<button data-view="days">📅<br>Tage</button>
-<button data-view="destinations">🗺️<br>Ziele</button>
-<button data-view="food">🍴<br>Essen</button>
-<button data-view="bookings">🎫<br>Buchung</button>
-<button data-view="tips">🌦️<br>Wetter</button>
+<button type="button" class="active" data-view="today" aria-label="Tagesplan">📍<br>Tagesplan</button>
+<button type="button" data-view="days" aria-label="Tage">📅<br>Tage</button>
+<button type="button" data-view="destinations" aria-label="Ziele">🗺️<br>Ziele</button>
+<button type="button" data-view="food" aria-label="Essen">🍴<br>Essen</button>
+<button type="button" data-view="bookings" aria-label="Buchung">🎫<br>Buchung</button>
+<button type="button" data-view="tips" aria-label="Wetter">🌦️<br>Wetter</button>
 </nav>
 <script src="vendor/leaflet/leaflet.js"></script>
 <script>
@@ -275,9 +267,10 @@ function updateDistances(){
 }
 function showLocateMsg(which,text){
   const el=document.getElementById(which+'LocateMsg'); if(!el)return;
-  el.textContent=text; el.style.display='flex';
+  el.textContent=text;
+  el.style.display=which==='today'?'block':'flex';
   clearTimeout(el._hideTimer);
-  el._hideTimer=setTimeout(()=>{el.style.display='none';},4500);
+  if(which!=='today')el._hideTimer=setTimeout(()=>{el.style.display='none';},4500);
 }
 function updateUserMarker(which){
   const map=which==='dest'?destMap:foodMap;
@@ -312,12 +305,13 @@ function requestLocation(which){
   if(!('geolocation' in navigator)){showLocateMsg(which,'Standortbestimmung wird von diesem Gerät nicht unterstützt.');return;}
   if(btn)btn.disabled=true;
   navigator.geolocation.getCurrentPosition(pos=>{
-    if(btn){btn.disabled=false;btn.classList.add('active');}
+    if(btn){btn.disabled=false;btn.classList.add('active');btn.classList.add('is-active');btn.setAttribute('aria-pressed','true');}
     userLoc={lat:pos.coords.latitude,lng:pos.coords.longitude,accuracy:pos.coords.accuracy};
     if(destMap)updateUserMarker('dest');
     if(foodMap)updateUserMarker('food');
     fitMapToUser(which);
     updateDistances();
+    showLocateMsg(which,which==='today'?'Standort aktiv – Entfernungen sind eingeblendet.':'Standort aktiv.');
   },err=>{
     if(btn)btn.disabled=false;
     let msg='Standort konnte nicht ermittelt werden.';
@@ -328,6 +322,53 @@ function requestLocation(which){
   },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
 }
 let destMap=null;
+let lastScrollY=0;
+function activeModal(){return document.querySelector('.modal.show');}
+function lockBodyScroll(){if(document.body.classList.contains('modal-open'))return;lastScrollY=window.scrollY||window.pageYOffset||0;document.body.style.top=`-${lastScrollY}px`;document.body.classList.add('modal-open');}
+function unlockBodyScroll(){if(document.body.classList.contains('modal-open')&&activeModal())return;document.body.classList.remove('modal-open');document.body.style.top='';window.scrollTo(0,lastScrollY);}
+function openModal(id){
+  const modal=document.getElementById(id); if(!modal)return;
+  modal._returnFocus=document.activeElement&&typeof document.activeElement.focus==='function'?document.activeElement:null;
+  modal.classList.add('show');
+  modal.setAttribute('aria-hidden','false');
+  lockBodyScroll();
+  syncOnlineState();
+  setTimeout(()=>{const focusEl=modal.querySelector('.modalclose')||modal.querySelector('.modalbox')||modal;if(focusEl&&typeof focusEl.focus==='function')focusEl.focus();},0);
+}
+function closeModal(id){
+  const modal=document.getElementById(id); if(!modal)return;
+  modal.classList.remove('show');
+  modal.setAttribute('aria-hidden','true');
+  unlockBodyScroll();
+  const target=modal._returnFocus;
+  if(target&&target.isConnected&&typeof target.focus==='function')setTimeout(()=>target.focus(),0);
+}
+function syncOnlineState(){
+  const offline=typeof navigator!=='undefined'&&navigator.onLine===false;
+  const banner=document.getElementById('offlineBanner');
+  if(banner){banner.hidden=!offline;banner.classList.toggle('show',offline);}
+  document.querySelectorAll('a[target="_blank"]').forEach(a=>{
+    const current=a.getAttribute('href');
+    if(current&&!a.dataset.href)a.dataset.href=current;
+    const saved=a.dataset.href||current||'';
+    if(!/^https?:/i.test(saved))return;
+    a.dataset.onlineRequired='1';
+    if(offline){
+      if(current)a.removeAttribute('href');
+      if(a.dataset.offlineTitle===undefined)a.dataset.offlineTitle=a.getAttribute('title')||'';
+      a.setAttribute('aria-disabled','true');
+      a.classList.add('is-offline');
+      a.setAttribute('tabindex','-1');
+      a.setAttribute('title','Benötigt Internet');
+    }else{
+      if(!current&&saved)a.setAttribute('href',saved);
+      a.removeAttribute('aria-disabled');
+      a.classList.remove('is-offline');
+      a.removeAttribute('tabindex');
+      a.setAttribute('title',a.dataset.offlineTitle||a.getAttribute('title')||'');
+    }
+  });
+}
 function ensureDestMap(){
   if(destMap||typeof L==='undefined')return;
   const wrap=document.getElementById('destMapWrap'); if(!wrap)return;
@@ -364,10 +405,10 @@ function openDestination(id){
   img.src=STATIC_DEST_IMAGES[d.id]||placeholderData(d.name); img.onerror=()=>{img.onerror=null;img.src=placeholderData('Foto derzeit nicht verfügbar')};
   const mc=document.getElementById('modalCredit');
   if(mc){const c=CREDITS[d.id];if(c){mc.style.display='';mc.textContent=`Foto: ${c.author||'Wikimedia Commons'}${c.license?' · '+c.license:''}`;}else{mc.style.display='none';mc.textContent='';}}
-  document.getElementById('modalActions').innerHTML=`<a class="btn" target="_blank" href="${mapsSearch(d.map)}">In Google Maps</a><a class="btn secondary" target="_blank" href="${mapsDir(d.map)}">Route ab Quinta</a><a class="btn sand" target="_blank" href="${weather(d.area)}">Wetter</a>`;
-  modal.classList.add('show'); document.body.style.overflow='hidden';
+  document.getElementById('modalActions').innerHTML=`${actionLink(mapsSearch(d.map),'In Google Maps')}${actionLink(mapsDir(d.map),'Route starten','btn secondary')}${actionLink(weather(d.area),'Wetter','btn sand')}`;
+  openModal('destModal');
 }
-function closeDestination(){document.getElementById('destModal').classList.remove('show');document.body.style.overflow='';}
+function closeDestination(){closeModal('destModal');}
 function destinationPills(date){
   const ids=DAY_DESTS[date]||[];
   if(!ids.length)return '';
@@ -382,6 +423,7 @@ function renderDestinations(){
  const list=DESTINATIONS.filter(d=>(d.name+' '+d.area+' '+d.cat+' '+d.text).toLowerCase().includes(q));
  document.getElementById('destGrid').innerHTML=list.map(destCardHtml).join('');
  updateDistances();
+ syncOnlineState();
 }
 // Compact destination cards for a given trip day (reuses DESTINATIONS + openDestination modal).
 function dayDestCards(date){
@@ -431,12 +473,14 @@ const FOOD_CAT_LABELS={star:'⭐ Slow-Food-Auswahl',tasca:'Traditionell/Tasca',f
 const FOOD_CAT_ORDER=['star','tasca','fisch','regional','modern','fine'];
 const FOOD_BY_ID=Object.fromEntries(RESTAURANTS.map(r=>[r.id,r]));
 const BOOKINGS=[["✈️ Flüge", "Ryanair H255QZ · FR 727 / FR 728 · Sitze 12A / 12B · je 20 kg Aufgabegepäck"], ["🏨 Faro", "THE MODERNIST · 06.–07.09. · Rua Dom Francisco Gomes 27"], ["🏡 Monchique", "Quinta da Lila – The Baker’s Cottage · 07.–19.09."], ["🚗 Mietwagen", "Auto Rent / AurumCars · Abholung 07.09. 15:00 · Rückgabe gebucht 19.09. 14:30"], ["☎️ Judith", "+351 916 978 072 · ca. 1 Stunde vor Ankunft anrufen"], ["☎️ Mietwagenstation", "+351 2898 18580"]];
-const ORIGIN='Quinta da Lila Monchique Tojal Portugal';
-function mapsDir(dest){return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(ORIGIN)+'&destination='+encodeURIComponent(dest);}
-// Like mapsDir but without a fixed origin, so Google Maps uses the device's current location as the start point.
-function mapsNav(dest){return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(dest);}
-function mapsSearch(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);}
-function weather(place){return 'https://www.google.com/search?q='+encodeURIComponent('Wetter '+place+' Portugal');}
+function escapeHtml(text){return String(text??'').replace(/[&<>"']/g,ch=>({"&":'&amp;',"<":'&lt;',">":'&gt;',"\"":'&quot;',"'":'&#39;'}[ch]));}
+function cleanQuery(text){const value=String(text??'').trim();return value?value:null;}
+function mapsDir(dest){const value=cleanQuery(dest);return value?'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(value):null;}
+function mapsNav(dest){return mapsDir(dest);}
+function mapsSearch(q){const value=cleanQuery(q);return value?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(value):null;}
+function weather(place){const value=cleanQuery(place);return value?'https://www.google.com/search?q='+encodeURIComponent('Wetter '+value+' Portugal'):null;}
+function actionLink(url,label,classes='btn'){return url?`<a class="${classes}" target="_blank" rel="noreferrer" href="${url}">${label}</a>`:`<span class="${classes} is-disabled" aria-disabled="true">${label}</span>`;}
+function plainTextLines(lines){return lines.filter(Boolean).join('\n');}
 function restaurantButtons(ids,showDistance=false){
   if(!ids||!ids.length)return '';
   return `<div class="reclist">${ids.map((id,i)=>{
@@ -453,14 +497,40 @@ function dayCard(d,open=true,includeFood=true){
  const fav=localStorage.getItem('fav-'+d.date)==='1';
  const food=includeFood?`<div class="sectiontitle">Lokalempfehlung</div><div class="food">${d.food}</div>${restaurantButtons(d.restaurants)}`:'';
  return `<details class="card" ${open?'open':''}><summary><div class="dayhead"><div class="datepill">${d.label}</div><div><div class="daytitle">${d.title}</div><div class="route">${d.route}</div><div class="drive">🚗 ${d.drive}</div><div class="badge"><span class="chev">›</span> Details</div></div></div></summary>${photo}
- <div class="actions"><button class="favbtn ${fav?'on':''}" onclick="toggleFav('${d.date}',this)">${fav?'★ Favorit':'☆ Favorit'}</button><a class="btn" target="_blank" href="${mapsDir(d.map_dest)}">Route in Maps</a><a class="btn secondary" target="_blank" href="${mapsSearch(d.map_dest)}">Ziel anzeigen</a><a class="btn sand" target="_blank" href="${weather(d.place)}">Wetter</a></div>
+ <div class="actions"><button class="favbtn ${fav?'on':''}" onclick="toggleFav('${d.date}',this)">${fav?'★ Favorit':'☆ Favorit'}</button>${actionLink(mapsDir(d.map_dest),'Route in Maps')}${actionLink(mapsSearch(d.map_dest),'Ziel anzeigen','btn secondary')}${actionLink(weather(d.place),'Wetter','btn sand')}</div>
  <div class="sectiontitle">Tagesablauf</div>${items}
  ${food}
- ${tips?`<div class="sectiontitle">Tipp</div>${tips}`:''}<div class="sectiontitle">Meine Notiz</div><textarea class="notearea" placeholder="Notiz zu diesem Tag …" oninput="saveNote('${d.date}',this.value)">${localStorage.getItem('note-'+d.date)||''}</textarea><div class="saved">Wird nur auf diesem Gerät gespeichert.</div></details>`;
+ ${tips?`<div class="sectiontitle">Tipp</div>${tips}`:''}<div class="sectiontitle">Meine Notiz</div><textarea class="notearea" placeholder="Notiz zu diesem Tag …" oninput="saveNote('${d.date}',this.value)">${escapeHtml(localStorage.getItem('note-'+d.date)||'')}</textarea><div class="saved">Wird nur auf diesem Gerät gespeichert.</div></details>`;
 }
 function toggleFav(date,btn){const on=localStorage.getItem('fav-'+date)==='1';localStorage.setItem('fav-'+date,on?'0':'1');btn.classList.toggle('on',!on);btn.textContent=!on?'★ Favorit':'☆ Favorit';}
 function saveNote(date,val){localStorage.setItem('note-'+date,val);}
 function localDateKey(){const now=new Date();return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
+function parseItemTime(label,prevMinutes=null){
+  const value=String(label||'').trim();
+  const direct=/^(?:ca\.?\s*)?(?:ab\s*)?(\d{1,2}):(\d{2})(?:\s*[–-]\s*\d{1,2}:\d{2})?$/i.exec(value);
+  if(direct)return parseInt(direct[1],10)*60+parseInt(direct[2],10);
+  if(/vor\s*(\d{1,2}):(\d{2})/i.test(value)){const m=/vor\s*(\d{1,2}):(\d{2})/i.exec(value);return Math.max(0,parseInt(m[1],10)*60+parseInt(m[2],10)-60);}
+  if(/mittag\s*\/\s*nachmittag/i.test(value))return 12*60;
+  if(/vormittag|morgen/i.test(value))return 9*60;
+  if(/nachmittag/i.test(value))return 15*60;
+  if(/mittag/i.test(value))return 12*60;
+  if(/abend/i.test(value))return 19*60;
+  if(/danach/i.test(value)&&prevMinutes!==null)return prevMinutes+30;
+  return null;
+}
+function fallbackRouteTarget(d,ids){
+  const mappedIndexes=Object.keys(ITEM_DESTS[d.date]||{}).map(Number).sort((a,b)=>a-b);
+  for(let i=mappedIndexes.length-1;i>=0;i--){
+    const destIds=(ITEM_DESTS[d.date]||{})[mappedIndexes[i]]||[];
+    const dest=destIds.map(id=>DESTINATIONS.find(x=>x.id===id)).find(Boolean);
+    if(dest&&cleanQuery(dest.map))return {name:dest.name,map:dest.map};
+  }
+  const lastId=ids&&ids.length?ids[ids.length-1]:null;
+  const lastDest=lastId?DESTINATIONS.find(x=>x.id===lastId):null;
+  if(lastDest&&cleanQuery(lastDest.map))return {name:lastDest.name,map:lastDest.map};
+  const map=cleanQuery(d.map_dest);
+  return map?{name:d.place||d.title,map}:null;
+}
 // Switches the visible bottom-nav tab/view (shared by nav buttons and in-dashboard shortcuts).
 function goToView(name){
   const btn=[...document.querySelectorAll('nav button')].find(b=>b.dataset.view===name);
@@ -492,33 +562,41 @@ function shiftDay(delta){selectDay(selectedDayIndex+delta);}
 function jumpToToday(){const idx=DAYS.findIndex(d=>d.date===localDateKey());if(idx!==-1)selectDay(idx);}
 // True only if the real current date falls within the trip period (06.–19.09.2026).
 function isTodayInTrip(){const key=localDateKey();return key>=DAYS[0].date&&key<=DAYS[DAYS.length-1].date;}
-// Picks the primary "Route" target for the selected day: for the real current day it tries the
-// next itinerary stop that hasn't passed yet (using the existing ITEM_DESTS/DAY_DESTS mappings),
-// otherwise it falls back to the day's first curated destination, then to map_dest.
+// Picks the primary "Route" target for the selected day: on the real current day it uses the
+// next not-yet-passed stop (based on ITEM_DESTS/DAY_DESTS + parsed time labels); on other days it
+// uses the first scheduled mapped stop and otherwise falls back to the day's overall map target.
 function nextRouteTarget(d){
-  const ids=DAY_DESTS[d.date];
-  if(ids&&ids.length){
-    if(d.date===localDateKey()){
-      const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
-      for(let i=0;i<d.items.length;i++){
-        const m=/^(\d{1,2}):(\d{2})$/.exec(d.items[i][1]||'');
-        if(!m)continue;
-        if(parseInt(m[1],10)*60+parseInt(m[2],10)<nowMinutes)continue;
-        const destIds=(ITEM_DESTS[d.date]||{})[i];
-        const dest=destIds&&destIds.length?DESTINATIONS.find(x=>x.id===destIds[0]):null;
-        if(dest)return{name:dest.name,map:dest.map};
-      }
+  const ids=DAY_DESTS[d.date]||[];
+  if(d.date===localDateKey()){
+    const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
+    let prevMinutes=null;
+    for(let i=0;i<d.items.length;i++){
+      const minutes=parseItemTime(d.items[i][1],prevMinutes);
+      if(minutes!==null)prevMinutes=minutes;
+      if(minutes===null||minutes<nowMinutes)continue;
+      const destIds=(ITEM_DESTS[d.date]||{})[i]||[];
+      const dest=destIds.map(id=>DESTINATIONS.find(x=>x.id===id)).find(x=>x&&cleanQuery(x.map));
+      if(dest)return{name:dest.name,map:dest.map};
     }
-    const first=DESTINATIONS.find(x=>x.id===ids[0]);
-    if(first)return{name:first.name,map:first.map};
+    return fallbackRouteTarget(d,ids);
   }
-  return{name:d.place,map:d.map_dest};
+  for(let i=0;i<d.items.length;i++){
+    const destIds=(ITEM_DESTS[d.date]||{})[i]||[];
+    const dest=destIds.map(id=>DESTINATIONS.find(x=>x.id===id)).find(x=>x&&cleanQuery(x.map));
+    if(dest)return{name:dest.name,map:dest.map};
+  }
+  if(ids.length){
+    const first=DESTINATIONS.find(x=>x.id===ids[0]);
+    if(first&&cleanQuery(first.map))return{name:first.name,map:first.map};
+  }
+  return fallbackRouteTarget(d,ids);
 }
 function renderToday(){
  const d=DAYS[selectedDayIndex],el=document.getElementById('today');
  const isRealToday=d.date===localDateKey();
  const p=dayPhoto(d.date);
- const target=nextRouteTarget(d);
+ const target=nextRouteTarget(d)||fallbackRouteTarget(d,DAY_DESTS[d.date]||[]);
+ const routeLabel=target&&target.name?`🧭 Route: ${target.name}`:'🧭 Route';
  const options=DAYS.map((x,i)=>`<option value="${i}" ${i===selectedDayIndex?'selected':''}>${x.label} · ${x.title}</option>`).join('');
  el.innerHTML=`<div class="card daypicker">
   <div class="daypicker-row">
@@ -527,9 +605,10 @@ function renderToday(){
    <button type="button" class="daypicker-nav" onclick="shiftDay(1)" ${selectedDayIndex===DAYS.length-1?'disabled':''} aria-label="Nächster Tag">›</button>
   </div>
   <div class="todayflag">${isRealToday?'<span class="badge">📍 Heute</span>':(isTodayInTrip()?`<span class="small">Ausgewählter Reisetag</span><button type="button" class="destpill" onclick="jumpToToday()">Zu heute springen</button>`:'<span class="small">Ausgewählter Reisetag</span>')}</div>
+  <div class="actions today-actions"><button type="button" id="todayLocateBtn" class="btn secondary${userLoc?' is-active':''}" onclick="requestLocation('today')" aria-label="Standort verwenden" ${userLoc?'aria-pressed="true"':''}>📍 Standort verwenden</button><span id="todayLocateMsg" class="small locate-inline" role="status" aria-live="polite">${userLoc?'Entfernungen ab deinem Standort werden angezeigt.':''}</span></div>
  </div>
  <div class="hero ${p?'photoHero':''}" ${p?`style="background-image:url('${p.src}')"`:''}><h2>${d.title}</h2><p>${d.label} · ${d.place}</p><div class="heroEmoji">${d.hero}</div></div>
- <div class="actions"><a class="btn routecta" style="flex:1" target="_blank" href="${mapsNav(target.map)}">🧭 Route: ${target.name}</a></div>
+ <div class="actions">${actionLink(mapsNav(target&&target.map),routeLabel,'btn routecta')}</div>
  <div class="card">
   <div class="sectiontitle">Ziele heute</div>
   ${dayDestCards(d.date)||'<p class="small">Für diesen Tag sind keine festen Einzelziele hinterlegt.</p>'}
@@ -537,7 +616,7 @@ function renderToday(){
  <div class="card">
   <div class="sectiontitle">Wetter</div>
   <p class="small">Kurzcheck für ${d.place} – die vollständige Vorhersage gibt es im Wetter-Tab.</p>
-  <div class="actions"><a class="btn sand" target="_blank" href="${weather(d.place)}">Wetter ${d.place}</a><button type="button" class="btn secondary" onclick="goToView('tips')">Zum Wetter-Tab</button></div>
+  <div class="actions">${actionLink(weather(d.place),`Wetter ${d.place}`,'btn sand')}<button type="button" class="btn secondary" onclick="goToView('tips')">Zum Wetter-Tab</button></div>
  </div>
  <div class="card">
   <div class="sectiontitle">Essen in der Nähe</div>
@@ -545,8 +624,9 @@ function renderToday(){
  </div>
  ${dayCard(d,true,false)}`;
  updateDistances();
+ syncOnlineState();
 }
-function renderDays(filter=''){const q=filter.toLowerCase();document.getElementById('daysList').innerHTML=DAYS.filter(d=>JSON.stringify(d).toLowerCase().includes(q)).map(d=>dayCard(d,false)).join('');}
+function renderDays(filter=''){const q=filter.toLowerCase();document.getElementById('daysList').innerHTML=DAYS.filter(d=>JSON.stringify(d).toLowerCase().includes(q)).map(d=>dayCard(d,false)).join('');syncOnlineState();}
 let foodMap=null;
 let foodMarkersLayer=null;
 function filterRestaurants(){
@@ -613,6 +693,7 @@ function renderFood(){
   }
   updateDistances();
   updateFoodMapMarkers(list);
+  syncOnlineState();
 }
 function openRestaurant(id){
   const r=FOOD_BY_ID[id]; if(!r)return;
@@ -621,20 +702,23 @@ function openRestaurant(id){
   document.getElementById('foodModalTags').innerHTML=r.cats.map(c=>`<span class="foodtag">${FOOD_CAT_LABELS[c]}</span>`).join('')+`<span class="foodprice">${r.price}</span>`;
   document.getElementById('foodModalWhy').textContent=r.why;
   document.getElementById('foodModalDishes').textContent=r.dishes;
-  document.getElementById('foodModalInfo').innerHTML=`${r.phone?`Telefon: ${r.phone}<br>`:'Telefon: nicht verifiziert<br>'}Öffnungstage: ${r.days||'nicht verifiziert – bitte vor Ort/telefonisch prüfen'}`;
-  const site=r.website?`<a class="btn secondary" target="_blank" href="${r.website}">Website</a>`:'';
+  document.getElementById('foodModalInfo').textContent=plainTextLines([r.phone?`Telefon: ${r.phone}`:'Telefon: nicht verifiziert',`Öffnungstage: ${r.days||'nicht verifiziert – bitte vor Ort/telefonisch prüfen'}`]);
+  const site=r.website?actionLink(r.website,'Website','btn secondary'):'';
   const phone=r.phone?`<a class="btn sand" href="tel:${r.phone.replace(/\s/g,'')}">Anrufen</a>`:'';
-  document.getElementById('foodModalActions').innerHTML=`<a class="btn" target="_blank" href="${mapsSearch(r.maps)}">In Google Maps</a>${site}${phone}`;
-  const modal=document.getElementById('foodModal');
-  modal.classList.add('show'); document.body.style.overflow='hidden';
+  document.getElementById('foodModalActions').innerHTML=`${actionLink(mapsSearch(r.maps),'In Google Maps')}${site}${phone}`;
+  openModal('foodModal');
 }
-function closeRestaurant(){document.getElementById('foodModal').classList.remove('show');document.body.style.overflow='';}
-function renderBookings(){document.getElementById('bookingList').innerHTML=BOOKINGS.map(b=>`<div class="card"><b>${b[0]}</b><div class="small" style="margin-top:6px">${b[1]}</div></div>`).join('');}
+function closeRestaurant(){closeModal('foodModal');}
+function renderBookings(){document.getElementById('bookingList').innerHTML=BOOKINGS.map(b=>`<div class="card"><b>${b[0]}</b><div class="small" style="margin-top:6px;white-space:pre-line">${b[1]}</div></div>`).join('');syncOnlineState();}
 document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>goToView(btn.dataset.view));
 document.getElementById('search').addEventListener('input',e=>renderDays(e.target.value));
 document.getElementById('destSearch').addEventListener('input',()=>renderDestinations());
 document.getElementById('foodSearch').addEventListener('input',()=>renderFood());
-renderToday();renderDays();renderDestinations();renderFoodFilters();renderFood();renderBookings();
+document.addEventListener('keydown',e=>{const modal=activeModal();if(modal&&e.key==='Escape'){e.preventDefault();modal.id==='destModal'?closeDestination():closeRestaurant();}});
+document.addEventListener('click',e=>{const disabled=e.target.closest('a[aria-disabled="true"]');if(disabled)e.preventDefault();});
+window.addEventListener('online',syncOnlineState);
+window.addEventListener('offline',syncOnlineState);
+renderToday();renderDays();renderDestinations();renderFoodFilters();renderFood();renderBookings();syncOnlineState();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body></html>
