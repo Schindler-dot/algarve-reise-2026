@@ -56,6 +56,9 @@ nav button{font-size:10px}
 .visitbtn.on{background:var(--accent2);color:var(--accent);border-color:var(--accent2)}
 .dest-marker-visited{filter:grayscale(100%) opacity(.7)}
 .destfilter{display:flex;gap:7px;overflow:auto;padding:0 0 10px;scrollbar-width:none}.destfilter::-webkit-scrollbar{display:none}
+.destprogress{font-size:12px;font-weight:800;color:var(--muted);padding:0 2px 10px}
+.marker-visit-toggle{border:0;background:var(--accent2);color:var(--accent);border-radius:999px;padding:6px 9px;min-width:44px;min-height:44px;font-size:11px;font-weight:800;margin-top:6px;cursor:pointer;display:block;width:100%}
+.marker-visit-toggle.on{background:var(--accent);color:#fff}
 .chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:750;color:var(--muted)}
 .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .destcredit{font-size:9px;color:var(--muted);padding:5px 8px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -105,6 +108,7 @@ nav button{font-size:10px}
 <div id="destMapWrap"><div id="destMap"></div><div id="destMapOffline">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div><div id="destLocateMsg" class="locate-msg"></div><button id="destLocateBtn" type="button" class="locate-btn" title="Meinen Standort anzeigen" aria-label="Meinen Standort anzeigen" onclick="requestLocation('dest')">📍</button></div>
 <input id="destSearch" class="search" placeholder="Ziel suchen …">
 <div id="destFilters" class="destfilter"></div>
+<div id="destProgress" class="destprogress"></div>
 <div id="destGrid" class="destgrid"></div>
 <div class="notice" style="margin-top:10px">Alle Fotos sind lokal in der App enthalten (Quelle: Wikimedia Commons) und stehen dadurch zuverlässig auch offline zur Verfügung.</div>
 </section>
@@ -337,6 +341,10 @@ function visitBtnHtml(d){
   const v=isVisited(d.id);
   return `<button type="button" class="visitbtn ${v?'on':''}" aria-pressed="${v}" aria-label="${escapeHtml(visitAriaLabel(d.name,v))}" onclick="event.stopPropagation();toggleVisited('${d.id}')">${v?'✓ Besucht':'○ Noch nicht besucht'}</button>`;
 }
+function markerPopupHtml(d){
+  const v=isVisited(d.id);
+  return `<button class="destpill" onclick="openDestination('${d.id}')">📍 ${d.name}</button><button type="button" class="marker-visit-toggle ${v?'on':''}" aria-pressed="${v}" aria-label="${escapeHtml(visitAriaLabel(d.name,v))}" onclick="event.stopPropagation();toggleVisited('${d.id}')">${v?'✓ Besucht':'○ Noch nicht besucht'}</button>`;
+}
 function toggleVisited(id){
   const v=!isVisited(id);
   localStorage.setItem('visited-dest-'+id,v?'1':'0');
@@ -345,14 +353,20 @@ function toggleVisited(id){
 function refreshVisitedUI(id){
   const d=DESTINATIONS.find(x=>x.id===id); if(!d)return;
   const v=isVisited(id);
-  document.querySelectorAll(`.destcard[data-id="${id}"]`).forEach(card=>{
-    card.classList.toggle('visited',v);
-    const btn=card.querySelector('.visitbtn');
-    if(btn){btn.classList.toggle('on',v);btn.setAttribute('aria-pressed',String(v));btn.setAttribute('aria-label',visitAriaLabel(d.name,v));btn.textContent=v?'✓ Besucht':'○ Noch nicht besucht';}
-    let badge=card.querySelector('.destvisitedbadge');
-    if(v&&!badge){badge=document.createElement('div');badge.className='destvisitedbadge';badge.textContent='✓ Besucht';card.insertBefore(badge,card.firstChild);}
-    else if(!v&&badge){badge.remove();}
-  });
+  if(destVisitedFilter!=='Alle'){
+    renderDestinations();
+  }else{
+    document.querySelectorAll(`.destcard[data-id="${id}"]`).forEach(card=>{
+      card.classList.toggle('visited',v);
+      const btn=card.querySelector('.visitbtn');
+      if(btn){btn.classList.toggle('on',v);btn.setAttribute('aria-pressed',String(v));btn.setAttribute('aria-label',visitAriaLabel(d.name,v));btn.textContent=v?'✓ Besucht':'○ Noch nicht besucht';}
+      let badge=card.querySelector('.destvisitedbadge');
+      if(v&&!badge){badge=document.createElement('div');badge.className='destvisitedbadge';badge.textContent='✓ Besucht';card.insertBefore(badge,card.firstChild);}
+      else if(!v&&badge){badge.remove();}
+    });
+    renderDestProgress();
+  }
+  renderDestFilters();
   const modal=document.getElementById('destModal');
   if(modal&&modal.dataset.destId===id){
     const mbtn=document.getElementById('modalVisitBtn');
@@ -360,7 +374,10 @@ function refreshVisitedUI(id){
     const mbadge=document.getElementById('modalVisitedBadge');
     if(mbadge)mbadge.style.display=v?'':'none';
   }
-  if(destMarkers[id])destMarkers[id].setIcon(destIcon(v));
+  if(destMarkers[id]){
+    destMarkers[id].setIcon(destIcon(v));
+    if(destMarkers[id].getPopup())destMarkers[id].setPopupContent(markerPopupHtml(d));
+  }
 }
 let lastScrollY=0;
 function activeModal(){return document.querySelector('.modal.show');}
@@ -420,7 +437,7 @@ function ensureDestMap(){
     if(typeof d.lat!=='number'||typeof d.lng!=='number')return;
     pts.push([d.lat,d.lng]);
     const marker=L.marker([d.lat,d.lng],{icon:destIcon(isVisited(d.id))}).addTo(destMap)
-      .bindPopup(`<button class="destpill" onclick="openDestination('${d.id}')">📍 ${d.name}</button>`);
+      .bindPopup(markerPopupHtml(d));
     destMarkers[d.id]=marker;
   });
   if(pts.length)destMap.fitBounds(pts,{padding:[24,24]});
@@ -458,14 +475,29 @@ function destinationPills(date){
   return `<div class="sectiontitle">Ziele antippen</div><div class="destinline">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);return d?`<button class="destpill" onclick="openDestination('${id}')">📍 ${d.name}</button>`:''}).join('')}</div>`;
 }
 let destCategory='Alle';
+let destVisitedFilter='Alle';
+const DEST_VISITED_FILTERS=['Alle','Offen','Besucht'];
+function setDestVisitedFilter(f){destVisitedFilter=f;renderDestFilters();renderDestinations();}
+function renderDestFilters(){
+  const el=document.getElementById('destFilters'); if(!el)return;
+  el.innerHTML=DEST_VISITED_FILTERS.map(f=>`<button class="chip ${destVisitedFilter===f?'active':''}" aria-pressed="${destVisitedFilter===f}" onclick="setDestVisitedFilter('${f}')">${f}</button>`).join('');
+}
+function visitedDestCount(){return DESTINATIONS.filter(d=>isVisited(d.id)).length;}
+function renderDestProgress(){
+  const el=document.getElementById('destProgress'); if(!el)return;
+  el.textContent=`${visitedDestCount()} von ${DESTINATIONS.length} Zielen besucht`;
+}
 function destCardHtml(d){
  const v=isVisited(d.id);
  return `<article class="destcard ${v?'visited':''}" data-id="${d.id}" onclick="openDestination('${d.id}')">${v?'<div class="destvisitedbadge">✓ Besucht</div>':''}<img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div><div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div>${visitBtnHtml(d)}</div></article>`;
 }
 function renderDestinations(){
  const q=(document.getElementById('destSearch').value||'').toLowerCase();
- const list=DESTINATIONS.filter(d=>(d.name+' '+d.area+' '+d.cat+' '+d.text).toLowerCase().includes(q));
+ let list=DESTINATIONS.filter(d=>(d.name+' '+d.area+' '+d.cat+' '+d.text).toLowerCase().includes(q));
+ if(destVisitedFilter==='Besucht')list=list.filter(d=>isVisited(d.id));
+ else if(destVisitedFilter==='Offen')list=list.filter(d=>!isVisited(d.id));
  document.getElementById('destGrid').innerHTML=list.map(destCardHtml).join('');
+ renderDestProgress();
  updateDistances();
  syncOnlineState();
 }
@@ -762,7 +794,7 @@ document.addEventListener('keydown',e=>{const modal=activeModal();if(modal&&e.ke
 document.addEventListener('click',e=>{const disabled=e.target.closest('a[aria-disabled="true"]');if(disabled)e.preventDefault();});
 window.addEventListener('online',syncOnlineState);
 window.addEventListener('offline',syncOnlineState);
-renderToday();renderDays();renderDestinations();renderFoodFilters();renderFood();renderBookings();syncOnlineState();
+renderToday();renderDays();renderDestFilters();renderDestinations();renderFoodFilters();renderFood();renderBookings();syncOnlineState();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body></html>
