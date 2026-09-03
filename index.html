@@ -447,20 +447,37 @@ function renderToday(){
 }
 function renderDays(filter=''){const q=filter.toLowerCase();document.getElementById('daysList').innerHTML=DAYS.filter(d=>JSON.stringify(d).toLowerCase().includes(q)).map(d=>dayCard(d,false)).join('');}
 let foodMap=null;
+let foodMarkersLayer=null;
+function filterRestaurants(){
+  const q=(document.getElementById('foodSearch').value||'').toLowerCase();
+  return RESTAURANTS.filter(r=>{
+    if(foodCat!=='Alle'){if(foodCat==='star'){if(!r.star)return false;}else if(!r.cats.includes(foodCat))return false;}
+    if(foodPrice!=='Alle'&&r.price!==foodPrice)return false;
+    const hay=(r.name+' '+r.place+' '+r.area+' '+r.why+' '+r.dishes).toLowerCase();
+    return hay.includes(q);
+  });
+}
+function updateFoodMapMarkers(list){
+  if(!foodMap)return;
+  if(!foodMarkersLayer)foodMarkersLayer=L.layerGroup().addTo(foodMap);
+  foodMarkersLayer.clearLayers();
+  const pts=[];
+  list.forEach(r=>{
+    if(typeof r.lat!=='number'||typeof r.lng!=='number')return;
+    pts.push([r.lat,r.lng]);
+    L.marker([r.lat,r.lng]).addTo(foodMarkersLayer)
+      .bindPopup(`<button class="destpill" onclick="openRestaurant('${r.id}')">${r.star?'⭐ ':''}🍴 ${r.name}</button>`);
+  });
+  if(pts.length>1)foodMap.fitBounds(pts,{padding:[24,24]});
+  else if(pts.length===1)foodMap.setView(pts[0],15);
+}
 function ensureFoodMap(){
   if(foodMap||typeof L==='undefined')return;
   const wrap=document.getElementById('foodMapWrap'); if(!wrap)return;
   foodMap=L.map('foodMap',{scrollWheelZoom:false});
   const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap-Mitwirkende'});
   tiles.addTo(foodMap);
-  const pts=[];
-  RESTAURANTS.forEach(r=>{
-    if(typeof r.lat!=='number'||typeof r.lng!=='number')return;
-    pts.push([r.lat,r.lng]);
-    L.marker([r.lat,r.lng]).addTo(foodMap)
-      .bindPopup(`<button class="destpill" onclick="openRestaurant('${r.id}')">${r.star?'⭐ ':''}🍴 ${r.name}</button>`);
-  });
-  if(pts.length)foodMap.fitBounds(pts,{padding:[24,24]});
+  updateFoodMapMarkers(filterRestaurants());
   const offlineNotice=document.getElementById('foodMapOffline');
   const showOffline=()=>{if(offlineNotice)offlineNotice.style.display='flex';};
   const hideOffline=()=>{if(offlineNotice)offlineNotice.style.display='none';};
@@ -482,22 +499,19 @@ function renderFoodFilters(){
 function setFoodCat(c){foodCat=c;renderFoodFilters();renderFood();}
 function setFoodPrice(p){foodPrice=p;renderFoodFilters();renderFood();}
 function renderFood(){
-  const q=(document.getElementById('foodSearch').value||'').toLowerCase();
-  const list=RESTAURANTS.filter(r=>{
-    if(foodCat!=='Alle'){if(foodCat==='star'){if(!r.star)return false;}else if(!r.cats.includes(foodCat))return false;}
-    if(foodPrice!=='Alle'&&r.price!==foodPrice)return false;
-    const hay=(r.name+' '+r.place+' '+r.area+' '+r.why+' '+r.dishes).toLowerCase();
-    return hay.includes(q);
-  });
+  const list=filterRestaurants();
   const el=document.getElementById('foodList');
-  if(!list.length){el.innerHTML='<div class="foodempty">Keine Restaurants gefunden – Filter oder Suche anpassen.</div>';return;}
-  el.innerHTML=list.map(r=>`<button class="foodcard" onclick="openRestaurant('${r.id}')">
-    <div class="fname">${r.star?'<span class="foodstar">⭐</span>':''}${r.name}<span class="foodprice">${r.price}</span></div>
-    <div class="foodmeta">${r.place} <span class="dist-badge" data-kind="food" data-id="${r.id}" style="display:none"></span></div>
-    <div class="foodtags">${r.cats.map(c=>`<span class="foodtag">${FOOD_CAT_LABELS[c]}</span>`).join('')}</div>
-    <div class="foodwhy">${r.why}</div>
-  </button>`).join('');
+  if(!list.length){el.innerHTML='<div class="foodempty">Keine Restaurants gefunden – Filter oder Suche anpassen.</div>';}
+  else{
+    el.innerHTML=list.map(r=>`<button class="foodcard" onclick="openRestaurant('${r.id}')">
+      <div class="fname">${r.star?'<span class="foodstar">⭐</span>':''}${r.name}<span class="foodprice">${r.price}</span></div>
+      <div class="foodmeta">${r.place} <span class="dist-badge" data-kind="food" data-id="${r.id}" style="display:none"></span></div>
+      <div class="foodtags">${r.cats.map(c=>`<span class="foodtag">${FOOD_CAT_LABELS[c]}</span>`).join('')}</div>
+      <div class="foodwhy">${r.why}</div>
+    </button>`).join('');
+  }
   updateDistances();
+  updateFoodMapMarkers(list);
 }
 function openRestaurant(id){
   const r=FOOD_BY_ID[id]; if(!r)return;
