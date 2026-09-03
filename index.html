@@ -433,6 +433,8 @@ const FOOD_BY_ID=Object.fromEntries(RESTAURANTS.map(r=>[r.id,r]));
 const BOOKINGS=[["✈️ Flüge", "Ryanair H255QZ · FR 727 / FR 728 · Sitze 12A / 12B · je 20 kg Aufgabegepäck"], ["🏨 Faro", "THE MODERNIST · 06.–07.09. · Rua Dom Francisco Gomes 27"], ["🏡 Monchique", "Quinta da Lila – The Baker’s Cottage · 07.–19.09."], ["🚗 Mietwagen", "Auto Rent / AurumCars · Abholung 07.09. 15:00 · Rückgabe gebucht 19.09. 14:30"], ["☎️ Judith", "+351 916 978 072 · ca. 1 Stunde vor Ankunft anrufen"], ["☎️ Mietwagenstation", "+351 2898 18580"]];
 const ORIGIN='Quinta da Lila Monchique Tojal Portugal';
 function mapsDir(dest){return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(ORIGIN)+'&destination='+encodeURIComponent(dest);}
+// Like mapsDir but without a fixed origin, so Google Maps uses the device's current location as the start point.
+function mapsNav(dest){return 'https://www.google.com/maps/dir/?api=1&destination='+encodeURIComponent(dest);}
 function mapsSearch(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);}
 function weather(place){return 'https://www.google.com/search?q='+encodeURIComponent('Wetter '+place+' Portugal');}
 function restaurantButtons(ids,showDistance=false){
@@ -488,6 +490,8 @@ function selectDay(idx){
 }
 function shiftDay(delta){selectDay(selectedDayIndex+delta);}
 function jumpToToday(){const idx=DAYS.findIndex(d=>d.date===localDateKey());if(idx!==-1)selectDay(idx);}
+// True only if the real current date falls within the trip period (06.–19.09.2026).
+function isTodayInTrip(){const key=localDateKey();return key>=DAYS[0].date&&key<=DAYS[DAYS.length-1].date;}
 // Picks the primary "Route" target for the selected day: for the real current day it tries the
 // next itinerary stop that hasn't passed yet (using the existing ITEM_DESTS/DAY_DESTS mappings),
 // otherwise it falls back to the day's first curated destination, then to map_dest.
@@ -522,10 +526,10 @@ function renderToday(){
    <select class="daypicker-select" onchange="selectDay(this.value)" aria-label="Reisetag wählen">${options}</select>
    <button type="button" class="daypicker-nav" onclick="shiftDay(1)" ${selectedDayIndex===DAYS.length-1?'disabled':''} aria-label="Nächster Tag">›</button>
   </div>
-  <div class="todayflag">${isRealToday?'<span class="badge">📍 Heute</span>':`<span class="small">Ausgewählter Reisetag</span><button type="button" class="destpill" onclick="jumpToToday()">Zu heute springen</button>`}</div>
+  <div class="todayflag">${isRealToday?'<span class="badge">📍 Heute</span>':(isTodayInTrip()?`<span class="small">Ausgewählter Reisetag</span><button type="button" class="destpill" onclick="jumpToToday()">Zu heute springen</button>`:'<span class="small">Ausgewählter Reisetag</span>')}</div>
  </div>
  <div class="hero ${p?'photoHero':''}" ${p?`style="background-image:url('${p.src}')"`:''}><h2>${d.title}</h2><p>${d.label} · ${d.place}</p><div class="heroEmoji">${d.hero}</div></div>
- <div class="actions"><a class="btn routecta" style="flex:1" target="_blank" href="${mapsDir(target.map)}">🧭 Route: ${target.name}</a></div>
+ <div class="actions"><a class="btn routecta" style="flex:1" target="_blank" href="${mapsNav(target.map)}">🧭 Route: ${target.name}</a></div>
  <div class="card">
   <div class="sectiontitle">Ziele heute</div>
   ${dayDestCards(d.date)||'<p class="small">Für diesen Tag sind keine festen Einzelziele hinterlegt.</p>'}
