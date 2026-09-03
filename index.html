@@ -45,11 +45,20 @@ nav button{font-size:10px}
 .locate-btn:disabled{opacity:.6;cursor:wait}
 .locate-msg{display:none;position:absolute;left:8px;right:60px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}.locate-inline{display:block;flex:1;min-width:0;padding:4px 2px}
 .dist-badge{display:inline-block;font-size:11px;font-weight:800;color:var(--accent);background:var(--accent2);border-radius:999px;padding:2px 8px;margin-top:4px}
-.destcard{background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.025);cursor:pointer}
+.destcard{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.025);cursor:pointer}
 .destcard img{width:100%;height:118px;object-fit:cover;display:block;background:#dfe5e5}
+.destcard.visited{background:#f2f1ec;box-shadow:none}
+.destcard.visited img{opacity:.55;filter:grayscale(70%)}
 .destbody{padding:10px}.desttitle{font-size:14px;font-weight:850;line-height:1.2}.destmeta{font-size:11px;color:var(--muted);margin-top:4px}
 .destactions{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.destactions .btn{padding:7px 9px;font-size:11px}
+.destvisitedbadge{position:absolute;top:8px;left:8px;z-index:1;display:flex;align-items:center;gap:3px;background:rgba(18,63,74,.88);color:#fff;font-size:10px;font-weight:850;padding:4px 8px;border-radius:999px}
+.visitbtn{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 9px;min-width:44px;min-height:44px;font-size:11px;font-weight:800;color:var(--muted);margin-top:8px}
+.visitbtn.on{background:var(--accent2);color:var(--accent);border-color:var(--accent2)}
+.dest-marker-visited{filter:grayscale(100%) opacity(.7)}
 .destfilter{display:flex;gap:7px;overflow:auto;padding:0 0 10px;scrollbar-width:none}.destfilter::-webkit-scrollbar{display:none}
+.destprogress{font-size:12px;font-weight:800;color:var(--muted);padding:0 2px 10px}
+.marker-visit-toggle{border:0;background:var(--accent2);color:var(--accent);border-radius:999px;padding:6px 9px;min-width:44px;min-height:44px;font-size:11px;font-weight:800;margin-top:6px;cursor:pointer;display:block;width:100%}
+.marker-visit-toggle.on{background:var(--accent);color:#fff}
 .chip{white-space:nowrap;border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 11px;font-size:12px;font-weight:750;color:var(--muted)}
 .chip.active{background:var(--accent);color:#fff;border-color:var(--accent)}
 .destcredit{font-size:9px;color:var(--muted);padding:5px 8px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -99,6 +108,7 @@ nav button{font-size:10px}
 <div id="destMapWrap"><div id="destMap"></div><div id="destMapOffline">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div><div id="destLocateMsg" class="locate-msg"></div><button id="destLocateBtn" type="button" class="locate-btn" title="Meinen Standort anzeigen" aria-label="Meinen Standort anzeigen" onclick="requestLocation('dest')">📍</button></div>
 <input id="destSearch" class="search" placeholder="Ziel suchen …">
 <div id="destFilters" class="destfilter"></div>
+<div id="destProgress" class="destprogress"></div>
 <div id="destGrid" class="destgrid"></div>
 <div class="notice" style="margin-top:10px">Alle Fotos sind lokal in der App enthalten (Quelle: Wikimedia Commons) und stehen dadurch zuverlässig auch offline zur Verfügung.</div>
 </section>
@@ -133,6 +143,7 @@ nav button{font-size:10px}
     <div class="card" style="margin-top:8px">
       <div id="modalTitle" class="daytitle"></div>
       <div id="modalArea" class="route"></div>
+      <span id="modalVisitedBadge" class="badge" style="display:none">✓ Besucht</span>
       <p id="modalText" class="small" style="font-size:14px;color:var(--ink)"></p>
       <div id="modalActions" class="actions"></div>
     </div>
@@ -322,6 +333,52 @@ function requestLocation(which){
   },{enableHighAccuracy:true,timeout:10000,maximumAge:0});
 }
 let destMap=null;
+const destMarkers={};
+function isVisited(id){return localStorage.getItem('visited-dest-'+id)==='1';}
+function destIcon(visited){return new L.Icon.Default({className:visited?'dest-marker-visited':''});}
+function visitAriaLabel(name,visited){return visited?`${name} als nicht besucht markieren`:`${name} als besucht markieren`;}
+function visitBtnHtml(d){
+  const v=isVisited(d.id);
+  return `<button type="button" class="visitbtn ${v?'on':''}" aria-pressed="${v}" aria-label="${escapeHtml(visitAriaLabel(d.name,v))}" onclick="event.stopPropagation();toggleVisited('${d.id}')">${v?'✓ Besucht':'○ Noch nicht besucht'}</button>`;
+}
+function markerPopupHtml(d){
+  const v=isVisited(d.id);
+  return `<button class="destpill" onclick="openDestination('${d.id}')">📍 ${d.name}</button><button type="button" class="marker-visit-toggle ${v?'on':''}" aria-pressed="${v}" aria-label="${escapeHtml(visitAriaLabel(d.name,v))}" onclick="event.stopPropagation();toggleVisited('${d.id}')">${v?'✓ Besucht':'○ Noch nicht besucht'}</button>`;
+}
+function toggleVisited(id){
+  const v=!isVisited(id);
+  localStorage.setItem('visited-dest-'+id,v?'1':'0');
+  refreshVisitedUI(id);
+}
+function refreshVisitedUI(id){
+  const d=DESTINATIONS.find(x=>x.id===id); if(!d)return;
+  const v=isVisited(id);
+  if(destVisitedFilter!=='Alle'){
+    renderDestinations();
+  }else{
+    document.querySelectorAll(`.destcard[data-id="${id}"]`).forEach(card=>{
+      card.classList.toggle('visited',v);
+      const btn=card.querySelector('.visitbtn');
+      if(btn){btn.classList.toggle('on',v);btn.setAttribute('aria-pressed',String(v));btn.setAttribute('aria-label',visitAriaLabel(d.name,v));btn.textContent=v?'✓ Besucht':'○ Noch nicht besucht';}
+      let badge=card.querySelector('.destvisitedbadge');
+      if(v&&!badge){badge=document.createElement('div');badge.className='destvisitedbadge';badge.textContent='✓ Besucht';card.insertBefore(badge,card.firstChild);}
+      else if(!v&&badge){badge.remove();}
+    });
+    renderDestProgress();
+  }
+  renderDestFilters();
+  const modal=document.getElementById('destModal');
+  if(modal&&modal.dataset.destId===id){
+    const mbtn=document.getElementById('modalVisitBtn');
+    if(mbtn){mbtn.classList.toggle('is-active',v);mbtn.setAttribute('aria-pressed',String(v));mbtn.setAttribute('aria-label',visitAriaLabel(d.name,v));mbtn.textContent=v?'✓ Besucht':'○ Noch nicht besucht';}
+    const mbadge=document.getElementById('modalVisitedBadge');
+    if(mbadge)mbadge.style.display=v?'':'none';
+  }
+  if(destMarkers[id]){
+    destMarkers[id].setIcon(destIcon(v));
+    if(destMarkers[id].getPopup())destMarkers[id].setPopupContent(markerPopupHtml(d));
+  }
+}
 let lastScrollY=0;
 function activeModal(){return document.querySelector('.modal.show');}
 function lockBodyScroll(){if(document.body.classList.contains('modal-open'))return;lastScrollY=window.scrollY||window.pageYOffset||0;document.body.style.top=`-${lastScrollY}px`;document.body.classList.add('modal-open');}
@@ -379,8 +436,9 @@ function ensureDestMap(){
   DESTINATIONS.forEach(d=>{
     if(typeof d.lat!=='number'||typeof d.lng!=='number')return;
     pts.push([d.lat,d.lng]);
-    L.marker([d.lat,d.lng]).addTo(destMap)
-      .bindPopup(`<button class="destpill" onclick="openDestination('${d.id}')">📍 ${d.name}</button>`);
+    const marker=L.marker([d.lat,d.lng],{icon:destIcon(isVisited(d.id))}).addTo(destMap)
+      .bindPopup(markerPopupHtml(d));
+    destMarkers[d.id]=marker;
   });
   if(pts.length)destMap.fitBounds(pts,{padding:[24,24]});
   const offlineNotice=document.getElementById('destMapOffline');
@@ -405,7 +463,9 @@ function openDestination(id){
   img.src=STATIC_DEST_IMAGES[d.id]||placeholderData(d.name); img.onerror=()=>{img.onerror=null;img.src=placeholderData('Foto derzeit nicht verfügbar')};
   const mc=document.getElementById('modalCredit');
   if(mc){const c=CREDITS[d.id];if(c){mc.style.display='';mc.textContent=`Foto: ${c.author||'Wikimedia Commons'}${c.license?' · '+c.license:''}`;}else{mc.style.display='none';mc.textContent='';}}
-  document.getElementById('modalActions').innerHTML=`${actionLink(mapsSearch(d.map),'In Google Maps')}${actionLink(mapsDir(d.map),'Route starten','btn secondary')}${actionLink(weather(d.area),'Wetter','btn sand')}`;
+  const v=isVisited(d.id);
+  const mbadge=document.getElementById('modalVisitedBadge'); if(mbadge)mbadge.style.display=v?'':'none';
+  document.getElementById('modalActions').innerHTML=`<button type="button" id="modalVisitBtn" class="btn secondary ${v?'is-active':''}" aria-pressed="${v}" aria-label="${escapeHtml(visitAriaLabel(d.name,v))}" onclick="toggleVisited('${d.id}')">${v?'✓ Besucht':'○ Noch nicht besucht'}</button>${actionLink(mapsSearch(d.map),'In Google Maps')}${actionLink(mapsDir(d.map),'Route starten','btn secondary')}${actionLink(weather(d.area),'Wetter','btn sand')}`;
   openModal('destModal');
 }
 function closeDestination(){closeModal('destModal');}
@@ -415,13 +475,29 @@ function destinationPills(date){
   return `<div class="sectiontitle">Ziele antippen</div><div class="destinline">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);return d?`<button class="destpill" onclick="openDestination('${id}')">📍 ${d.name}</button>`:''}).join('')}</div>`;
 }
 let destCategory='Alle';
+let destVisitedFilter='Alle';
+const DEST_VISITED_FILTERS=['Alle','Offen','Besucht'];
+function setDestVisitedFilter(f){destVisitedFilter=f;renderDestFilters();renderDestinations();}
+function renderDestFilters(){
+  const el=document.getElementById('destFilters'); if(!el)return;
+  el.innerHTML=DEST_VISITED_FILTERS.map(f=>`<button class="chip ${destVisitedFilter===f?'active':''}" aria-pressed="${destVisitedFilter===f}" onclick="setDestVisitedFilter('${f}')">${f}</button>`).join('');
+}
+function visitedDestCount(){return DESTINATIONS.filter(d=>isVisited(d.id)).length;}
+function renderDestProgress(){
+  const el=document.getElementById('destProgress'); if(!el)return;
+  el.textContent=`${visitedDestCount()} von ${DESTINATIONS.length} Zielen besucht`;
+}
 function destCardHtml(d){
- return `<article class="destcard" onclick="openDestination('${d.id}')"><img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div><div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div></div></article>`;
+ const v=isVisited(d.id);
+ return `<article class="destcard ${v?'visited':''}" data-id="${d.id}" onclick="openDestination('${d.id}')">${v?'<div class="destvisitedbadge">✓ Besucht</div>':''}<img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div><div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div>${visitBtnHtml(d)}</div></article>`;
 }
 function renderDestinations(){
  const q=(document.getElementById('destSearch').value||'').toLowerCase();
- const list=DESTINATIONS.filter(d=>(d.name+' '+d.area+' '+d.cat+' '+d.text).toLowerCase().includes(q));
+ let list=DESTINATIONS.filter(d=>(d.name+' '+d.area+' '+d.cat+' '+d.text).toLowerCase().includes(q));
+ if(destVisitedFilter==='Besucht')list=list.filter(d=>isVisited(d.id));
+ else if(destVisitedFilter==='Offen')list=list.filter(d=>!isVisited(d.id));
  document.getElementById('destGrid').innerHTML=list.map(destCardHtml).join('');
+ renderDestProgress();
  updateDistances();
  syncOnlineState();
 }
@@ -718,7 +794,7 @@ document.addEventListener('keydown',e=>{const modal=activeModal();if(modal&&e.ke
 document.addEventListener('click',e=>{const disabled=e.target.closest('a[aria-disabled="true"]');if(disabled)e.preventDefault();});
 window.addEventListener('online',syncOnlineState);
 window.addEventListener('offline',syncOnlineState);
-renderToday();renderDays();renderDestinations();renderFoodFilters();renderFood();renderBookings();syncOnlineState();
+renderToday();renderDays();renderDestFilters();renderDestinations();renderFoodFilters();renderFood();renderBookings();syncOnlineState();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body></html>

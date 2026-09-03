@@ -129,7 +129,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
   };
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -241,4 +241,75 @@ test('destination and restaurant modals exist and open/close hooks are wired',()
   assert.equal(document.getElementById('foodModal').getAttribute('aria-hidden'),'false');
   app.closeRestaurant();
   assert.equal(document.getElementById('foodModal').classList.contains('show'),false);
+});
+
+test('visited toggle persists per destination and updates the progress counter',()=>{
+  const {app,storage}=buildSandbox();
+  const id=app.DESTINATIONS[0].id;
+  assert.equal(app.isVisited(id),false);
+  assert.equal(app.visitedDestCount(),0);
+  app.toggleVisited(id);
+  assert.equal(storage.getItem('visited-dest-'+id),'1');
+  assert.equal(app.isVisited(id),true);
+  assert.equal(app.visitedDestCount(),1);
+  app.toggleVisited(id);
+  assert.equal(storage.getItem('visited-dest-'+id),'0');
+  assert.equal(app.isVisited(id),false);
+  assert.equal(app.visitedDestCount(),0);
+});
+
+test('destination progress indicator reports "x von N Zielen besucht"',()=>{
+  const {app,document}=buildSandbox();
+  app.renderDestinations();
+  assert.equal(document.getElementById('destProgress').textContent,`0 von ${app.DESTINATIONS.length} Zielen besucht`);
+  app.toggleVisited(app.DESTINATIONS[0].id);
+  app.toggleVisited(app.DESTINATIONS[1].id);
+  app.renderDestinations();
+  assert.equal(document.getElementById('destProgress').textContent,`2 von ${app.DESTINATIONS.length} Zielen besucht`);
+});
+
+test('Alle/Offen/Besucht filter chips render and filter the destination grid',()=>{
+  const {app,document}=buildSandbox();
+  app.renderDestFilters();
+  const filterHtml=document.getElementById('destFilters').innerHTML;
+  assert.match(filterHtml,/Alle/);
+  assert.match(filterHtml,/Offen/);
+  assert.match(filterHtml,/Besucht/);
+
+  const visitedId=app.DESTINATIONS[0].id;
+  const openId=app.DESTINATIONS[1].id;
+  app.toggleVisited(visitedId);
+
+  app.setDestVisitedFilter('Besucht');
+  assert.equal(app.destVisitedFilter(),'Besucht');
+  app.renderDestinations();
+  let gridHtml=document.getElementById('destGrid').innerHTML;
+  assert.match(gridHtml,new RegExp(`data-id="${visitedId}"`));
+  assert.doesNotMatch(gridHtml,new RegExp(`data-id="${openId}"`));
+
+  app.setDestVisitedFilter('Offen');
+  app.renderDestinations();
+  gridHtml=document.getElementById('destGrid').innerHTML;
+  assert.doesNotMatch(gridHtml,new RegExp(`data-id="${visitedId}"`));
+  assert.match(gridHtml,new RegExp(`data-id="${openId}"`));
+
+  app.setDestVisitedFilter('Alle');
+  app.renderDestinations();
+  gridHtml=document.getElementById('destGrid').innerHTML;
+  assert.match(gridHtml,new RegExp(`data-id="${visitedId}"`));
+  assert.match(gridHtml,new RegExp(`data-id="${openId}"`));
+});
+
+test('marker popup exposes a visited toggle that reflects and flips state',()=>{
+  const {app}=buildSandbox();
+  const d=app.DESTINATIONS[0];
+  let popup=app.markerPopupHtml(d);
+  assert.match(popup,/aria-pressed="false"/);
+  assert.match(popup,/○ Noch nicht besucht/);
+  assert.match(popup,new RegExp(`toggleVisited\\('${d.id}'\\)`));
+
+  app.toggleVisited(d.id);
+  popup=app.markerPopupHtml(d);
+  assert.match(popup,/aria-pressed="true"/);
+  assert.match(popup,/✓ Besucht/);
 });
