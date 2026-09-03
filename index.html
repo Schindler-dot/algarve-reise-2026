@@ -12,9 +12,10 @@
 html{overflow-x:hidden}*{box-sizing:border-box} body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--ink);overflow-x:hidden}body.modal-open{overflow:hidden;position:fixed;left:0;right:0;width:100%}
 header{position:sticky;top:0;z-index:20;background:rgba(244,241,234,.94);backdrop-filter:blur(12px);padding:calc(13px + env(safe-area-inset-top)) 15px 10px;border-bottom:1px solid var(--line)}
 h1{margin:0;font-size:21px}.sub{font-size:12px;color:var(--muted);margin-top:2px}
-main{padding:12px 12px 100px;max-width:760px;margin:auto}.view{display:none}.view.active{display:block}
-nav{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:9px 9px calc(9px + env(safe-area-inset-bottom));position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:30}
-nav button{border:0;background:transparent;padding:7px 1px;min-height:44px;font-size:11px;color:var(--muted);border-radius:10px}nav button.active{background:var(--accent2);color:var(--accent);font-weight:800}
+main{padding:12px 12px 118px;max-width:760px;margin:auto}.view{display:none}.view.active{display:block}
+nav{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px;padding:9px 9px calc(9px + env(safe-area-inset-bottom));position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--line);z-index:30;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+nav::-webkit-scrollbar{display:none}
+nav button{border:0;background:transparent;padding:7px 4px;min-height:44px;min-width:44px;font-size:10px;line-height:1.15;color:var(--muted);border-radius:10px;white-space:nowrap;flex:0 0 auto}nav button.active{background:var(--accent2);color:var(--accent);font-weight:800}
 .hero{position:relative;overflow:hidden;background:linear-gradient(135deg,#123f4a,#326d73);color:#fff;padding:20px;border-radius:20px;margin-bottom:12px;min-height:125px}
 .hero:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-35px;top:-35px;background:rgba(255,255,255,.08)}
 .heroEmoji{font-size:48px;position:absolute;right:20px;bottom:11px}.hero h2{margin:0 0 5px;font-size:25px;max-width:78%}.hero p{margin:0;opacity:.9;font-size:13px;max-width:78%}
@@ -33,8 +34,7 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 
 .dayphoto{width:100%;height:180px;object-fit:cover;border-radius:14px;margin:12px 0 4px;background:#dfe5e5}.photocredit{font-size:10px;color:var(--muted);margin:0 2px 9px}.photocredit a{color:inherit}.favbtn{border:0;background:#fff3c4;border-radius:999px;padding:8px 11px;min-width:44px;min-height:44px;font-size:13px;font-weight:800;color:#654f00}.favbtn.on{background:#f5d85d}.notearea{width:100%;min-height:76px;border:1px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:14px;background:#fff;resize:vertical}.saved{font-size:11px;color:var(--muted);margin-top:4px}.photoHero{background-size:cover;background-position:center}.photoHero:before{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(18,63,74,.92),rgba(18,63,74,.25));}.photoHero>*{position:relative;z-index:1}
 
-nav{grid-template-columns:repeat(6,1fr)}
-nav button{font-size:10px}
+@media(max-width:430px){nav{display:flex;gap:6px;justify-content:flex-start;scroll-snap-type:x proximity}nav button{min-width:70px;scroll-snap-align:center}}@media(min-width:431px){nav{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}}
 .destgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 #destMapWrap{position:relative;height:330px;border-radius:17px;overflow:hidden;margin-bottom:12px;border:1px solid var(--line);background:var(--accent2)}
 #destMap{width:100%;height:100%}
@@ -65,7 +65,7 @@ nav button{font-size:10px}
 .destlink{display:inline-flex;align-items:center;gap:5px;text-decoration:none;color:inherit;font-weight:800}
 .destinline{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}
 .destpill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:750;color:var(--accent);cursor:pointer}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3200;display:none;align-items:flex-end;justify-content:center;padding:0}.modal.show{display:flex}.modalbox{position:relative;width:100%;max-width:760px;max-height:94vh;overflow-y:auto;overflow-x:hidden;background:var(--bg);border-radius:22px 22px 0 0;padding:12px 12px calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modalhero{width:100%;height:230px;object-fit:cover;border-radius:16px;background:#dfe5e5}.modalclose{position:sticky;top:0;right:0;margin-left:auto;display:flex;align-items:center;justify-content:center;border:0;background:#fff;border-radius:999px;min-width:44px;min-height:44px;padding:0;font-size:24px;z-index:3;box-shadow:0 2px 10px rgba(0,0,0,.15)}body.modal-open #destMapWrap,body.modal-open #foodMapWrap,body.modal-open .leaflet-control-container,body.modal-open .locate-btn,body.modal-open #destMapOffline,body.modal-open #foodMapOffline,body.modal-open .locate-msg{pointer-events:none!important}@media(max-width:619px){.modal{align-items:flex-end}.modalbox{width:100%;max-height:94vh;border-radius:22px 22px 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom))}}@media(min-width:620px){.destgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.destcard img{height:145px}.modal{align-items:center;padding:20px}.modalbox{border-radius:22px;max-height:90vh}}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:3200;display:none;align-items:flex-end;justify-content:center;padding:0}.modal.show{display:flex}.modalbox{position:relative;width:100%;max-width:760px;max-height:94vh;overflow-y:auto;overflow-x:hidden;background:var(--bg);border-radius:22px 22px 0 0;padding:12px 12px calc(20px + env(safe-area-inset-bottom));overscroll-behavior:contain;-webkit-overflow-scrolling:touch}.modalhero{width:100%;height:230px;object-fit:cover;border-radius:16px;background:#dfe5e5}.modalclose{position:sticky;top:0;right:0;margin-left:auto;display:flex;align-items:center;justify-content:center;border:0;background:#fff;border-radius:999px;min-width:44px;min-height:44px;padding:0;font-size:24px;z-index:3;box-shadow:0 2px 10px rgba(0,0,0,.15)}body.modal-open #destMapWrap,body.modal-open #foodMapWrap,body.modal-open #diaryMapWrap,body.modal-open .leaflet-control-container,body.modal-open .locate-btn,body.modal-open #destMapOffline,body.modal-open #foodMapOffline,body.modal-open .locate-msg{pointer-events:none!important}@media(max-width:619px){.modal{align-items:flex-end}.modalbox{width:100%;max-height:94vh;border-radius:22px 22px 0 0;padding-bottom:calc(20px + env(safe-area-inset-bottom))}}@media(min-width:620px){.destgrid{grid-template-columns:repeat(3,minmax(0,1fr))}.destcard img{height:145px}.modal{align-items:center;padding:20px}.modalbox{border-radius:22px;max-height:90vh}}
 
 #foodMapWrap{position:relative;height:290px;border-radius:17px;overflow:hidden;margin-bottom:12px;border:1px solid var(--line);background:var(--accent2)}
 #foodMap{width:100%;height:100%}
@@ -95,6 +95,7 @@ nav button{font-size:10px}
 .visual-dests{display:flex;flex-direction:column;gap:14px;margin:10px 0 20px}.visual-dest{display:block;width:100%;padding:0;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;color:inherit;box-shadow:0 3px 12px rgba(0,0,0,.04);cursor:pointer}.visual-dest img{display:block;width:100%;height:160px;object-fit:cover;background:#dfe5e5}.visual-dest-copy{display:block;padding:12px 14px 14px}.visual-dest-title{display:block;font-size:17px;font-weight:900;color:var(--accent)}.visual-dest-desc{display:block;font-size:13px;line-height:1.45;margin-top:5px;color:var(--ink)}.visual-dest-open{display:block;font-size:12px;font-weight:850;color:var(--accent);margin-top:9px}.partlabel{font-size:16px;font-weight:900;color:var(--accent);margin:16px 0 7px;padding-bottom:6px;border-bottom:1px solid var(--line)}@media(min-width:600px){.visual-dest img{height:220px}}
 
 .daypicker{overflow:hidden}.daypicker-row{display:flex;align-items:center;gap:8px;min-width:0}.daypicker-nav{border:1px solid var(--line);background:#fff;border-radius:12px;width:44px;height:44px;flex:none;font-size:19px;font-weight:800;color:var(--accent);cursor:pointer}.daypicker-nav:disabled{opacity:.35;cursor:default}.daypicker-select{flex:1;min-width:0;max-width:100%;padding:10px 10px;border:1px solid var(--line);border-radius:12px;font-size:13px;background:#fff;color:var(--ink);font-weight:750}.todayflag{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px;flex-wrap:wrap}.routecta{display:flex;text-align:center;font-size:14px;padding:13px 14px;border-radius:14px}.today-actions{align-items:center}.daypicker-row,.destfilter,.pricefilter{overflow-x:auto;scrollbar-width:none}.daypicker-row::-webkit-scrollbar,.destfilter::-webkit-scrollbar,.pricefilter::-webkit-scrollbar{display:none}
+.diaryStats,.diarySuggestions,.diaryStorage{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.diaryStat,.diarySuggestion{background:#fff;border:1px solid var(--line);border-radius:12px;padding:8px 10px;font-size:12px}.diarySuggestion{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%}.diaryGallery,.diaryAssignList{display:grid;grid-template-columns:repeat(auto-fit,minmax(138px,1fr));gap:10px;margin-top:10px}.diaryPhoto{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}.diaryThumb{display:block;width:100%;height:122px;object-fit:cover;background:#dfe5e5;border:0;padding:0}.diaryPhotoBody{padding:9px 10px}.diaryPhotoMeta{font-size:11px;color:var(--muted);line-height:1.35;margin-top:4px}.diaryEmpty{font-size:13px;color:var(--muted);padding:10px 2px}.diaryAssignRow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}.diaryAssignRow select{flex:1;min-width:120px;padding:10px;border:1px solid var(--line);border-radius:12px;background:#fff}#diaryMapWrap{position:relative;height:320px;border-radius:17px;overflow:hidden;margin-top:10px;border:1px solid var(--line);background:linear-gradient(180deg,#eef7f4,#dde8e8)}#diaryMap{width:100%;height:100%}#diaryMapEmpty{position:absolute;inset:10px;display:none;align-items:center;justify-content:center;text-align:center;background:rgba(255,255,255,.92);border:1px dashed var(--line);border-radius:13px;padding:18px;font-size:13px;color:var(--muted);z-index:500}.photoMarker{display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:999px;background:#fff;border:2px solid var(--accent);box-shadow:0 2px 8px rgba(0,0,0,.25);font-size:15px}.danger{background:#8f2436;color:#fff}.routeStart{color:#12734b;font-weight:850}.routeEnd{color:#9b1b30;font-weight:850}.diaryPreviewImg{width:100%;max-height:60vh;object-fit:contain;border-radius:16px;background:#dfe5e5}.leaflet-div-icon.photo-pin{background:none;border:0}
 </style>
 </head>
 <body>
@@ -124,15 +125,41 @@ nav button{font-size:10px}
 <div class="notice" style="margin-top:10px">Angaben zu Telefon und Öffnungstagen basieren auf zuletzt verfügbaren Quellen und können sich ändern – bitte vor dem Besuch kurz prüfen bzw. reservieren.</div>
 </section>
 <section id="bookings" class="view"><div class="hero"><h2>Buchungen</h2><p>Die wichtigsten Daten ohne Suchen</p><div class="heroEmoji">🎫</div></div><div id="bookingList"></div></section>
-<section id="tagebuch" class="view"><div class="hero"><h2>Tagebuch</h2><p>Standortverlauf aus Google Maps als Zeitachse importieren</p><div class="heroEmoji">📓</div></div>
+<section id="tagebuch" class="view"><div class="hero"><h2>Tagebuch</h2><p>Standortverlauf und Fotos bleiben komplett lokal auf diesem Gerät</p><div class="heroEmoji">📓</div></div>
 <div class="card">
-<div class="sectiontitle">Zeitachse</div>
-<p class="small">Importiere deinen Google-Standortverlauf (Export von Android) für den Reisezeitraum 06.–19.09.2026. Die Standortpunkte werden ausschließlich lokal auf diesem Gerät gespeichert (IndexedDB) – es wird nichts hochgeladen oder geteilt.</p>
-<div class="actions"><button type="button" class="btn" id="timelineUpdateBtn" onclick="startTimelineImport()">Zeitachse aktualisieren</button></div>
+<div class="sectiontitle">Import</div>
+<p class="small">Importiere deinen Google-Standortverlauf und deine Fotos für den Reisezeitraum 06.–19.09.2026. Alles bleibt lokal in IndexedDB/localStorage – es wird nichts hochgeladen oder geteilt.</p>
+<div class="actions"><button type="button" class="btn" id="timelineUpdateBtn" onclick="startTimelineImport()">Zeitachse aktualisieren</button><button type="button" class="btn secondary" onclick="choosePhotoFiles()">Fotos hinzufügen</button><button type="button" class="btn secondary" onclick="exportDiaryBackup()">Backup exportieren</button><button type="button" class="btn secondary" onclick="chooseDiaryBackupFile()">Backup importieren</button></div>
 <div id="timelineSummary" class="small" style="margin-top:10px"></div>
 <div id="timelineResult" class="small" style="margin-top:6px"></div>
 </div>
+<div class="card">
+<div class="sectiontitle">Reisetag</div>
+<div class="daypicker-row"><button type="button" id="diaryPrevDayBtn" class="daypicker-nav" onclick="shiftDiaryDay(-1)" aria-label="Vorheriger Tagebuch-Tag">‹</button><select id="diaryDaySelect" class="daypicker-select" onchange="setDiaryDay(this.value)" aria-label="Tagebuch-Tag wählen"></select><button type="button" id="diaryNextDayBtn" class="daypicker-nav" onclick="shiftDiaryDay(1)" aria-label="Nächster Tagebuch-Tag">›</button></div>
+<div id="diaryStorageUsage" class="small" style="margin-top:10px"></div>
+</div>
+<div class="card">
+<div class="sectiontitle">Tagesroute</div>
+<div id="diaryRouteStats" class="diaryStats"></div>
+<div id="diaryDaySuggestions" style="margin-top:10px"></div>
+<div id="diaryMapWrap"><div id="diaryMap"></div><div id="diaryMapEmpty"></div></div>
+</div>
+<div class="card">
+<div class="sectiontitle">Fotos des Tages</div>
+<div id="diaryPhotoSummary" class="small"></div>
+<div id="diaryPhotoGallery" class="diaryGallery"></div>
+<div id="diaryDayUnlocated" style="margin-top:10px"></div>
+<div class="sectiontitle" style="margin-top:14px">Nicht zugeordnet</div>
+<div id="diaryUnassignedPhotos"></div>
+</div>
+<div class="card">
+<div class="sectiontitle">Datenschutz & Verwaltung</div>
+<p class="small">Du kannst einzelne Tage oder das gesamte Tagebuch wieder löschen. Notizen, Favoriten und bereits bestätigte Ziele bleiben dabei unverändert.</p>
+<div class="actions"><button type="button" class="btn secondary" onclick="deleteDiaryDay()">Diesen Tag löschen</button><button type="button" class="btn danger" onclick="deleteEntireDiary()">Ganzes Tagebuch löschen</button></div>
+</div>
 <input type="file" id="timelineFileInput" accept="application/json,.json" style="display:none" onchange="handleTimelineFile(event)">
+<input type="file" id="photoFileInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="handlePhotoFiles(event)">
+<input type="file" id="diaryBackupInput" accept="application/json,.json" style="display:none" onchange="handleDiaryBackupFile(event)">
 </section>
 <section id="tips" class="view"><div class="hero"><h2>Wetter & wichtig</h2><p>Für spontane Entscheidungen unterwegs</p><div class="heroEmoji">🌦️</div></div>
 <div class="card">
@@ -181,15 +208,29 @@ nav button{font-size:10px}
     <button type="button" class="modalclose" onclick="closeTimelineInstructions()" aria-label="Schließen">×</button>
     <div class="card">
       <div id="timelineInstructionsTitle" class="daytitle">Zeitachse von Android exportieren</div>
-      <p class="small">So exportierst du deinen Google-Standortverlauf als Datei:</p>
+      <p class="small">Primärer Ablauf auf Android/Samsung:</p>
       <ol class="small" style="padding-left:18px;line-height:1.7;color:var(--ink)">
-        <li>Google Maps App öffnen und oben rechts auf das Profilbild tippen.</li>
-        <li><b>Deine Zeitachse</b> auswählen.</li>
-        <li>Oben rechts auf die drei Punkte (⋮) tippen → <b>Standortdaten verwalten</b>.</li>
-        <li>Unter „Export“ die Option <b>Zeitachsendaten exportieren</b> wählen.</li>
-        <li>Die Datei (Timeline.json) speichern, z. B. in „Downloads“, und bei Bedarf auf dieses Gerät übertragen.</li>
+        <li>Android- bzw. Samsung-„Einstellungen" öffnen.</li>
+        <li>„Standort" auswählen.</li>
+        <li>„Standortdienste" öffnen.</li>
+        <li>„Zeitachse" auswählen.</li>
+        <li>„Zeitachsendaten exportieren" antippen.</li>
+        <li>JSON-Datei in „Downloads" speichern.</li>
+        <li>Zur Algarve-App zurückkehren und Datei auswählen.</li>
       </ol>
-      <div class="actions"><button type="button" class="btn" onclick="chooseTimelineFile()">Datei auswählen</button></div>
+      <p class="small">Falls der Direktlink unten nicht reagiert, bitte die Schritte oben manuell ausführen.</p>
+      <div class="actions"><button type="button" class="btn" onclick="chooseTimelineFile()">Datei auswählen</button><button type="button" class="btn secondary" onclick="openAndroidSettings()">Android-Einstellungen öffnen</button></div>
+    </div>
+  </div>
+</div>
+<div id="photoPreviewModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="photoPreviewTitle" onclick="if(event.target===this)closePhotoPreview()">
+  <div class="modalbox" tabindex="-1">
+    <button type="button" class="modalclose" onclick="closePhotoPreview()" aria-label="Schließen">×</button>
+    <div class="card">
+      <div id="photoPreviewTitle" class="daytitle">Foto</div>
+      <img id="photoPreviewImg" class="diaryPreviewImg" alt="">
+      <p id="photoPreviewMeta" class="small" style="margin-top:10px"></p>
+      <div id="photoPreviewActions" class="actions"></div>
     </div>
   </div>
 </div>
@@ -635,18 +676,25 @@ function fallbackRouteTarget(d,ids){
   const map=cleanQuery(d.map_dest);
   return map?{name:d.place||d.title,map}:null;
 }
+function keepActiveNavVisible(btn){
+  const nav=document.querySelector&&document.querySelector('nav');
+  if(!btn||!nav||nav.scrollWidth<=nav.clientWidth||typeof btn.scrollIntoView!=='function')return;
+  setTimeout(()=>btn.scrollIntoView({inline:'nearest',block:'nearest',behavior:'smooth'}),0);
+}
 // Switches the visible bottom-nav tab/view (shared by nav buttons and in-dashboard shortcuts).
 function goToView(name){
   const btn=[...document.querySelectorAll('nav button')].find(b=>b.dataset.view===name);
   if(!btn)return;
   document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
   btn.classList.add('active');
+  keepActiveNavVisible(btn);
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(name).classList.add('active');
   if(name==='destinations'){ensureDestMap();if(destMap)setTimeout(()=>destMap.invalidateSize(),0);}
   if(name==='food'){ensureFoodMap();if(foodMap)setTimeout(()=>foodMap.invalidateSize(),0);}
-  if(name==='tagebuch'){refreshTimelineSummary();}
+  if(name==='tagebuch'){refreshTimelineSummary();renderDiaryDayPicker();renderDiaryDay();if(diaryMap)setTimeout(()=>diaryMap.invalidateSize(),0);}
 }
+function switchView(name){goToView(name);}
 // Heute dashboard: which trip day (index into DAYS) is currently selected.
 // Defaults to the real current day if it's within the trip period, otherwise the nearest trip day.
 // This never affects the user's real geolocation (userLoc stays independent of the selected day).
@@ -817,25 +865,100 @@ function closeRestaurant(){closeModal('foodModal');}
 function renderBookings(){document.getElementById('bookingList').innerHTML=BOOKINGS.map(b=>`<div class="card"><b>${b[0]}</b><div class="small" style="margin-top:6px;white-space:pre-line">${b[1]}</div></div>`).join('');syncOnlineState();}
 // ---- Tagebuch: Google-Zeitachse (Standortverlauf) importieren, ausschließlich lokal in IndexedDB ----
 const DIARY_DB_NAME='algarve-tagebuch';
-const DIARY_DB_VERSION=1;
+const DIARY_DB_VERSION=2;
 const DIARY_STORE='locations';
-function openDiaryDB(){
-  return new Promise((resolve,reject)=>{
-    if(typeof indexedDB==='undefined'){reject(new Error('IndexedDB ist auf diesem Gerät nicht verfügbar.'));return;}
-    const req=indexedDB.open(DIARY_DB_NAME,DIARY_DB_VERSION);
-    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(DIARY_STORE))db.createObjectStore(DIARY_STORE,{keyPath:'id'});};
-    req.onsuccess=()=>resolve(req.result);
-    req.onerror=()=>reject(req.error);
-  });
+const PHOTO_STORE='photos';
+const LISBON_TZ='Europe/Lisbon';
+const DAY_MS=86400000;
+const DAY_SELECT_OPTIONS=DAYS.map((d,i)=>`<option value="${i}">${d.label} · ${d.title}</option>`).join('');
+const lisbonDateFmt=typeof Intl!=='undefined'?new Intl.DateTimeFormat('en-CA',{timeZone:LISBON_TZ,year:'numeric',month:'2-digit',day:'2-digit'}):null;
+const lisbonClockFmt=typeof Intl!=='undefined'?new Intl.DateTimeFormat('de-DE',{timeZone:LISBON_TZ,hour:'2-digit',minute:'2-digit',hourCycle:'h23'}):null;
+const lisbonDateTimeFmt=typeof Intl!=='undefined'?new Intl.DateTimeFormat('de-DE',{timeZone:LISBON_TZ,day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}):null;
+let diaryDayIndex=defaultDayIndex();
+let diaryMap=null,diaryRouteLayer=null,diaryPhotoLayer=null,diaryStartMarker=null,diaryEndMarker=null;
+let diaryRenderUrls=[];
+let diaryPhotoCache=[];
+let diaryRenderToken=0;
+function closeKnownModal(id){
+  if(id==='destModal')closeDestination();
+  else if(id==='foodModal')closeRestaurant();
+  else if(id==='photoPreviewModal')closePhotoPreview();
+  else closeModal(id);
 }
+function dtfParts(fmt,date){
+  if(!fmt||!(date instanceof Date)||Number.isNaN(date.getTime()))return null;
+  const out={};
+  fmt.formatToParts(date).forEach(part=>{if(part.type!=='literal')out[part.type]=part.value;});
+  return out;
+}
+function pad2(num){return String(num).padStart(2,'0');}
+function timeZoneDateKeyFromDate(date,timeZone=LISBON_TZ){
+  if(!(date instanceof Date)||Number.isNaN(date.getTime()))return null;
+  if(typeof Intl==='undefined')return date.toISOString().slice(0,10);
+  const fmt=timeZone===LISBON_TZ?lisbonDateFmt:new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit'});
+  const parts=dtfParts(fmt,date);
+  return parts?`${parts.year}-${parts.month}-${parts.day}`:date.toISOString().slice(0,10);
+}
+function lisbonDateKey(timestamp){
+  const d=timestamp instanceof Date?timestamp:normalizeTimelineDate(timestamp);
+  return d?timeZoneDateKeyFromDate(d,LISBON_TZ):null;
+}
+function timeZoneOffsetMinutes(timeZone,date){
+  if(typeof Intl==='undefined'||!(date instanceof Date)||Number.isNaN(date.getTime()))return 0;
+  const fmt=new Intl.DateTimeFormat('en-CA',{timeZone,year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+  const p=dtfParts(fmt,date); if(!p)return 0;
+  const asUtc=Date.UTC(Number(p.year),Number(p.month)-1,Number(p.day),Number(p.hour),Number(p.minute),Number(p.second));
+  return Math.round((asUtc-date.getTime())/60000);
+}
+function dateFromTimeZoneLocal(parts,timeZone=LISBON_TZ){
+  const guess=Date.UTC(Number(parts.year),Number(parts.month)-1,Number(parts.day),Number(parts.hour||0),Number(parts.minute||0),Number(parts.second||0));
+  let date=new Date(guess-timeZoneOffsetMinutes(timeZone,new Date(guess))*60000);
+  const offset=timeZoneOffsetMinutes(timeZone,date);
+  const fixed=new Date(guess-offset*60000);
+  const offset2=timeZoneOffsetMinutes(timeZone,fixed);
+  return offset2===offset?fixed:new Date(guess-offset2*60000);
+}
+function normalizeTimelineDate(timestamp){
+  if(timestamp instanceof Date)return Number.isNaN(timestamp.getTime())?null:timestamp;
+  if(typeof timestamp==='number'){
+    const d=new Date(timestamp);
+    return Number.isNaN(d.getTime())?null:d;
+  }
+  const value=String(timestamp??'').trim();
+  if(!value)return null;
+  const d=/^\d{11,}$/.test(value)?new Date(Number(value)):new Date(value);
+  return Number.isNaN(d.getTime())?null:d;
+}
+function normalizeTimelineTimestamp(timestamp){
+  const d=normalizeTimelineDate(timestamp);
+  return d?d.toISOString():null;
+}
+function formatLisbonTime(timestamp){
+  const d=normalizeTimelineDate(timestamp);
+  return d?(lisbonClockFmt?lisbonClockFmt.format(d):d.toISOString().slice(11,16)):'—';
+}
+function formatLisbonDateTime(timestamp){
+  const d=normalizeTimelineDate(timestamp);
+  return d?(lisbonDateTimeFmt?lisbonDateTimeFmt.format(d):d.toISOString()):'Unbekannt';
+}
+function inTripRange(timestamp){
+  const key=lisbonDateKey(timestamp);
+  return !!key&&key>=DAYS[0].date&&key<=DAYS[DAYS.length-1].date;
+}
+function isValidCoordinate(lat,lng){return Number.isFinite(lat)&&Number.isFinite(lng)&&lat>=-90&&lat<=90&&lng>=-180&&lng<=180;}
 // Parses "lat, lng" / "lat°, lng°" style strings used across the different Google Timeline export formats.
 function parseLatLngPair(str){
   if(typeof str!=='string')return null;
   const m=str.match(/(-?\d+(?:\.\d+)?)\s*°?\s*,\s*(-?\d+(?:\.\d+)?)\s*°?/);
   if(!m)return null;
   const lat=parseFloat(m[1]),lng=parseFloat(m[2]);
-  if(Number.isNaN(lat)||Number.isNaN(lng))return null;
-  return {lat,lng};
+  return isValidCoordinate(lat,lng)?{lat,lng}:null;
+}
+function normalizeTimelinePoint(point){
+  if(!point)return null;
+  const lat=Number(point.lat),lng=Number(point.lng),timestamp=normalizeTimelineTimestamp(point.timestamp);
+  if(!isValidCoordinate(lat,lng)||!timestamp)return null;
+  return {lat,lng,timestamp,dateKey:lisbonDateKey(timestamp)};
 }
 // Extracts {lat,lng,timestamp} points from either the legacy Google Takeout "Records.json" format
 // (locations[] with latitudeE7/longitudeE7) or the current on-device Timeline export
@@ -852,84 +975,214 @@ function extractTimelinePoints(data){
       if(typeof loc.longitudeE7==='number')lng=loc.longitudeE7/1e7;
       if(typeof loc.latitude==='number')lat=loc.latitude;
       if(typeof loc.longitude==='number')lng=loc.longitude;
-      const timestamp=loc.timestamp||(loc.timestampMs?new Date(Number(loc.timestampMs)).toISOString():null);
+      const timestamp=loc.timestamp||loc.deviceTimestamp||(loc.timestampMs?normalizeTimelineTimestamp(Number(loc.timestampMs)):null);
       if(typeof lat==='number'&&typeof lng==='number'&&timestamp)points.push({lat,lng,timestamp});
     });
   }
   if(Array.isArray(data.semanticSegments)){
     data.semanticSegments.forEach(seg=>{
       if(!seg)return;
-      if(Array.isArray(seg.timelinePath)){
-        seg.timelinePath.forEach(step=>add(parseLatLngPair(step?.point),step?.time||seg.startTime));
-      }
+      if(Array.isArray(seg.timelinePath))seg.timelinePath.forEach(step=>add(parseLatLngPair(step?.point||step?.latLng||step?.LatLng),step?.time||step?.timestamp||seg.startTime));
       const visitPoint=seg.visit?.topCandidate?.placeLocation?.latLng||seg.visit?.topCandidate?.placeLocation;
-      if(visitPoint)add(parseLatLngPair(visitPoint),seg.startTime);
+      if(visitPoint)add(parseLatLngPair(visitPoint),seg.startTime||seg.endTime);
       const actStart=seg.activity?.start?.latLng||seg.activity?.start;
       if(actStart)add(parseLatLngPair(actStart),seg.startTime);
       const actEnd=seg.activity?.end?.latLng||seg.activity?.end;
-      if(actEnd)add(parseLatLngPair(actEnd),seg.endTime);
+      if(actEnd)add(parseLatLngPair(actEnd),seg.endTime||seg.startTime);
     });
   }
   if(Array.isArray(data.rawSignals)){
     data.rawSignals.forEach(sig=>{
       const pos=sig?.position;
-      if(pos?.LatLng)add(parseLatLngPair(pos.LatLng),pos.timestamp);
+      add(parseLatLngPair(pos?.LatLng||pos?.latLng),pos?.timestamp||sig?.timestamp);
     });
   }
   return points;
 }
-// Only keep points that fall within the actual trip period (first/last day of DAYS: 06.–19.09.2026).
-function inTripRange(timestamp){
-  const d=new Date(timestamp);
-  if(Number.isNaN(d.getTime()))return false;
-  const key=d.toISOString().slice(0,10);
-  return key>=DAYS[0].date&&key<=DAYS[DAYS.length-1].date;
+function timelinePointId(p){
+  const norm=normalizeTimelinePoint(p);
+  return norm?`${norm.lat.toFixed(6)}_${norm.lng.toFixed(6)}_${norm.timestamp}`:'';
 }
-function timelinePointId(p){return `${p.lat.toFixed(6)}_${p.lng.toFixed(6)}_${p.timestamp}`;}
-// Stores points in IndexedDB, skipping any point already present (same coordinates + timestamp) to avoid duplicates.
-function storeTimelinePoints(points){
-  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
-    let added=0,duplicates=0;
-    const tx=db.transaction(DIARY_STORE,'readwrite');
-    const store=tx.objectStore(DIARY_STORE);
-    points.forEach(p=>{
-      const id=timelinePointId(p);
-      const getReq=store.get(id);
-      getReq.onsuccess=()=>{
-        if(getReq.result){duplicates++;}
-        else{added++;store.put({id,lat:p.lat,lng:p.lng,timestamp:p.timestamp});}
-      };
+function prepareTimelinePoints(points){
+  const out=[];
+  const seen=new Set();
+  let valid=0,invalid=0,inRange=0,outOfRange=0,duplicatesInFile=0;
+  (Array.isArray(points)?points:[]).forEach(raw=>{
+    const point=normalizeTimelinePoint(raw);
+    if(!point){invalid++;return;}
+    valid++;
+    if(!inTripRange(point.timestamp)){outOfRange++;return;}
+    inRange++;
+    const id=timelinePointId(point);
+    if(seen.has(id)){duplicatesInFile++;return;}
+    seen.add(id);
+    out.push({id,lat:point.lat,lng:point.lng,timestamp:point.timestamp,dateKey:point.dateKey||lisbonDateKey(point.timestamp)});
+  });
+  return {points:out,total:Array.isArray(points)?points.length:0,valid,invalid,inRange,outOfRange,duplicatesInFile};
+}
+function mergeTimelinePoints(points,existingIds=new Set()){
+  const records=[],seen=new Set(existingIds),dupes={duplicates:0};
+  (Array.isArray(points)?points:[]).forEach(raw=>{
+    const point=normalizeTimelinePoint(raw); if(!point)return;
+    const id=timelinePointId(point);
+    if(!id||seen.has(id)){dupes.duplicates++;return;}
+    seen.add(id);
+    records.push({id,lat:point.lat,lng:point.lng,timestamp:point.timestamp,dateKey:point.dateKey||lisbonDateKey(point.timestamp)});
+  });
+  return {records,added:records.length,duplicates:dupes.duplicates};
+}
+function sortedTimelinePoints(points){return [...(Array.isArray(points)?points:[])].sort((a,b)=>new Date(a.timestamp)-new Date(b.timestamp));}
+function simplifyRoutePoints(points,maxPoints=350){
+  const list=sortedTimelinePoints(points);
+  if(list.length<=maxPoints)return list;
+  const kept=[list[0]];
+  let last=list[0];
+  for(let i=1;i<list.length-1;i++){
+    const p=list[i];
+    const minutes=(new Date(p.timestamp)-new Date(last.timestamp))/60000;
+    const dist=distanceKm(last.lat,last.lng,p.lat,p.lng);
+    if(dist>=0.08||minutes>=4){kept.push(p);last=p;}
+  }
+  const end=list[list.length-1];
+  if(kept[kept.length-1]!==end)kept.push(end);
+  if(kept.length<=maxPoints)return kept;
+  const step=Math.ceil(kept.length/maxPoints);
+  const sampled=kept.filter((_,i)=>i===0||i===kept.length-1||i%step===0);
+  if(sampled[sampled.length-1]!==end)sampled.push(end);
+  return sampled;
+}
+function routeDistanceKm(points){
+  const list=sortedTimelinePoints(points);
+  let total=0;
+  for(let i=1;i<list.length;i++)total+=distanceKm(list[i-1].lat,list[i-1].lng,list[i].lat,list[i].lng);
+  return total;
+}
+function nearestDestination(lat,lng,maxKm=3){
+  let best=null;
+  DESTINATIONS.forEach(dest=>{
+    const dist=distanceKm(lat,lng,dest.lat,dest.lng);
+    if((!best||dist<best.distanceKm)&&dist<=maxKm)best={id:dest.id,name:dest.name,distanceKm:dist};
+  });
+  return best;
+}
+function detectVisitSuggestions(points){
+  const list=sortedTimelinePoints(points);
+  const suggestions=[];
+  DESTINATIONS.forEach(dest=>{
+    let start=null,last=null,prev=null;
+    const push=()=>{
+      if(!start||!last)return;
+      const durationMs=new Date(last.timestamp)-new Date(start.timestamp);
+      if(durationMs>=10*60000)suggestions.push({id:dest.id,name:dest.name,start:start.timestamp,end:last.timestamp,durationMinutes:Math.round(durationMs/60000)});
+      start=last=prev=null;
+    };
+    list.forEach(p=>{
+      const near=distanceKm(p.lat,p.lng,dest.lat,dest.lng)<=0.2;
+      if(!near){push();return;}
+      if(prev&&new Date(p.timestamp)-new Date(prev.timestamp)>30*60000)push();
+      if(!start)start=p;
+      last=p;
+      prev=p;
     });
-    tx.oncomplete=()=>{db.close();resolve({added,duplicates});};
-    tx.onerror=()=>{db.close();reject(tx.error);};
-  }));
+    push();
+  });
+  const unique=new Map();
+  suggestions.sort((a,b)=>b.durationMinutes-a.durationMinutes);
+  suggestions.forEach(s=>{if(!unique.has(s.id))unique.set(s.id,s);});
+  return [...unique.values()];
 }
-function countTimelinePoints(){
-  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
-    const tx=db.transaction(DIARY_STORE,'readonly');
-    const req=tx.objectStore(DIARY_STORE).count();
+function openDiaryDB(){
+  return new Promise((resolve,reject)=>{
+    if(typeof indexedDB==='undefined'){reject(new Error('IndexedDB ist auf diesem Gerät nicht verfügbar.'));return;}
+    const req=indexedDB.open(DIARY_DB_NAME,DIARY_DB_VERSION);
+    req.onupgradeneeded=()=>{
+      const db=req.result,tx=req.transaction;
+      let loc=db.objectStoreNames.contains(DIARY_STORE)?tx.objectStore(DIARY_STORE):db.createObjectStore(DIARY_STORE,{keyPath:'id'});
+      if(loc.indexNames&&!loc.indexNames.contains('dateKey'))try{loc.createIndex('dateKey','dateKey',{unique:false});}catch(_e){}
+      let photos=db.objectStoreNames.contains(PHOTO_STORE)?tx.objectStore(PHOTO_STORE):db.createObjectStore(PHOTO_STORE,{keyPath:'id'});
+      if(photos.indexNames&&!photos.indexNames.contains('dateKey'))try{photos.createIndex('dateKey','dateKey',{unique:false});}catch(_e){}
+    };
     req.onsuccess=()=>resolve(req.result);
     req.onerror=()=>reject(req.error);
-    tx.oncomplete=()=>db.close();
-  })).catch(()=>null);
-}
-function refreshTimelineSummary(){
-  const el=document.getElementById('timelineSummary');
-  countTimelinePoints().then(count=>{
-    if(count==null){el.textContent='';return;}
-    el.textContent=count>0?`${count} Standortpunkt(e) für den Reisezeitraum (06.–19.09.2026) lokal gespeichert.`:'Noch keine Standortpunkte importiert.';
   });
 }
+function getAllFromObjectStore(store){
+  return new Promise((resolve,reject)=>{
+    if(store.getAll){const req=store.getAll();req.onsuccess=()=>resolve(req.result||[]);req.onerror=()=>reject(req.error);return;}
+    const out=[];const req=store.openCursor();
+    req.onsuccess=()=>{const cur=req.result;if(cur){out.push(cur.value);cur.continue();}else resolve(out);};
+    req.onerror=()=>reject(req.error);
+  });
+}
+function readStore(storeName){
+  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(storeName,'readonly');
+    getAllFromObjectStore(tx.objectStore(storeName)).then(resolve,reject);
+    tx.oncomplete=()=>db.close();
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Lesefehler'));};
+  }));
+}
+function writeStoreRecords(storeName,records){
+  if(!records.length)return Promise.resolve();
+  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(storeName,'readwrite'),store=tx.objectStore(storeName);
+    records.forEach(record=>store.put(record));
+    tx.oncomplete=()=>{db.close();resolve();};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Schreibfehler'));};
+  }));
+}
+function deleteStoreKeys(storeName,keys){
+  if(!keys.length)return Promise.resolve(0);
+  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(storeName,'readwrite'),store=tx.objectStore(storeName);
+    keys.forEach(key=>store.delete(key));
+    tx.oncomplete=()=>{db.close();resolve(keys.length);};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Löschfehler'));};
+  }));
+}
+function clearStore(storeName){
+  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(storeName,'readwrite');
+    tx.objectStore(storeName).clear();
+    tx.oncomplete=()=>{db.close();resolve();};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Fehler beim Leeren'));};
+  }));
+}
+function countStore(storeName){return readStore(storeName).then(items=>items.length).catch(()=>null);}
+// Stores points in IndexedDB, skipping duplicates from the same import and already saved records.
+function storeTimelinePoints(points){
+  return readStore(DIARY_STORE).then(existing=>{
+    const merged=mergeTimelinePoints(points,new Set(existing.map(p=>p.id)));
+    return writeStoreRecords(DIARY_STORE,merged.records).then(()=>({added:merged.added,duplicates:merged.duplicates}));
+  });
+}
+function countTimelinePoints(){return countStore(DIARY_STORE);}
+function countTimelinePhotos(){return countStore(PHOTO_STORE);}
+function refreshTimelineSummary(){
+  const el=document.getElementById('timelineSummary'); if(!el)return;
+  Promise.all([countTimelinePoints(),countTimelinePhotos()]).then(([points,photos])=>{
+    if(points==null&&photos==null){el.textContent='';return;}
+    const pointText=points==null?'keine Standortdaten':`${points} Standortpunkt(e)`;
+    const photoText=photos==null?'':` · ${photos} Foto(s)`;
+    el.textContent=(points||photos)?`${pointText}${photoText} lokal gespeichert.`:'Noch keine Standortpunkte oder Fotos importiert.';
+  }).catch(()=>{el.textContent='';});
+}
 function showTimelineResult(message,isError=false){
-  const el=document.getElementById('timelineResult');
+  const el=document.getElementById('timelineResult'); if(!el)return;
   el.textContent=message;
   el.style.color=isError?'#b3261e':'';
 }
-// Step 1: show the Android export instructions before letting the user pick a file.
 function startTimelineImport(){openModal('timelineInstructionsModal');}
 function closeTimelineInstructions(){closeModal('timelineInstructionsModal');}
-// Step 2: close the instructions and open the native file picker for the exported JSON.
-function chooseTimelineFile(){closeTimelineInstructions();document.getElementById('timelineFileInput').click();}
+function chooseTimelineFile(){closeTimelineInstructions();const input=document.getElementById('timelineFileInput');if(input)input.click();}
+function openAndroidSettings(){
+  try{
+    if(typeof location==='undefined'&&!(window&&window.location))throw new Error('no location');
+    const target=(typeof location!=='undefined'?location:window.location);
+    target.href='intent:#Intent;action=android.settings.LOCATION_SOURCE_SETTINGS;end';
+    showTimelineResult('Falls sich keine Einstellungen öffnen, bitte die Schritte im Hinweisfenster manuell ausführen.');
+  }catch(_e){showTimelineResult('Android-Einstellungen konnten hier nicht direkt geöffnet werden – bitte die Schritte oben manuell ausführen.',true);}
+}
 function handleTimelineFile(event){
   const file=event.target.files&&event.target.files[0];
   event.target.value='';
@@ -938,32 +1191,400 @@ function handleTimelineFile(event){
   const reader=new FileReader();
   reader.onload=()=>{
     let data;
-    try{data=JSON.parse(reader.result);}
-    catch(e){showTimelineResult('Die Datei konnte nicht gelesen werden. Bitte eine gültige Zeitachsen-JSON-Datei (Timeline.json) wählen.',true);return;}
+    try{data=JSON.parse(reader.result);}catch(_e){showTimelineResult('Die Datei konnte nicht gelesen werden. Bitte eine gültige Zeitachsen-JSON-Datei wählen.',true);return;}
     importTimelineData(data);
   };
   reader.onerror=()=>showTimelineResult('Die Datei konnte nicht gelesen werden.',true);
   reader.readAsText(file);
 }
 function importTimelineData(data){
-  const points=extractTimelinePoints(data);
-  if(!points.length){showTimelineResult('In der Datei wurden keine Standortpunkte gefunden.',true);return;}
-  const inRange=points.filter(p=>inTripRange(p.timestamp));
-  if(!inRange.length){showTimelineResult(`${points.length} Standortpunkt(e) gefunden, aber keiner liegt im Reisezeitraum 06.–19.09.2026.`,true);return;}
-  storeTimelinePoints(inRange).then(({added,duplicates})=>{
-    showTimelineResult(`Zeitachse aktualisiert: ${points.length} Punkte gefunden, ${inRange.length} im Reisezeitraum (06.–19.09.2026), davon ${added} neu gespeichert und ${duplicates} bereits vorhanden.`);
+  const extracted=extractTimelinePoints(data),prepared=prepareTimelinePoints(extracted);
+  if(!prepared.valid){showTimelineResult('In der Datei wurden keine gültigen Standortpunkte gefunden.',true);return;}
+  if(!prepared.inRange){showTimelineResult(`${prepared.valid} gültige Standortpunkt(e) gefunden, aber keiner liegt im Reisezeitraum 06.–19.09.2026.`,true);return;}
+  storeTimelinePoints(prepared.points).then(({added,duplicates})=>{
+    showTimelineResult(`Zeitachse aktualisiert: ${prepared.valid} gültige Punkt(e), ${prepared.invalid} verworfen, ${prepared.inRange} im Reisezeitraum, ${prepared.duplicatesInFile} Duplikat(e) in der Datei, ${added} neu gespeichert und ${duplicates} bereits vorhanden.`);
     refreshTimelineSummary();
+    refreshDiaryStorageUsage();
+    renderDiaryDay();
   }).catch(()=>showTimelineResult('Import fehlgeschlagen: Standortdaten konnten nicht lokal gespeichert werden.',true));
+}
+function setDiaryDay(idx){
+  diaryDayIndex=Math.max(0,Math.min(DAYS.length-1,Number(idx)||0));
+  const select=document.getElementById('diaryDaySelect'); if(select)select.value=String(diaryDayIndex);
+  const prev=document.getElementById('diaryPrevDayBtn'),next=document.getElementById('diaryNextDayBtn');
+  if(prev)prev.disabled=diaryDayIndex===0;
+  if(next)next.disabled=diaryDayIndex===DAYS.length-1;
+  renderDiaryDay();
+}
+function shiftDiaryDay(delta){setDiaryDay(diaryDayIndex+delta);}
+function renderDiaryDayPicker(){
+  const select=document.getElementById('diaryDaySelect'); if(!select)return;
+  if(select.innerHTML!==DAY_SELECT_OPTIONS)select.innerHTML=DAY_SELECT_OPTIONS;
+  select.value=String(diaryDayIndex);
+  const prev=document.getElementById('diaryPrevDayBtn'),next=document.getElementById('diaryNextDayBtn');
+  if(prev)prev.disabled=diaryDayIndex===0;
+  if(next)next.disabled=diaryDayIndex===DAYS.length-1;
+}
+function revokeDiaryUrls(){
+  diaryRenderUrls.forEach(url=>{try{URL.revokeObjectURL(url);}catch(_e){}});
+  diaryRenderUrls=[];
+}
+function photoViewUrl(photo){
+  if(!photo||!photo.blob||typeof URL==='undefined'||typeof URL.createObjectURL!=='function')return '';
+  const url=URL.createObjectURL(photo.blob);
+  diaryRenderUrls.push(url);
+  return url;
+}
+function ensureDiaryMap(){
+  if(diaryMap||typeof L==='undefined')return;
+  const wrap=document.getElementById('diaryMapWrap'); if(!wrap)return;
+  diaryMap=L.map('diaryMap',{scrollWheelZoom:false,attributionControl:false,preferCanvas:true});
+  diaryMap.setView([37.2,-8.6],9);
+  setTimeout(()=>diaryMap.invalidateSize(),50);
+}
+function clearDiaryMapLayers(){
+  if(diaryRouteLayer){diaryMap.removeLayer(diaryRouteLayer);diaryRouteLayer=null;}
+  if(diaryPhotoLayer){diaryMap.removeLayer(diaryPhotoLayer);diaryPhotoLayer=null;}
+  if(diaryStartMarker){diaryMap.removeLayer(diaryStartMarker);diaryStartMarker=null;}
+  if(diaryEndMarker){diaryMap.removeLayer(diaryEndMarker);diaryEndMarker=null;}
+}
+function renderDiaryMap(points,photos){
+  const empty=document.getElementById('diaryMapEmpty');
+  ensureDiaryMap();
+  if(!diaryMap){if(empty){empty.style.display='flex';empty.textContent='Die Karte konnte auf diesem Gerät nicht initialisiert werden.';}return;}
+  clearDiaryMapLayers();
+  if(!points.length){if(empty){empty.style.display='flex';empty.textContent='Für diesen Tag wurden noch keine Standortdaten importiert.';}return;}
+  if(empty)empty.style.display='none';
+  const routePoints=simplifyRoutePoints(points),latlngs=routePoints.map(p=>[p.lat,p.lng]);
+  diaryRouteLayer=L.polyline(latlngs,{color:'#123f4a',weight:4,opacity:.9}).addTo(diaryMap);
+  const start=points[0],end=points[points.length-1];
+  diaryStartMarker=L.circleMarker([start.lat,start.lng],{radius:7,color:'#12734b',weight:2,fillColor:'#12734b',fillOpacity:1}).addTo(diaryMap).bindPopup(`Start · ${formatLisbonTime(start.timestamp)}`);
+  diaryEndMarker=L.circleMarker([end.lat,end.lng],{radius:7,color:'#9b1b30',weight:2,fillColor:'#9b1b30',fillOpacity:1}).addTo(diaryMap).bindPopup(`Ende · ${formatLisbonTime(end.timestamp)}`);
+  if(photos.length){
+    diaryPhotoLayer=L.layerGroup().addTo(diaryMap);
+    photos.forEach(photo=>{
+      const marker=L.marker([photo.lat,photo.lng],{icon:L.divIcon({className:'photo-pin',html:'<div class="photoMarker">📷</div>',iconSize:[28,28],iconAnchor:[14,14]})}).addTo(diaryPhotoLayer);
+      marker.bindPopup(`<div style="min-width:140px"><button type="button" style="border:0;background:none;padding:0;display:block;width:100%;text-align:left" onclick='openPhotoPreview(${JSON.stringify(photo.id)})'><img src="${photo.viewUrl}" alt="${escapeHtml(photo.name)}" style="width:100%;height:92px;object-fit:cover;border-radius:10px;background:#dfe5e5"></button><div class="small" style="margin-top:6px">${escapeHtml(photo.name)}${photo.captureTime?`<br>${escapeHtml(formatLisbonDateTime(photo.captureTime))}`:''}${photo.placeName?`<br>${escapeHtml(photo.placeName)}`:''}</div><button type="button" class="destpill" style="margin-top:6px" onclick='openPhotoPreview(${JSON.stringify(photo.id)})'>Groß anzeigen</button></div>`);
+    });
+  }
+  const bounds=[...latlngs,...photos.filter(p=>isValidCoordinate(p.lat,p.lng)).map(p=>[p.lat,p.lng])];
+  if(bounds.length>1)diaryMap.fitBounds(bounds,{padding:[24,24],maxZoom:15});
+  else diaryMap.setView(bounds[0],15);
+}
+function photoTimeLabel(photo){return photo.captureTime?formatLisbonDateTime(photo.captureTime):'Zeit unbekannt';}
+function photoLocationLabel(photo){return photo.placeName||(!photo.dateKey?'Nicht zugeordnet':(photo.lat!=null&&photo.lng!=null?`${photo.lat.toFixed(4)}, ${photo.lng.toFixed(4)}`:'Ohne Standort'));}
+function renderPhotoCard(photo,mode='day',index=0){
+  const actions=`<div class="actions"><button type="button" class="btn secondary" onclick='openPhotoPreview(${JSON.stringify(photo.id)})'>Vorschau</button><button type="button" class="btn secondary" onclick='removeDiaryPhoto(${JSON.stringify(photo.id)})'>Entfernen</button></div>`;
+  const assign=mode==='unassigned'?`<div class="diaryAssignRow"><select id="diaryAssign${index}" aria-label="Tag zuordnen">${DAYS.map(d=>`<option value="${d.date}">${d.label} · ${d.title}</option>`).join('')}</select><button type="button" class="btn secondary" onclick='assignPhotoToDay(${JSON.stringify(photo.id)},"diaryAssign${index}")'>Tag zuordnen</button></div>`:'';
+  return `<div class="diaryPhoto"><button type="button" style="padding:0;border:0;background:none;width:100%" onclick='openPhotoPreview(${JSON.stringify(photo.id)})'><img class="diaryThumb" src="${photo.viewUrl}" alt="${escapeHtml(photo.name)}"></button><div class="diaryPhotoBody"><b>${escapeHtml(photo.name)}</b><div class="diaryPhotoMeta">${escapeHtml(photoTimeLabel(photo))}<br>${escapeHtml(photoLocationLabel(photo))}${photo.assignmentSource==='manual'?'<br>Manuell einem Reisetag zugeordnet.':''}${photo.assignmentSource==='timeline'?'<br>Standort aus Zeitachse zugeordnet.':''}</div>${actions}${assign}</div></div>`;
+}
+function renderDiarySuggestions(dayKey,points){
+  const el=document.getElementById('diaryDaySuggestions'); if(!el)return;
+  const suggestions=detectVisitSuggestions(points).filter(s=>lisbonDateKey(s.start)===dayKey);
+  if(!suggestions.length){el.innerHTML='';return;}
+  el.innerHTML=suggestions.map(s=>`<div class="diarySuggestion"><div><b>Vermutlich besucht: ${escapeHtml(s.name)}</b><div class="small">ca. ${s.durationMinutes} Min. · ${escapeHtml(formatLisbonTime(s.start))}–${escapeHtml(formatLisbonTime(s.end))}</div></div>${isVisited(s.id)?'<span class="badge">✓ Bereits bestätigt</span>':`<button type="button" class="btn secondary" onclick="confirmSuggestedVisit('${s.id}')">Als besucht bestätigen</button>`}</div>`).join('');
+}
+function confirmSuggestedVisit(id){
+  if(!id)return;
+  localStorage.setItem('visited-dest-'+id,'1');
+  refreshVisitedUI(id);
+  renderDiaryDay();
+  showTimelineResult('Ziel als besucht markiert.');
+}
+function renderDiaryStats(points,dayPhotos){
+  const el=document.getElementById('diaryRouteStats'); if(!el)return;
+  if(!points.length){el.innerHTML='<div class="diaryStat">Für diesen Tag wurden noch keine Standortdaten importiert.</div>';return;}
+  const start=points[0],end=points[points.length-1],dist=routeDistanceKm(points);
+  el.innerHTML=`<div class="diaryStat">${points.length} Punkt(e)</div><div class="diaryStat"><span class="routeStart">Start</span> ${escapeHtml(formatLisbonTime(start.timestamp))}</div><div class="diaryStat"><span class="routeEnd">Ende</span> ${escapeHtml(formatLisbonTime(end.timestamp))}</div><div class="diaryStat">≈ ${escapeHtml(formatDistance(dist))}</div>${dayPhotos.length?`<div class="diaryStat">${dayPhotos.length} Foto(s)</div>`:''}`;
+}
+function closePhotoPreview(silent=false){
+  closeModal('photoPreviewModal');
+  if(!silent)diaryPhotoCache=[];
+}
+function openPhotoPreview(id){
+  const photo=diaryPhotoCache.find(p=>p.id===id); if(!photo)return;
+  const img=document.getElementById('photoPreviewImg'),title=document.getElementById('photoPreviewTitle'),meta=document.getElementById('photoPreviewMeta'),actions=document.getElementById('photoPreviewActions');
+  if(title)title.textContent=photo.name||'Foto';
+  if(img){img.src=photo.viewUrl||'';img.alt=photo.name||'Foto';}
+  if(meta)meta.textContent=[photoTimeLabel(photo),photoLocationLabel(photo)].filter(Boolean).join(' · ');
+  if(actions)actions.innerHTML=`<a class="btn secondary" href="${photo.viewUrl}" target="_blank" rel="noreferrer">Bild öffnen</a><button type="button" class="btn secondary" onclick='removeDiaryPhoto(${JSON.stringify(photo.id)})'>Entfernen</button>`;
+  openModal('photoPreviewModal');
+}
+function renderDiaryPhotos(dayKey,photos){
+  const dayPhotos=photos.filter(p=>p.dateKey===dayKey),mapped=dayPhotos.filter(p=>isValidCoordinate(Number(p.lat),Number(p.lng))),unlocated=dayPhotos.filter(p=>!isValidCoordinate(Number(p.lat),Number(p.lng))),unassigned=photos.filter(p=>!p.dateKey);
+  const gallery=document.getElementById('diaryPhotoGallery'),summary=document.getElementById('diaryPhotoSummary'),dayUnlocated=document.getElementById('diaryDayUnlocated'),unassignedEl=document.getElementById('diaryUnassignedPhotos');
+  const display=[...dayPhotos,...unassigned];
+  diaryPhotoCache=display;
+  if(summary)summary.textContent=dayPhotos.length?`${dayPhotos.length} Foto(s) für ${dayKey}, davon ${mapped.length} mit Kartenposition und ${unlocated.length} ohne Standort.`:'Für diesen Tag wurden noch keine Fotos zugeordnet.';
+  if(gallery)gallery.innerHTML=mapped.length?mapped.map((p,i)=>renderPhotoCard(p,'day',i)).join(''):'<div class="diaryEmpty">Für diesen Tag sind noch keine Fotos mit Kartenposition vorhanden.</div>';
+  if(dayUnlocated)dayUnlocated.innerHTML=unlocated.length?`<div class="sectiontitle">Ohne Standort</div><div class="diaryGallery">${unlocated.map((p,i)=>renderPhotoCard(p,'day-unlocated',i)).join('')}</div>`:'';
+  if(unassignedEl)unassignedEl.innerHTML=unassigned.length?`<div class="diaryAssignList">${unassigned.map((p,i)=>renderPhotoCard(p,'unassigned',i)).join('')}</div>`:'<div class="diaryEmpty">Keine unzugeordneten Fotos.</div>';
+  return {dayPhotos,mapped};
+}
+function renderDiaryDay(){
+  const day=DAYS[diaryDayIndex];
+  const token=++diaryRenderToken;
+  renderDiaryDayPicker();
+  closePhotoPreview(true);
+  Promise.all([readStore(DIARY_STORE).catch(()=>[]),readStore(PHOTO_STORE).catch(()=>[])]).then(([allPoints,allPhotos])=>{
+    if(token!==diaryRenderToken)return;
+    revokeDiaryUrls();
+    const points=sortedTimelinePoints(allPoints.filter(p=>(p.dateKey||lisbonDateKey(p.timestamp))===day.date).map(p=>({id:p.id,lat:Number(p.lat),lng:Number(p.lng),timestamp:normalizeTimelineTimestamp(p.timestamp)||p.timestamp,dateKey:p.dateKey||lisbonDateKey(p.timestamp)})).filter(p=>isValidCoordinate(p.lat,p.lng)&&inTripRange(p.timestamp)));
+    const photos=allPhotos.map(p=>({...p,viewUrl:photoViewUrl(p)}));
+    const rendered=renderDiaryPhotos(day.date,photos);
+    renderDiaryStats(points,rendered.dayPhotos);
+    renderDiarySuggestions(day.date,points);
+    renderDiaryMap(points,rendered.mapped);
+    refreshDiaryStorageUsage();
+  }).catch(()=>{
+    revokeDiaryUrls();
+    const stats=document.getElementById('diaryRouteStats'),empty=document.getElementById('diaryMapEmpty'),gallery=document.getElementById('diaryPhotoGallery'),unassigned=document.getElementById('diaryUnassignedPhotos');
+    if(stats)stats.innerHTML='<div class="diaryStat">Lokaler Speicher ist auf diesem Gerät derzeit nicht verfügbar.</div>';
+    if(empty){empty.style.display='flex';empty.textContent='Lokaler Speicher ist auf diesem Gerät derzeit nicht verfügbar.';}
+    if(gallery)gallery.innerHTML='<div class="diaryEmpty">Keine Fotodaten verfügbar.</div>';
+    if(unassigned)unassigned.innerHTML='<div class="diaryEmpty">Keine Fotodaten verfügbar.</div>';
+  });
+}
+function formatBytes(bytes){
+  if(!(bytes>0))return '0 B';
+  if(bytes<1024)return `${bytes} B`;
+  if(bytes<1024*1024)return `${(bytes/1024).toFixed(1)} KB`;
+  return `${(bytes/1024/1024).toFixed(1)} MB`;
+}
+function roughDiaryBytes(locations,photos){
+  let bytes=JSON.stringify(locations||[]).length;
+  (photos||[]).forEach(photo=>{const meta={...photo};delete meta.blob;bytes+=JSON.stringify(meta).length+(photo.size||photo.blob?.size||0);});
+  return bytes;
+}
+function refreshDiaryStorageUsage(){
+  const el=document.getElementById('diaryStorageUsage'); if(!el)return;
+  Promise.all([readStore(DIARY_STORE).catch(()=>[]),readStore(PHOTO_STORE).catch(()=>[])]).then(([locations,photos])=>{
+    const approx=roughDiaryBytes(locations,photos);
+    if(navigator.storage&&navigator.storage.estimate)return navigator.storage.estimate().then(est=>{el.textContent=`Tagebuch lokal: ca. ${formatBytes(approx)}${est?.quota?` · Browser gesamt ${formatBytes(est.usage||0)} von ${formatBytes(est.quota)}`:''}`;}).catch(()=>{el.textContent=`Tagebuch lokal: ca. ${formatBytes(approx)}`;});
+    el.textContent=`Tagebuch lokal: ca. ${formatBytes(approx)}`;
+  }).catch(()=>{el.textContent='';});
+}
+function deleteDiaryDay(){
+  const day=DAYS[diaryDayIndex];
+  if(typeof confirm==='function'&&!confirm(`Alle Tagebuchdaten für ${day.label} löschen?`))return;
+  Promise.all([readStore(DIARY_STORE).catch(()=>[]),readStore(PHOTO_STORE).catch(()=>[])]).then(([locations,photos])=>Promise.all([
+    deleteStoreKeys(DIARY_STORE,locations.filter(p=>(p.dateKey||lisbonDateKey(p.timestamp))===day.date).map(p=>p.id)),
+    deleteStoreKeys(PHOTO_STORE,photos.filter(p=>p.dateKey===day.date).map(p=>p.id))
+  ])).then(()=>{showTimelineResult(`Alle Tagebuchdaten für ${day.label} wurden gelöscht.`);refreshTimelineSummary();renderDiaryDay();refreshDiaryStorageUsage();}).catch(()=>showTimelineResult('Die Daten für diesen Tag konnten nicht gelöscht werden.',true));
+}
+function deleteEntireDiary(){
+  if(typeof confirm==='function'&&!confirm('Das gesamte Tagebuch mit allen Standortpunkten und Fotos löschen?'))return;
+  Promise.all([clearStore(DIARY_STORE),clearStore(PHOTO_STORE)]).then(()=>{showTimelineResult('Das gesamte Tagebuch wurde gelöscht.');refreshTimelineSummary();renderDiaryDay();refreshDiaryStorageUsage();}).catch(()=>showTimelineResult('Das Tagebuch konnte nicht vollständig gelöscht werden.',true));
+}
+function readBlobAsArrayBuffer(blob){
+  if(blob.arrayBuffer)return blob.arrayBuffer();
+  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsArrayBuffer(blob);});
+}
+function readBlobAsDataUrl(blob){
+  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result||''));reader.onerror=()=>reject(reader.error);reader.readAsDataURL(blob);});
+}
+function dataUrlToBlob(dataUrl,type='application/octet-stream'){
+  const parts=String(dataUrl||'').split(',');
+  const base64=parts[1]||'';
+  const bin=atob(base64);
+  const bytes=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)bytes[i]=bin.charCodeAt(i);
+  return new Blob([bytes],{type});
+}
+function exifAscii(view,offset,length){let out='';for(let i=0;i<length&&offset+i<view.byteLength;i++)out+=String.fromCharCode(view.getUint8(offset+i));return out;}
+function exifGpsCoord(values,ref){if(!Array.isArray(values)||values.length<3)return null;const dec=Number(values[0]||0)+Number(values[1]||0)/60+Number(values[2]||0)/3600;return /[SW]/i.test(ref||'')?-dec:dec;}
+function parseExifDateString(value){
+  const m=String(value||'').trim().match(/^(\d{4}):(\d{2}):(\d{2})[ T](\d{2}):(\d{2}):(\d{2})$/);
+  if(!m)return null;
+  return dateFromTimeZoneLocal({year:m[1],month:m[2],day:m[3],hour:m[4],minute:m[5],second:m[6]},LISBON_TZ).toISOString();
+}
+function parseJpegExif(buffer){
+  const view=buffer instanceof DataView?buffer:new DataView(buffer);
+  if(view.byteLength<4||view.getUint16(0,false)!==0xFFD8)return {};
+  let offset=2;
+  while(offset+4<=view.byteLength){
+    if(view.getUint8(offset)!==0xFF)break;
+    const marker=view.getUint8(offset+1);
+    if(marker===0xDA||marker===0xD9)break;
+    const size=view.getUint16(offset+2,false);
+    if(marker===0xE1&&size>=8&&exifAscii(view,offset+4,6)==='Exif\x00\x00')return parseExifTiff(view,offset+10);
+    offset+=2+size;
+  }
+  return {};
+}
+function parseExifTiff(view,base){
+  if(base+8>view.byteLength)return {};
+  const little=exifAscii(view,base,2)==='II';
+  const u16=(o)=>view.getUint16(o,little),u32=(o)=>view.getUint32(o,little);
+  if(u16(base+2)!==42)return {};
+  const typeSize={1:1,2:1,3:2,4:4,5:8};
+  function readValue(type,count,valueOffsetPos){
+    const unit=typeSize[type]; if(!unit)return null;
+    const total=unit*count;
+    const dataOffset=total<=4?valueOffsetPos:base+u32(valueOffsetPos);
+    if(dataOffset<0||dataOffset+total>view.byteLength)return null;
+    if(type===2)return exifAscii(view,dataOffset,count).replace(/\0+$/,'');
+    if(type===5){const arr=[];for(let i=0;i<count;i++){const num=u32(dataOffset+i*8),den=u32(dataOffset+i*8+4);arr.push(den?num/den:0);}return arr;}
+    const getter=type===3?u16:u32;
+    if(type===1){if(count===1)return view.getUint8(dataOffset);const arr=[];for(let i=0;i<count;i++)arr.push(view.getUint8(dataOffset+i));return arr;}
+    if(count===1)return getter(dataOffset);
+    const arr=[];for(let i=0;i<count;i++)arr.push(getter(dataOffset+i*unit));return arr;
+  }
+  function readIfd(offset){
+    if(!offset||base+offset+2>view.byteLength)return {};
+    const pos=base+offset,count=u16(pos),tags={};
+    for(let i=0;i<count;i++){
+      const entry=pos+2+i*12;if(entry+12>view.byteLength)break;
+      tags[u16(entry)]={type:u16(entry+2),count:u32(entry+4),valuePos:entry+8};
+    }
+    return tags;
+  }
+  const ifd0=readIfd(u32(base+4));
+  const out={orientation:null,captureTime:null,gps:null};
+  if(ifd0[0x0112])out.orientation=readValue(ifd0[0x0112].type,ifd0[0x0112].count,ifd0[0x0112].valuePos);
+  const exifPtr=ifd0[0x8769]?readValue(ifd0[0x8769].type,ifd0[0x8769].count,ifd0[0x8769].valuePos):null;
+  const gpsPtr=ifd0[0x8825]?readValue(ifd0[0x8825].type,ifd0[0x8825].count,ifd0[0x8825].valuePos):null;
+  const exifIfd=readIfd(exifPtr),gpsIfd=readIfd(gpsPtr);
+  const dateRaw=(exifIfd[0x9003]&&readValue(exifIfd[0x9003].type,exifIfd[0x9003].count,exifIfd[0x9003].valuePos))||(ifd0[0x0132]&&readValue(ifd0[0x0132].type,ifd0[0x0132].count,ifd0[0x0132].valuePos));
+  out.captureTime=parseExifDateString(dateRaw);
+  const lat=exifGpsCoord(gpsIfd[2]&&readValue(gpsIfd[2].type,gpsIfd[2].count,gpsIfd[2].valuePos),gpsIfd[1]&&readValue(gpsIfd[1].type,gpsIfd[1].count,gpsIfd[1].valuePos));
+  const lng=exifGpsCoord(gpsIfd[4]&&readValue(gpsIfd[4].type,gpsIfd[4].count,gpsIfd[4].valuePos),gpsIfd[3]&&readValue(gpsIfd[3].type,gpsIfd[3].count,gpsIfd[3].valuePos));
+  if(isValidCoordinate(lat,lng))out.gps={lat,lng};
+  return out;
+}
+function photoIdForFile(file){return `${file.name||'foto'}__${file.size||0}__${file.lastModified||0}`;}
+function maybeHeic(file){return /\.(heic|heif)$/i.test(file?.name||'')||/^image\/hei[cf]$/i.test(file?.type||'');}
+function ensureRenderableImage(file){
+  if(typeof createImageBitmap==='function')return createImageBitmap(file).then(img=>{if(img&&img.close)img.close();});
+  if(typeof Image==='undefined'||typeof URL==='undefined'||typeof URL.createObjectURL!=='function')return Promise.resolve();
+  return new Promise((resolve,reject)=>{const url=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(url);resolve();};img.onerror=()=>{URL.revokeObjectURL(url);reject(new Error('decode failed'));};img.src=url;});
+}
+function nearestTimelinePoint(timestamp,points){
+  if(!timestamp||!points.length)return null;
+  let best=null,target=new Date(timestamp).getTime();
+  points.forEach(point=>{const diff=Math.abs(new Date(point.timestamp).getTime()-target);if(!best||diff<best.diff)best={point,diff};});
+  return best&&best.diff<=15*60000?best.point:null;
+}
+function resolvePhotoAssignment(meta,timelinePoints){
+  if(meta.gps&&isValidCoordinate(meta.gps.lat,meta.gps.lng)){
+    const near=nearestDestination(meta.gps.lat,meta.gps.lng,4);
+    return {dateKey:meta.captureTime?lisbonDateKey(meta.captureTime):null,lat:meta.gps.lat,lng:meta.gps.lng,placeName:near?near.name:'',assignmentSource:'gps'};
+  }
+  if(meta.captureTime){
+    const closest=nearestTimelinePoint(meta.captureTime,timelinePoints);
+    if(closest){
+      const near=nearestDestination(closest.lat,closest.lng,4);
+      return {dateKey:closest.dateKey||lisbonDateKey(closest.timestamp),lat:closest.lat,lng:closest.lng,placeName:near?near.name:'',assignmentSource:'timeline'};
+    }
+  }
+  return {dateKey:null,lat:null,lng:null,placeName:'',assignmentSource:'unassigned'};
+}
+function choosePhotoFiles(){const input=document.getElementById('photoFileInput');if(input)input.click();}
+function handlePhotoFiles(event){
+  const files=[...(event.target.files||[])];
+  event.target.value='';
+  if(!files.length)return;
+  importPhotoFiles(files);
+}
+async function importPhotoFiles(files){
+  showTimelineResult('Fotos werden importiert …');
+  try{
+    const [existingPhotos,timelinePoints]=await Promise.all([readStore(PHOTO_STORE).catch(()=>[]),readStore(DIARY_STORE).catch(()=>[])]);
+    const existingIds=new Set(existingPhotos.map(p=>p.id));
+    const newRecords=[];
+    let added=0,duplicates=0,unsupported=0,unassigned=0;
+    const warnings=[];
+    for(const file of files){
+      const id=photoIdForFile(file);
+      if(existingIds.has(id)){duplicates++;continue;}
+      try{await ensureRenderableImage(file);}catch(_e){unsupported++;if(maybeHeic(file))warnings.push(`HEIC/HEIF wird von diesem Browser vermutlich nicht unterstützt: ${file.name}`);continue;}
+      let exif={};
+      if(/\.(jpe?g)$/i.test(file.name||'')||/^image\/jpe?g$/i.test(file.type||'')){
+        try{exif=parseJpegExif(await readBlobAsArrayBuffer(file));}catch(_e){}
+      }else if(maybeHeic(file))warnings.push(`HEIC/HEIF wird von diesem Browser vermutlich nur eingeschränkt unterstützt: ${file.name}`);
+      const assigned=resolvePhotoAssignment({captureTime:exif.captureTime||null,gps:exif.gps||null},timelinePoints);
+      if(!assigned.dateKey)unassigned++;
+      newRecords.push({id,name:file.name||'Foto',size:file.size||0,lastModified:file.lastModified||0,type:file.type||'application/octet-stream',blob:file,captureTime:exif.captureTime||null,orientation:exif.orientation||null,lat:assigned.lat,lng:assigned.lng,dateKey:assigned.dateKey||null,placeName:assigned.placeName||'',assignmentSource:assigned.assignmentSource||'unassigned'});
+      existingIds.add(id);
+      added++;
+    }
+    await writeStoreRecords(PHOTO_STORE,newRecords);
+    refreshTimelineSummary();
+    refreshDiaryStorageUsage();
+    renderDiaryDay();
+    showTimelineResult(`Fotos importiert: ${added} neu, ${duplicates} bereits vorhanden, ${unsupported} nicht lesbar, ${unassigned} nicht zugeordnet.${warnings.length?` ${warnings[0]}`:''}`,unsupported>0&&added===0);
+  }catch(_e){showTimelineResult('Fotoimport fehlgeschlagen: Bilder konnten nicht lokal gespeichert werden.',true);}
+}
+function assignPhotoToDay(id,selectId){
+  const select=document.getElementById(selectId); if(!select)return;
+  readStore(PHOTO_STORE).then(photos=>{
+    const photo=photos.find(p=>p.id===id); if(!photo)return;
+    photo.dateKey=select.value||null;
+    photo.assignmentSource='manual';
+    if(!photo.placeName)photo.placeName='Manuell zugeordnet';
+    return writeStoreRecords(PHOTO_STORE,[photo]);
+  }).then(()=>{showTimelineResult('Foto einem Reisetag zugeordnet.');renderDiaryDay();refreshTimelineSummary();refreshDiaryStorageUsage();}).catch(()=>showTimelineResult('Foto konnte nicht zugeordnet werden.',true));
+}
+function removeDiaryPhoto(id){
+  if(typeof confirm==='function'&&!confirm('Dieses Foto aus dem Tagebuch löschen?'))return;
+  deleteStoreKeys(PHOTO_STORE,[id]).then(()=>{closePhotoPreview();showTimelineResult('Foto entfernt.');refreshTimelineSummary();renderDiaryDay();refreshDiaryStorageUsage();}).catch(()=>showTimelineResult('Foto konnte nicht gelöscht werden.',true));
+}
+function chooseDiaryBackupFile(){const input=document.getElementById('diaryBackupInput');if(input)input.click();}
+function handleDiaryBackupFile(event){
+  const file=event.target.files&&event.target.files[0];
+  event.target.value='';
+  if(!file)return;
+  const reader=new FileReader();
+  reader.onload=()=>{let data;try{data=JSON.parse(reader.result);}catch(_e){showTimelineResult('Backup-Datei ist kein gültiges JSON.',true);return;}importDiaryBackup(data);};
+  reader.onerror=()=>showTimelineResult('Backup-Datei konnte nicht gelesen werden.',true);
+  reader.readAsText(file);
+}
+async function exportDiaryBackup(){
+  try{
+    const [locations,photos]=await Promise.all([readStore(DIARY_STORE).catch(()=>[]),readStore(PHOTO_STORE).catch(()=>[])]);
+    const photoPayload=[];
+    for(const photo of photos){
+      photoPayload.push({...photo,blobBase64:photo.blob?await readBlobAsDataUrl(photo.blob):'',blob:undefined});
+      delete photoPayload[photoPayload.length-1].viewUrl;
+    }
+    const blob=new Blob([JSON.stringify({version:1,exportedAt:new Date().toISOString(),locations,photos:photoPayload})],{type:'application/json'});
+    const url=URL.createObjectURL(blob),a=document.createElement('a');
+    a.href=url;a.download='algarve-tagebuch-backup.json';a.click();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    showTimelineResult('Backup exportiert. Fotos sind im JSON als Data-URL enthalten und können die Datei groß machen.');
+  }catch(_e){showTimelineResult('Backup konnte nicht exportiert werden.',true);}
+}
+async function importDiaryBackup(data){
+  try{
+    const prepared=prepareTimelinePoints(data?.locations||[]);
+    const pointResult=await storeTimelinePoints(prepared.points);
+    const existingPhotos=await readStore(PHOTO_STORE).catch(()=>[]);
+    const existingIds=new Set(existingPhotos.map(p=>p.id));
+    const photoRecords=[];
+    let photoDuplicates=0;
+    for(const raw of data?.photos||[]){
+      const id=String(raw?.id||'');
+      if(!id||existingIds.has(id)){if(id)photoDuplicates++;continue;}
+      const blob=raw?.blobBase64?dataUrlToBlob(raw.blobBase64,raw.type||'application/octet-stream'):null;
+      photoRecords.push({id,name:raw.name||'Foto',size:raw.size||blob?.size||0,lastModified:raw.lastModified||0,type:raw.type||blob?.type||'application/octet-stream',blob,captureTime:raw.captureTime||null,orientation:raw.orientation||null,lat:isValidCoordinate(Number(raw.lat),Number(raw.lng))?Number(raw.lat):null,lng:isValidCoordinate(Number(raw.lat),Number(raw.lng))?Number(raw.lng):null,dateKey:raw.dateKey&&raw.dateKey>=DAYS[0].date&&raw.dateKey<=DAYS[DAYS.length-1].date?raw.dateKey:null,placeName:raw.placeName||'',assignmentSource:raw.assignmentSource||'backup'});
+      existingIds.add(id);
+    }
+    await writeStoreRecords(PHOTO_STORE,photoRecords);
+    refreshTimelineSummary();
+    refreshDiaryStorageUsage();
+    renderDiaryDay();
+    showTimelineResult(`Backup importiert: ${pointResult.added} neue Standortpunkte, ${pointResult.duplicates} doppelte Standortpunkte, ${photoRecords.length} neue Fotos, ${photoDuplicates} doppelte Fotos.`);
+  }catch(_e){showTimelineResult('Backup konnte nicht importiert werden.',true);}
 }
 document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>goToView(btn.dataset.view));
 document.getElementById('search').addEventListener('input',e=>renderDays(e.target.value));
 document.getElementById('destSearch').addEventListener('input',()=>renderDestinations());
 document.getElementById('foodSearch').addEventListener('input',()=>renderFood());
-document.addEventListener('keydown',e=>{const modal=activeModal();if(modal&&e.key==='Escape'){e.preventDefault();modal.id==='destModal'?closeDestination():closeRestaurant();}});
+document.addEventListener('keydown',e=>{const modal=activeModal();if(modal&&e.key==='Escape'){e.preventDefault();closeKnownModal(modal.id);}});
 document.addEventListener('click',e=>{const disabled=e.target.closest('a[aria-disabled="true"]');if(disabled)e.preventDefault();});
 window.addEventListener('online',syncOnlineState);
 window.addEventListener('offline',syncOnlineState);
-renderToday();renderDays();renderDestFilters();renderDestinations();renderFoodFilters();renderFood();renderBookings();syncOnlineState();
+renderToday();renderDays();renderDestFilters();renderDestinations();renderFoodFilters();renderFood();renderBookings();renderDiaryDayPicker();renderDiaryDay();refreshTimelineSummary();syncOnlineState();
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body></html>
