@@ -88,6 +88,13 @@ nav button{font-size:10px}
 .schedule-dests{display:flex;flex-direction:column;gap:10px;margin:8px 0 14px}.schedule-dest{display:grid;grid-template-columns:112px 1fr;background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:0 2px 9px rgba(0,0,0,.025);cursor:pointer;text-align:left;width:100%;padding:0;color:inherit}.schedule-dest img{width:112px;height:92px;object-fit:cover;background:#dfe5e5}.schedule-dest-body{padding:9px 10px}.schedule-dest-title{font-weight:900;font-size:14px;line-height:1.2}.schedule-dest-meta{font-size:11px;color:var(--muted);margin-top:4px;display:block}.schedule-dest-hint{font-size:11px;color:var(--accent);font-weight:800;margin-top:7px;display:block}
 
 .visual-dests{display:flex;flex-direction:column;gap:14px;margin:10px 0 20px}.visual-dest{display:block;width:100%;padding:0;text-align:left;border:1px solid var(--line);border-radius:18px;overflow:hidden;background:#fff;color:inherit;box-shadow:0 3px 12px rgba(0,0,0,.04);cursor:pointer}.visual-dest img{display:block;width:100%;height:160px;object-fit:cover;background:#dfe5e5}.visual-dest-copy{display:block;padding:12px 14px 14px}.visual-dest-title{display:block;font-size:17px;font-weight:900;color:var(--accent)}.visual-dest-desc{display:block;font-size:13px;line-height:1.45;margin-top:5px;color:var(--ink)}.visual-dest-open{display:block;font-size:12px;font-weight:850;color:var(--accent);margin-top:9px}.partlabel{font-size:16px;font-weight:900;color:var(--accent);margin:16px 0 7px;padding-bottom:6px;border-bottom:1px solid var(--line)}@media(min-width:600px){.visual-dest img{height:220px}}
+
+.daypicker-row{display:flex;align-items:center;gap:8px}
+.daypicker-nav{border:1px solid var(--line);background:#fff;border-radius:12px;width:42px;height:42px;flex:none;font-size:19px;font-weight:800;color:var(--accent);cursor:pointer}
+.daypicker-nav:disabled{opacity:.35;cursor:default}
+.daypicker-select{flex:1;min-width:0;padding:10px 10px;border:1px solid var(--line);border-radius:12px;font-size:13px;background:#fff;color:var(--ink);font-weight:750}
+.todayflag{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:9px}
+.routecta{display:block;text-align:center;font-size:14px;padding:13px 14px;border-radius:14px}
 </style>
 </head>
 <body>
@@ -367,11 +374,21 @@ function destinationPills(date){
   return `<div class="sectiontitle">Ziele antippen</div><div class="destinline">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);return d?`<button class="destpill" onclick="openDestination('${id}')">📍 ${d.name}</button>`:''}).join('')}</div>`;
 }
 let destCategory='Alle';
+function destCardHtml(d){
+ return `<article class="destcard" onclick="openDestination('${d.id}')"><img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div><div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div></div></article>`;
+}
 function renderDestinations(){
  const q=(document.getElementById('destSearch').value||'').toLowerCase();
  const list=DESTINATIONS.filter(d=>(d.name+' '+d.area+' '+d.cat+' '+d.text).toLowerCase().includes(q));
- document.getElementById('destGrid').innerHTML=list.map(d=>`<article class="destcard" onclick="openDestination('${d.id}')"><img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div><div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div></div></article>`).join('');
+ document.getElementById('destGrid').innerHTML=list.map(destCardHtml).join('');
  updateDistances();
+}
+// Compact destination cards for a given trip day (reuses DESTINATIONS + openDestination modal).
+function dayDestCards(date){
+ const ids=DAY_DESTS[date]||[];
+ const list=ids.map(id=>DESTINATIONS.find(x=>x.id===id)).filter(Boolean);
+ if(!list.length)return '';
+ return `<div class="destgrid">${list.map(destCardHtml).join('')}</div>`;
 }
 const DAYPART_DESTS={
 '2026-09-07':{Vormittag:['faro-altstadt','arco-vila','se-faro'],Nachmittag:['monchique']},
@@ -418,32 +435,112 @@ const ORIGIN='Quinta da Lila Monchique Tojal Portugal';
 function mapsDir(dest){return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(ORIGIN)+'&destination='+encodeURIComponent(dest);}
 function mapsSearch(q){return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(q);}
 function weather(place){return 'https://www.google.com/search?q='+encodeURIComponent('Wetter '+place+' Portugal');}
-function restaurantButtons(ids){
+function restaurantButtons(ids,showDistance=false){
   if(!ids||!ids.length)return '';
   return `<div class="reclist">${ids.map((id,i)=>{
     const r=FOOD_BY_ID[id]; if(!r)return '';
     const tag=i===0?'⭐ Hauptempfehlung':'Alternative';
-    return `<button class="recitem ${i===0?'recmain':''}" onclick="openRestaurant('${id}')"><div class="rname">${r.star?'<span class=\"foodstar\">⭐</span> ':''}${r.name}<span class="rectag">· ${tag}</span></div><div class="foodmeta">${r.place} · ${r.price}</div></button>`;
+    const dist=showDistance?`<span class="dist-badge" data-kind="food" data-id="${id}" style="display:none"></span>`:'';
+    return `<button class="recitem ${i===0?'recmain':''}" onclick="openRestaurant('${id}')"><div class="rname">${r.star?'<span class=\"foodstar\">⭐</span> ':''}${r.name}<span class="rectag">· ${tag}</span></div><div class="foodmeta">${r.place} · ${r.price} ${dist}</div></button>`;
   }).join('')}</div>`;
 }
-function dayCard(d,open=true){
+function dayCard(d,open=true,includeFood=true){
  let shownParts=new Set();const items=d.items.map((x,i)=>{const part=itemPart(x[1]);const head=(part&&!shownParts.has(part))?`<div class="partlabel">${part}</div>`:'';if(part)shownParts.add(part);const cards=visualDestCards(d.date,i);return `${head}<div class="item"><div class="icon">${x[0]}</div><div class="time">${x[1]}</div><div class="desc">${x[2]}</div></div>${cards}`;}).join('');
  const tips=(d.tips||[]).map(t=>`<div class="tip">${t}</div>`).join('');
  const p=dayPhoto(d.date); const pc=p?CREDITS[p.id]:null; const photo=p?`<img class="dayphoto" src="${p.src}" alt="${p.place}" loading="lazy"><div class="photocredit">${pc?`Foto: ${pc.author||'Wikimedia Commons'}${pc.license?' · '+pc.license:''}`:''}</div>`:'';
  const fav=localStorage.getItem('fav-'+d.date)==='1';
+ const food=includeFood?`<div class="sectiontitle">Lokalempfehlung</div><div class="food">${d.food}</div>${restaurantButtons(d.restaurants)}`:'';
  return `<details class="card" ${open?'open':''}><summary><div class="dayhead"><div class="datepill">${d.label}</div><div><div class="daytitle">${d.title}</div><div class="route">${d.route}</div><div class="drive">🚗 ${d.drive}</div><div class="badge"><span class="chev">›</span> Details</div></div></div></summary>${photo}
  <div class="actions"><button class="favbtn ${fav?'on':''}" onclick="toggleFav('${d.date}',this)">${fav?'★ Favorit':'☆ Favorit'}</button><a class="btn" target="_blank" href="${mapsDir(d.map_dest)}">Route in Maps</a><a class="btn secondary" target="_blank" href="${mapsSearch(d.map_dest)}">Ziel anzeigen</a><a class="btn sand" target="_blank" href="${weather(d.place)}">Wetter</a></div>
  <div class="sectiontitle">Tagesablauf</div>${items}
- <div class="sectiontitle">Lokalempfehlung</div><div class="food">${d.food}</div>${restaurantButtons(d.restaurants)}
+ ${food}
  ${tips?`<div class="sectiontitle">Tipp</div>${tips}`:''}<div class="sectiontitle">Meine Notiz</div><textarea class="notearea" placeholder="Notiz zu diesem Tag …" oninput="saveNote('${d.date}',this.value)">${localStorage.getItem('note-'+d.date)||''}</textarea><div class="saved">Wird nur auf diesem Gerät gespeichert.</div></details>`;
 }
 function toggleFav(date,btn){const on=localStorage.getItem('fav-'+date)==='1';localStorage.setItem('fav-'+date,on?'0':'1');btn.classList.toggle('on',!on);btn.textContent=!on?'★ Favorit':'☆ Favorit';}
 function saveNote(date,val){localStorage.setItem('note-'+date,val);}
 function localDateKey(){const now=new Date();return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;}
+// Switches the visible bottom-nav tab/view (shared by nav buttons and in-dashboard shortcuts).
+function goToView(name){
+  const btn=[...document.querySelectorAll('nav button')].find(b=>b.dataset.view===name);
+  if(!btn)return;
+  document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  if(name==='destinations'){ensureDestMap();if(destMap)setTimeout(()=>destMap.invalidateSize(),0);}
+  if(name==='food'){ensureFoodMap();if(foodMap)setTimeout(()=>foodMap.invalidateSize(),0);}
+}
+// Heute dashboard: which trip day (index into DAYS) is currently selected.
+// Defaults to the real current day if it's within the trip period, otherwise the nearest trip day.
+// This never affects the user's real geolocation (userLoc stays independent of the selected day).
+function defaultDayIndex(){
+  const key=localDateKey();
+  const idx=DAYS.findIndex(d=>d.date===key);
+  if(idx!==-1)return idx;
+  if(key<DAYS[0].date)return 0;
+  if(key>DAYS[DAYS.length-1].date)return DAYS.length-1;
+  return 0;
+}
+let selectedDayIndex=defaultDayIndex();
+function selectDay(idx){
+  selectedDayIndex=Math.max(0,Math.min(DAYS.length-1,Number(idx)));
+  renderToday();
+}
+function shiftDay(delta){selectDay(selectedDayIndex+delta);}
+function jumpToToday(){const idx=DAYS.findIndex(d=>d.date===localDateKey());if(idx!==-1)selectDay(idx);}
+// Picks the primary "Route" target for the selected day: for the real current day it tries the
+// next itinerary stop that hasn't passed yet (using the existing ITEM_DESTS/DAY_DESTS mappings),
+// otherwise it falls back to the day's first curated destination, then to map_dest.
+function nextRouteTarget(d){
+  const ids=DAY_DESTS[d.date];
+  if(ids&&ids.length){
+    if(d.date===localDateKey()){
+      const now=new Date(),nowMinutes=now.getHours()*60+now.getMinutes();
+      for(let i=0;i<d.items.length;i++){
+        const m=/^(\d{1,2}):(\d{2})$/.exec(d.items[i][1]||'');
+        if(!m)continue;
+        if(parseInt(m[1],10)*60+parseInt(m[2],10)<nowMinutes)continue;
+        const destIds=(ITEM_DESTS[d.date]||{})[i];
+        const dest=destIds&&destIds.length?DESTINATIONS.find(x=>x.id===destIds[0]):null;
+        if(dest)return{name:dest.name,map:dest.map};
+      }
+    }
+    const first=DESTINATIONS.find(x=>x.id===ids[0]);
+    if(first)return{name:first.name,map:first.map};
+  }
+  return{name:d.place,map:d.map_dest};
+}
 function renderToday(){
- const found=DAYS.find(d=>d.date===localDateKey()),el=document.getElementById('today');
- if(found){const p=dayPhoto(found.date); el.innerHTML=`<div class="hero ${p?'photoHero':''}" ${p?`style="background-image:url('${p.src}')"`:''}><h2>${found.title}</h2><p>${found.label} · ${found.drive}</p><div class="heroEmoji">${found.hero}</div></div>${dayCard(found,true)}`;}
- else el.innerHTML=`<div class="hero"><h2>Reise-Cockpit</h2><p>Algarve · 06.–19.09.2026</p><div class="heroEmoji">☀️</div></div><div class="card"><b>Nächste Reise</b><p class="small">Am 06.09.2026 startet eure Reise. Unter „Tage“ findest du das komplette Programm, Routen, Wetter und Lokaltipps.</p></div>${dayCard(DAYS[0],false)}`;
+ const d=DAYS[selectedDayIndex],el=document.getElementById('today');
+ const isRealToday=d.date===localDateKey();
+ const p=dayPhoto(d.date);
+ const target=nextRouteTarget(d);
+ const options=DAYS.map((x,i)=>`<option value="${i}" ${i===selectedDayIndex?'selected':''}>${x.label} · ${x.title}</option>`).join('');
+ el.innerHTML=`<div class="card daypicker">
+  <div class="daypicker-row">
+   <button type="button" class="daypicker-nav" onclick="shiftDay(-1)" ${selectedDayIndex===0?'disabled':''} aria-label="Vorheriger Tag">‹</button>
+   <select class="daypicker-select" onchange="selectDay(this.value)" aria-label="Reisetag wählen">${options}</select>
+   <button type="button" class="daypicker-nav" onclick="shiftDay(1)" ${selectedDayIndex===DAYS.length-1?'disabled':''} aria-label="Nächster Tag">›</button>
+  </div>
+  <div class="todayflag">${isRealToday?'<span class="badge">📍 Heute</span>':`<span class="small">Ausgewählter Reisetag</span><button type="button" class="destpill" onclick="jumpToToday()">Zu heute springen</button>`}</div>
+ </div>
+ <div class="hero ${p?'photoHero':''}" ${p?`style="background-image:url('${p.src}')"`:''}><h2>${d.title}</h2><p>${d.label} · ${d.place}</p><div class="heroEmoji">${d.hero}</div></div>
+ <div class="actions"><a class="btn routecta" style="flex:1" target="_blank" href="${mapsDir(target.map)}">🧭 Route: ${target.name}</a></div>
+ <div class="card">
+  <div class="sectiontitle">Ziele heute</div>
+  ${dayDestCards(d.date)||'<p class="small">Für diesen Tag sind keine festen Einzelziele hinterlegt.</p>'}
+ </div>
+ <div class="card">
+  <div class="sectiontitle">Wetter</div>
+  <p class="small">Kurzcheck für ${d.place} – die vollständige Vorhersage gibt es im Wetter-Tab.</p>
+  <div class="actions"><a class="btn sand" target="_blank" href="${weather(d.place)}">Wetter ${d.place}</a><button type="button" class="btn secondary" onclick="goToView('tips')">Zum Wetter-Tab</button></div>
+ </div>
+ <div class="card">
+  <div class="sectiontitle">Essen in der Nähe</div>
+  ${d.restaurants&&d.restaurants.length?restaurantButtons(d.restaurants,true):'<p class="small">Für diesen Tag keine feste Restaurantauswahl hinterlegt – im Essen-Tab frei stöbern.</p>'}
+ </div>
+ ${dayCard(d,true,false)}`;
+ updateDistances();
 }
 function renderDays(filter=''){const q=filter.toLowerCase();document.getElementById('daysList').innerHTML=DAYS.filter(d=>JSON.stringify(d).toLowerCase().includes(q)).map(d=>dayCard(d,false)).join('');}
 let foodMap=null;
@@ -529,7 +626,7 @@ function openRestaurant(id){
 }
 function closeRestaurant(){document.getElementById('foodModal').classList.remove('show');document.body.style.overflow='';}
 function renderBookings(){document.getElementById('bookingList').innerHTML=BOOKINGS.map(b=>`<div class="card"><b>${b[0]}</b><div class="small" style="margin-top:6px">${b[1]}</div></div>`).join('');}
-document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));document.getElementById(btn.dataset.view).classList.add('active');if(btn.dataset.view==='destinations'){ensureDestMap();if(destMap)setTimeout(()=>destMap.invalidateSize(),0);}if(btn.dataset.view==='food'){ensureFoodMap();if(foodMap)setTimeout(()=>foodMap.invalidateSize(),0);}});
+document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>goToView(btn.dataset.view));
 document.getElementById('search').addEventListener('input',e=>renderDays(e.target.value));
 document.getElementById('destSearch').addEventListener('input',()=>renderDestinations());
 document.getElementById('foodSearch').addEventListener('input',()=>renderFood());
