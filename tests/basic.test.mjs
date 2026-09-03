@@ -129,7 +129,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
   };
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -313,3 +313,64 @@ test('marker popup exposes a visited toggle that reflects and flips state',()=>{
   assert.match(popup,/aria-pressed="true"/);
   assert.match(popup,/✓ Besucht/);
 });
+
+test('Tagebuch: parses "lat, lng" style coordinate strings in various notations',()=>{
+  const {app}=buildSandbox();
+  const a=app.parseLatLngPair('37.123456, -8.654321');
+  assert.equal(a.lat,37.123456);
+  assert.equal(a.lng,-8.654321);
+  const b=app.parseLatLngPair('37.123456°, -8.654321°');
+  assert.equal(b.lat,37.123456);
+  assert.equal(b.lng,-8.654321);
+  assert.equal(app.parseLatLngPair('not-a-coordinate'),null);
+  assert.equal(app.parseLatLngPair(null),null);
+});
+
+test('Tagebuch: extracts points from the legacy Google Takeout Records.json format',()=>{
+  const {app}=buildSandbox();
+  const data={locations:[
+    {latitudeE7:371234567,longitudeE7:-86543210,timestampMs:'1757260800000'},
+    {latitude:37.5,longitude:-8.7,timestamp:'2026-09-08T10:00:00Z'},
+    {latitudeE7:371234567}
+  ]};
+  const points=app.extractTimelinePoints(data);
+  assert.equal(points.length,2);
+  assert.ok(Math.abs(points[0].lat-37.1234567)<1e-6);
+  assert.ok(Math.abs(points[0].lng-(-8.654321))<1e-6);
+  assert.equal(points[1].timestamp,'2026-09-08T10:00:00Z');
+});
+
+test('Tagebuch: extracts points from the current semanticSegments/rawSignals Timeline export',()=>{
+  const {app}=buildSandbox();
+  const data={
+    semanticSegments:[
+      {startTime:'2026-09-07T09:00:00Z',endTime:'2026-09-07T09:30:00Z',timelinePath:[{point:'37.01°, -8.41°',time:'2026-09-07T09:05:00Z'}]},
+      {startTime:'2026-09-09T12:00:00Z',visit:{topCandidate:{placeLocation:'37.10, -8.67'}}}
+    ],
+    rawSignals:[{position:{LatLng:'37.20, -8.90',timestamp:'2026-09-10T08:00:00Z'}}]
+  };
+  const points=app.extractTimelinePoints(data);
+  assert.equal(points.length,3);
+  assert.ok(points.some(p=>p.timestamp==='2026-09-07T09:05:00Z'&&Math.abs(p.lat-37.01)<1e-6));
+  assert.ok(points.some(p=>p.timestamp==='2026-09-09T12:00:00Z'&&Math.abs(p.lng-(-8.67))<1e-6));
+  assert.ok(points.some(p=>p.timestamp==='2026-09-10T08:00:00Z'));
+});
+
+test('Tagebuch: only keeps points within the actual trip period 06.–19.09.2026',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.inTripRange('2026-09-06T00:00:00Z'),true);
+  assert.equal(app.inTripRange('2026-09-19T23:59:59Z'),true);
+  assert.equal(app.inTripRange('2026-09-05T23:59:59Z'),false);
+  assert.equal(app.inTripRange('2026-09-20T00:00:00Z'),false);
+  assert.equal(app.inTripRange('not-a-date'),false);
+});
+
+test('Tagebuch: point id is stable for identical coordinates + timestamp (dedup key)',()=>{
+  const {app}=buildSandbox();
+  const a={lat:37.1234561,lng:-8.654321,timestamp:'2026-09-07T09:05:00Z'};
+  const b={lat:37.123456,lng:-8.654321,timestamp:'2026-09-07T09:05:00Z'};
+  assert.equal(app.timelinePointId(a),app.timelinePointId(b));
+  const c={...b,timestamp:'2026-09-07T09:06:00Z'};
+  assert.notEqual(app.timelinePointId(b),app.timelinePointId(c));
+});
+
