@@ -124,6 +124,16 @@ nav button{font-size:10px}
 <div class="notice" style="margin-top:10px">Angaben zu Telefon und Öffnungstagen basieren auf zuletzt verfügbaren Quellen und können sich ändern – bitte vor dem Besuch kurz prüfen bzw. reservieren.</div>
 </section>
 <section id="bookings" class="view"><div class="hero"><h2>Buchungen</h2><p>Die wichtigsten Daten ohne Suchen</p><div class="heroEmoji">🎫</div></div><div id="bookingList"></div></section>
+<section id="tagebuch" class="view"><div class="hero"><h2>Tagebuch</h2><p>Standortverlauf aus Google Maps als Zeitachse importieren</p><div class="heroEmoji">📓</div></div>
+<div class="card">
+<div class="sectiontitle">Zeitachse</div>
+<p class="small">Importiere deinen Google-Standortverlauf (Export von Android) für den Reisezeitraum 06.–19.09.2026. Die Standortpunkte werden ausschließlich lokal auf diesem Gerät gespeichert (IndexedDB) – es wird nichts hochgeladen oder geteilt.</p>
+<div class="actions"><button type="button" class="btn" id="timelineUpdateBtn" onclick="startTimelineImport()">Zeitachse aktualisieren</button></div>
+<div id="timelineSummary" class="small" style="margin-top:10px"></div>
+<div id="timelineResult" class="small" style="margin-top:6px"></div>
+</div>
+<input type="file" id="timelineFileInput" accept="application/json,.json" style="display:none" onchange="handleTimelineFile(event)">
+</section>
 <section id="tips" class="view"><div class="hero"><h2>Wetter & wichtig</h2><p>Für spontane Entscheidungen unterwegs</p><div class="heroEmoji">🌦️</div></div>
 <div class="card">
 <div class="sectiontitle">Wetter</div>
@@ -166,6 +176,23 @@ nav button{font-size:10px}
     </div>
   </div>
 </div>
+<div id="timelineInstructionsModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="timelineInstructionsTitle" onclick="if(event.target===this)closeTimelineInstructions()">
+  <div class="modalbox" tabindex="-1">
+    <button type="button" class="modalclose" onclick="closeTimelineInstructions()" aria-label="Schließen">×</button>
+    <div class="card">
+      <div id="timelineInstructionsTitle" class="daytitle">Zeitachse von Android exportieren</div>
+      <p class="small">So exportierst du deinen Google-Standortverlauf als Datei:</p>
+      <ol class="small" style="padding-left:18px;line-height:1.7;color:var(--ink)">
+        <li>Google Maps App öffnen und oben rechts auf das Profilbild tippen.</li>
+        <li><b>Deine Zeitachse</b> auswählen.</li>
+        <li>Oben rechts auf die drei Punkte (⋮) tippen → <b>Standortdaten verwalten</b>.</li>
+        <li>Unter „Export“ die Option <b>Zeitachsendaten exportieren</b> wählen.</li>
+        <li>Die Datei (Timeline.json) speichern, z. B. in „Downloads“, und bei Bedarf auf dieses Gerät übertragen.</li>
+      </ol>
+      <div class="actions"><button type="button" class="btn" onclick="chooseTimelineFile()">Datei auswählen</button></div>
+    </div>
+  </div>
+</div>
 </main>
 <nav>
 <button type="button" class="active" data-view="today" aria-label="Tagesplan">📍<br>Tagesplan</button>
@@ -173,6 +200,7 @@ nav button{font-size:10px}
 <button type="button" data-view="destinations" aria-label="Ziele">🗺️<br>Ziele</button>
 <button type="button" data-view="food" aria-label="Essen">🍴<br>Essen</button>
 <button type="button" data-view="bookings" aria-label="Buchung">🎫<br>Buchung</button>
+<button type="button" data-view="tagebuch" aria-label="Tagebuch">📓<br>Tagebuch</button>
 <button type="button" data-view="tips" aria-label="Wetter">🌦️<br>Wetter</button>
 </nav>
 <script src="vendor/leaflet/leaflet.js"></script>
@@ -617,6 +645,7 @@ function goToView(name){
   document.getElementById(name).classList.add('active');
   if(name==='destinations'){ensureDestMap();if(destMap)setTimeout(()=>destMap.invalidateSize(),0);}
   if(name==='food'){ensureFoodMap();if(foodMap)setTimeout(()=>foodMap.invalidateSize(),0);}
+  if(name==='tagebuch'){refreshTimelineSummary();}
 }
 // Heute dashboard: which trip day (index into DAYS) is currently selected.
 // Defaults to the real current day if it's within the trip period, otherwise the nearest trip day.
@@ -786,6 +815,146 @@ function openRestaurant(id){
 }
 function closeRestaurant(){closeModal('foodModal');}
 function renderBookings(){document.getElementById('bookingList').innerHTML=BOOKINGS.map(b=>`<div class="card"><b>${b[0]}</b><div class="small" style="margin-top:6px;white-space:pre-line">${b[1]}</div></div>`).join('');syncOnlineState();}
+// ---- Tagebuch: Google-Zeitachse (Standortverlauf) importieren, ausschließlich lokal in IndexedDB ----
+const DIARY_DB_NAME='algarve-tagebuch';
+const DIARY_DB_VERSION=1;
+const DIARY_STORE='locations';
+function openDiaryDB(){
+  return new Promise((resolve,reject)=>{
+    if(typeof indexedDB==='undefined'){reject(new Error('IndexedDB ist auf diesem Gerät nicht verfügbar.'));return;}
+    const req=indexedDB.open(DIARY_DB_NAME,DIARY_DB_VERSION);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(DIARY_STORE))db.createObjectStore(DIARY_STORE,{keyPath:'id'});};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+// Parses "lat, lng" / "lat°, lng°" style strings used across the different Google Timeline export formats.
+function parseLatLngPair(str){
+  if(typeof str!=='string')return null;
+  const m=str.match(/(-?\d+(?:\.\d+)?)\s*°?\s*,\s*(-?\d+(?:\.\d+)?)\s*°?/);
+  if(!m)return null;
+  const lat=parseFloat(m[1]),lng=parseFloat(m[2]);
+  if(Number.isNaN(lat)||Number.isNaN(lng))return null;
+  return {lat,lng};
+}
+// Extracts {lat,lng,timestamp} points from either the legacy Google Takeout "Records.json" format
+// (locations[] with latitudeE7/longitudeE7) or the current on-device Timeline export
+// (semanticSegments[]/rawSignals[]).
+function extractTimelinePoints(data){
+  const points=[];
+  const add=(pair,timestamp)=>{if(pair&&timestamp)points.push({lat:pair.lat,lng:pair.lng,timestamp});};
+  if(!data||typeof data!=='object')return points;
+  if(Array.isArray(data.locations)){
+    data.locations.forEach(loc=>{
+      if(!loc)return;
+      let lat=null,lng=null;
+      if(typeof loc.latitudeE7==='number')lat=loc.latitudeE7/1e7;
+      if(typeof loc.longitudeE7==='number')lng=loc.longitudeE7/1e7;
+      if(typeof loc.latitude==='number')lat=loc.latitude;
+      if(typeof loc.longitude==='number')lng=loc.longitude;
+      const timestamp=loc.timestamp||(loc.timestampMs?new Date(Number(loc.timestampMs)).toISOString():null);
+      if(typeof lat==='number'&&typeof lng==='number'&&timestamp)points.push({lat,lng,timestamp});
+    });
+  }
+  if(Array.isArray(data.semanticSegments)){
+    data.semanticSegments.forEach(seg=>{
+      if(!seg)return;
+      if(Array.isArray(seg.timelinePath)){
+        seg.timelinePath.forEach(step=>add(parseLatLngPair(step?.point),step?.time||seg.startTime));
+      }
+      const visitPoint=seg.visit?.topCandidate?.placeLocation?.latLng||seg.visit?.topCandidate?.placeLocation;
+      if(visitPoint)add(parseLatLngPair(visitPoint),seg.startTime);
+      const actStart=seg.activity?.start?.latLng||seg.activity?.start;
+      if(actStart)add(parseLatLngPair(actStart),seg.startTime);
+      const actEnd=seg.activity?.end?.latLng||seg.activity?.end;
+      if(actEnd)add(parseLatLngPair(actEnd),seg.endTime);
+    });
+  }
+  if(Array.isArray(data.rawSignals)){
+    data.rawSignals.forEach(sig=>{
+      const pos=sig?.position;
+      if(pos?.LatLng)add(parseLatLngPair(pos.LatLng),pos.timestamp);
+    });
+  }
+  return points;
+}
+// Only keep points that fall within the actual trip period (first/last day of DAYS: 06.–19.09.2026).
+function inTripRange(timestamp){
+  const d=new Date(timestamp);
+  if(Number.isNaN(d.getTime()))return false;
+  const key=d.toISOString().slice(0,10);
+  return key>=DAYS[0].date&&key<=DAYS[DAYS.length-1].date;
+}
+function timelinePointId(p){return `${p.lat.toFixed(6)}_${p.lng.toFixed(6)}_${p.timestamp}`;}
+// Stores points in IndexedDB, skipping any point already present (same coordinates + timestamp) to avoid duplicates.
+function storeTimelinePoints(points){
+  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
+    let added=0,duplicates=0;
+    const tx=db.transaction(DIARY_STORE,'readwrite');
+    const store=tx.objectStore(DIARY_STORE);
+    points.forEach(p=>{
+      const id=timelinePointId(p);
+      const getReq=store.get(id);
+      getReq.onsuccess=()=>{
+        if(getReq.result){duplicates++;}
+        else{added++;store.put({id,lat:p.lat,lng:p.lng,timestamp:p.timestamp});}
+      };
+    });
+    tx.oncomplete=()=>{db.close();resolve({added,duplicates});};
+    tx.onerror=()=>{db.close();reject(tx.error);};
+  }));
+}
+function countTimelinePoints(){
+  return openDiaryDB().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(DIARY_STORE,'readonly');
+    const req=tx.objectStore(DIARY_STORE).count();
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+    tx.oncomplete=()=>db.close();
+  })).catch(()=>null);
+}
+function refreshTimelineSummary(){
+  const el=document.getElementById('timelineSummary');
+  countTimelinePoints().then(count=>{
+    if(count==null){el.textContent='';return;}
+    el.textContent=count>0?`${count} Standortpunkt(e) für den Reisezeitraum (06.–19.09.2026) lokal gespeichert.`:'Noch keine Standortpunkte importiert.';
+  });
+}
+function showTimelineResult(message,isError=false){
+  const el=document.getElementById('timelineResult');
+  el.textContent=message;
+  el.style.color=isError?'#b3261e':'';
+}
+// Step 1: show the Android export instructions before letting the user pick a file.
+function startTimelineImport(){openModal('timelineInstructionsModal');}
+function closeTimelineInstructions(){closeModal('timelineInstructionsModal');}
+// Step 2: close the instructions and open the native file picker for the exported JSON.
+function chooseTimelineFile(){closeTimelineInstructions();document.getElementById('timelineFileInput').click();}
+function handleTimelineFile(event){
+  const file=event.target.files&&event.target.files[0];
+  event.target.value='';
+  if(!file)return;
+  showTimelineResult('Zeitachse wird importiert …');
+  const reader=new FileReader();
+  reader.onload=()=>{
+    let data;
+    try{data=JSON.parse(reader.result);}
+    catch(e){showTimelineResult('Die Datei konnte nicht gelesen werden. Bitte eine gültige Zeitachsen-JSON-Datei (Timeline.json) wählen.',true);return;}
+    importTimelineData(data);
+  };
+  reader.onerror=()=>showTimelineResult('Die Datei konnte nicht gelesen werden.',true);
+  reader.readAsText(file);
+}
+function importTimelineData(data){
+  const points=extractTimelinePoints(data);
+  if(!points.length){showTimelineResult('In der Datei wurden keine Standortpunkte gefunden.',true);return;}
+  const inRange=points.filter(p=>inTripRange(p.timestamp));
+  if(!inRange.length){showTimelineResult(`${points.length} Standortpunkt(e) gefunden, aber keiner liegt im Reisezeitraum 06.–19.09.2026.`,true);return;}
+  storeTimelinePoints(inRange).then(({added,duplicates})=>{
+    showTimelineResult(`Zeitachse aktualisiert: ${points.length} Punkte gefunden, ${inRange.length} im Reisezeitraum (06.–19.09.2026), davon ${added} neu gespeichert und ${duplicates} bereits vorhanden.`);
+    refreshTimelineSummary();
+  }).catch(()=>showTimelineResult('Import fehlgeschlagen: Standortdaten konnten nicht lokal gespeichert werden.',true));
+}
 document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>goToView(btn.dataset.view));
 document.getElementById('search').addEventListener('input',e=>renderDays(e.target.value));
 document.getElementById('destSearch').addEventListener('input',()=>renderDestinations());
