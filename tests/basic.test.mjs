@@ -56,6 +56,8 @@ class Element {
     this.value='';
     this.isConnected=true;
     this.onclick=null;
+    this.clientWidth=0;
+    this.scrollWidth=0;
   }
   addEventListener(type,fn){(this.listeners[type]??=[]).push(fn);}
   setAttribute(name,value){this.attributes[name]=String(value);if(name==='class'){this.classList.set=new Set(String(value).split(/\s+/).filter(Boolean));this.classList.sync();}}
@@ -64,27 +66,31 @@ class Element {
   focus(){this.ownerDocument.activeElement=this;}
   querySelector(selector){return this._queries?.[selector]||null;}
   closest(selector){return selector==='a[aria-disabled="true"]'&&this.getAttribute('aria-disabled')==='true'?this:null;}
+  scrollIntoView(){}
 }
 
 function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
   const elements=new Map();
-  const navButtons=['today','days','destinations','food','bookings','tips'].map(view=>{const el=new Element();el.dataset.view=view;return el;});
-  const ids=['search','destSearch','foodSearch','destGrid','foodList','foodCatFilters','foodPriceFilters','bookingList','today','daysList','days','destinations','food','bookings','tips','offlineBanner','destModal','modalTitle','modalArea','modalText','modalImg','modalCredit','modalActions','foodModal','foodModalTitle','foodModalArea','foodModalTags','foodModalWhy','foodModalDishes','foodModalInfo','foodModalActions','destMapWrap','foodMapWrap','destMapOffline','foodMapOffline','destLocateMsg','foodLocateMsg','todayLocateMsg','destLocateBtn','foodLocateBtn','todayLocateBtn'];
+  const navButtons=['today','days','destinations','food','bookings','tagebuch','tips'].map(view=>{const el=new Element();el.dataset.view=view;return el;});
+  const navEl=new Element('nav'); navEl.clientWidth=0; navEl.scrollWidth=0;
+  const ids=['search','destSearch','foodSearch','destGrid','foodList','foodCatFilters','foodPriceFilters','bookingList','today','daysList','days','destinations','food','bookings','tagebuch','tips','offlineBanner','destModal','modalTitle','modalArea','modalText','modalImg','modalCredit','modalActions','foodModal','foodModalTitle','foodModalArea','foodModalTags','foodModalWhy','foodModalDishes','foodModalInfo','foodModalActions','destMapWrap','foodMapWrap','destMapOffline','foodMapOffline','destLocateMsg','foodLocateMsg','todayLocateMsg','destLocateBtn','foodLocateBtn','todayLocateBtn','timelineSummary','timelineResult','diaryDaySelect','diaryPrevDayBtn','diaryNextDayBtn','diaryStorageUsage','diaryRouteStats','diaryDaySuggestions','diaryMapWrap','diaryMap','diaryMapEmpty','diaryPhotoSummary','diaryPhotoGallery','diaryDayUnlocated','diaryUnassignedPhotos','photoPreviewModal','photoPreviewTitle','photoPreviewImg','photoPreviewMeta','photoPreviewActions'];
   for(const id of ids){elements.set(id,new Element(id));}
-  for(const id of ['today','days','destinations','food','bookings','tips'])elements.get(id).classList.add('view');
+  for(const id of ['today','days','destinations','food','bookings','tagebuch','tips'])elements.get(id).classList.add('view');
   const body=new Element('body');
   const document={
     body,
     activeElement:body,
     addEventListener(){},
+    createElement(tag){const el=new Element(tag);el.ownerDocument=document;return el;},
     getElementById(id){if(!elements.has(id))elements.set(id,new Element(id));const el=elements.get(id);el.ownerDocument=document;return el;},
     querySelectorAll(selector){
       if(selector==='nav button')return navButtons;
-      if(selector==='.view')return ['today','days','destinations','food','bookings','tips'].map(id=>document.getElementById(id));
+      if(selector==='.view')return ['today','days','destinations','food','bookings','tagebuch','tips'].map(id=>document.getElementById(id));
       if(selector==='.dist-badge'||selector==='.schedule-dest img[data-dest]'||selector==='a[target="_blank"]')return [];
       return [];
     },
     querySelector(selector){
+      if(selector==='nav')return navEl;
       if(selector==='.modal.show')return ['destModal','foodModal'].map(id=>document.getElementById(id)).find(el=>el.classList.contains('show'))||null;
       return null;
     }
@@ -105,7 +111,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
     document,
     localStorage:storage,
     navigator:{onLine:true,serviceWorker:{register:()=>Promise.resolve()},geolocation:{getCurrentPosition(){}}},
-    window:{addEventListener(){},scrollY:0,pageYOffset:0,scrollTo(x,y){this.scrollY=y;this.pageYOffset=y;}},
+    window:{addEventListener(){},scrollY:0,pageYOffset:0,location:{href:''},scrollTo(x,y){this.scrollY=y;this.pageYOffset=y;}},
     fetch:()=>Promise.resolve({ok:false,json:()=>Promise.resolve({})}),
     setTimeout:fn=>{if(typeof fn==='function')fn();return 1;},
     clearTimeout(){},
@@ -124,13 +130,48 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
     Math,
     RegExp,
     JSON,
+    Intl,
     URL,
-    URLSearchParams
+    URLSearchParams,
+    confirm:()=>true
   };
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
+}
+
+function makeExifSampleJpeg(){
+  const exifHeader=Buffer.from('Exif\0\0','binary');
+  const tiff=Buffer.alloc(190);
+  let o=0;
+  tiff.write('II',o,'ascii'); o+=2;
+  tiff.writeUInt16LE(42,o); o+=2;
+  tiff.writeUInt32LE(8,o); o+=4;
+  tiff.writeUInt16LE(3,o); o+=2;
+  tiff.writeUInt16LE(0x0112,o); tiff.writeUInt16LE(3,o+2); tiff.writeUInt32LE(1,o+4); tiff.writeUInt16LE(6,o+8); o+=12;
+  tiff.writeUInt16LE(0x8769,o); tiff.writeUInt16LE(4,o+2); tiff.writeUInt32LE(1,o+4); tiff.writeUInt32LE(50,o+8); o+=12;
+  tiff.writeUInt16LE(0x8825,o); tiff.writeUInt16LE(4,o+2); tiff.writeUInt32LE(1,o+4); tiff.writeUInt32LE(88,o+8); o+=12;
+  tiff.writeUInt32LE(0,o); o+=4;
+  tiff.writeUInt16LE(1,50);
+  tiff.writeUInt16LE(0x9003,52); tiff.writeUInt16LE(2,54); tiff.writeUInt32LE(20,56); tiff.writeUInt32LE(68,60);
+  tiff.writeUInt32LE(0,64);
+  Buffer.from('2026:09:07 10:15:30\0','ascii').copy(tiff,68);
+  tiff.writeUInt16LE(4,88);
+  tiff.writeUInt16LE(1,90); tiff.writeUInt16LE(2,92); tiff.writeUInt32LE(2,94); tiff.write('N\0',98,'ascii');
+  tiff.writeUInt16LE(2,102); tiff.writeUInt16LE(5,104); tiff.writeUInt32LE(3,106); tiff.writeUInt32LE(142,110);
+  tiff.writeUInt16LE(3,114); tiff.writeUInt16LE(2,116); tiff.writeUInt32LE(2,118); tiff.write('W\0',122,'ascii');
+  tiff.writeUInt16LE(4,126); tiff.writeUInt16LE(5,128); tiff.writeUInt32LE(3,130); tiff.writeUInt32LE(166,134);
+  tiff.writeUInt32LE(0,138);
+  const rationals=[[37,1],[7,1],[24,1],[8,1],[39,1],[0,1]];
+  let rr=142;
+  rationals.forEach(([num,den])=>{tiff.writeUInt32LE(num,rr);tiff.writeUInt32LE(den,rr+4);rr+=8;});
+  const app1Payload=Buffer.concat([exifHeader,tiff]);
+  const app1=Buffer.alloc(4);
+  app1.writeUInt16BE(0xFFE1,0);
+  app1.writeUInt16BE(app1Payload.length+2,2);
+  const jpeg=Buffer.concat([Buffer.from([0xFF,0xD8]),app1,app1Payload,Buffer.from([0xFF,0xD9])]);
+  return jpeg.buffer.slice(jpeg.byteOffset,jpeg.byteOffset+jpeg.byteLength);
 }
 
 test('inline script is syntactically valid JavaScript',()=>{
@@ -359,18 +400,85 @@ test('Tagebuch: extracts points from the current semanticSegments/rawSignals Tim
 test('Tagebuch: only keeps points within the actual trip period 06.–19.09.2026',()=>{
   const {app}=buildSandbox();
   assert.equal(app.inTripRange('2026-09-06T00:00:00Z'),true);
-  assert.equal(app.inTripRange('2026-09-19T23:59:59Z'),true);
-  assert.equal(app.inTripRange('2026-09-05T23:59:59Z'),false);
-  assert.equal(app.inTripRange('2026-09-20T00:00:00Z'),false);
+  assert.equal(app.inTripRange('2026-09-19T22:59:59Z'),true);
+  assert.equal(app.inTripRange('2026-09-05T22:59:59Z'),false);
+  assert.equal(app.inTripRange('2026-09-19T23:00:00Z'),false);
   assert.equal(app.inTripRange('not-a-date'),false);
 });
 
 test('Tagebuch: point id is stable for identical coordinates + timestamp (dedup key)',()=>{
   const {app}=buildSandbox();
   const a={lat:37.1234561,lng:-8.654321,timestamp:'2026-09-07T09:05:00Z'};
-  const b={lat:37.123456,lng:-8.654321,timestamp:'2026-09-07T09:05:00Z'};
+  const b={lat:37.123456,lng:-8.654321,timestamp:'2026-09-07T10:05:00+01:00'};
   assert.equal(app.timelinePointId(a),app.timelinePointId(b));
   const c={...b,timestamp:'2026-09-07T09:06:00Z'};
   assert.notEqual(app.timelinePointId(b),app.timelinePointId(c));
 });
 
+test('Tagebuch: Lisbon-local day key and trip range honor local midnight boundaries',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.lisbonDateKey('2026-09-05T22:59:59Z'),'2026-09-05');
+  assert.equal(app.lisbonDateKey('2026-09-05T23:00:01Z'),'2026-09-06');
+  assert.equal(app.lisbonDateKey('2026-09-05T23:30:00Z'),'2026-09-06');
+  assert.equal(app.inTripRange('2026-09-05T22:59:59Z'),false);
+  assert.equal(app.inTripRange('2026-09-05T23:00:01Z'),true);
+});
+
+test('Tagebuch: invalid coordinates are rejected before dedup/storage prep',()=>{
+  const {app}=buildSandbox();
+  const prepared=app.prepareTimelinePoints([
+    {lat:91,lng:-8.6,timestamp:'2026-09-07T10:00:00Z'},
+    {lat:37.2,lng:-181,timestamp:'2026-09-07T10:00:00Z'},
+    {lat:37.2,lng:-8.6,timestamp:'2026-09-07T10:00:00Z'}
+  ]);
+  assert.equal(prepared.valid,1);
+  assert.equal(prepared.invalid,2);
+  assert.equal(prepared.points.length,1);
+});
+
+test('Tagebuch: in-file duplicates are removed and counted before persistence',()=>{
+  const {app}=buildSandbox();
+  const prepared=app.prepareTimelinePoints([
+    {lat:37.2,lng:-8.6,timestamp:'2026-09-07T09:05:00Z'},
+    {lat:37.2,lng:-8.6,timestamp:'2026-09-07T10:05:00+01:00'},
+    {lat:37.21,lng:-8.61,timestamp:'2026-09-07T09:10:00Z'}
+  ]);
+  assert.equal(prepared.inRange,3);
+  assert.equal(prepared.duplicatesInFile,1);
+  assert.equal(prepared.points.length,2);
+});
+
+test('Tagebuch: repeated import of the same normalized points yields zero new additions',()=>{
+  const {app}=buildSandbox();
+  const prepared=app.prepareTimelinePoints([
+    {lat:37.2,lng:-8.6,timestamp:'2026-09-07T09:05:00Z'},
+    {lat:37.21,lng:-8.61,timestamp:'2026-09-07T09:10:00Z'}
+  ]);
+  const first=app.mergeTimelinePoints(prepared.points,new Set());
+  const second=app.mergeTimelinePoints(prepared.points,new Set(first.records.map(p=>p.id)));
+  assert.equal(first.added,2);
+  assert.equal(first.duplicates,0);
+  assert.equal(second.added,0);
+  assert.equal(second.duplicates,2);
+});
+
+test('Tagebuch: haversine helpers produce plausible route distances',()=>{
+  const {app}=buildSandbox();
+  assert.ok(app.distanceKm(0,0,0,1)>111&&app.distanceKm(0,0,0,1)<112);
+  const total=app.routeDistanceKm([
+    {lat:37,lng:-8,timestamp:'2026-09-07T09:00:00Z'},
+    {lat:37.01,lng:-8,timestamp:'2026-09-07T09:05:00Z'},
+    {lat:37.02,lng:-8,timestamp:'2026-09-07T09:10:00Z'}
+  ]);
+  assert.ok(total>2&&total<3);
+});
+
+test('Tagebuch: compact JPEG EXIF parser reads capture time, GPS and orientation',()=>{
+  const {app}=buildSandbox();
+  const exif=app.parseJpegExif(makeExifSampleJpeg());
+  assert.equal(exif.orientation,6);
+  assert.equal(exif.captureTime,'2026-09-07T09:15:30.000Z');
+  assert.ok(exif.gps);
+  assert.ok(Math.abs(exif.gps.lat-37.1233333)<1e-4);
+  assert.ok(Math.abs(exif.gps.lng-(-8.65))<1e-4);
+});
