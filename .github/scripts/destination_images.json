@@ -51,15 +51,15 @@
     "name": "Praia da Arrifana",
     "search": "Praia da Arrifana Portugal beach cliffs"
   },
-  "bairro-pescadores-olhao": {
-    "candidates": [],
-    "name": "Bairro dos Pescadores",
-    "search": "Olhão bairro cubista casas"
-  },
   "biblioteca-tavira": {
-    "candidates": [],
+    "candidates": [
+      "Cadeia de Tavira, actual Biblioteca, 1.jpg",
+      "Cadeia de Tavira, actual Biblioteca, 2.jpg",
+      "Cadeia de Tavira 1.JPG",
+      "Biblioteca Municipal, Tavira, Portugal (070).jpg"
+    ],
     "name": "Biblioteca Municipal Álvaro de Campos",
-    "search": "Biblioteca Álvaro de Campos"
+    "search": "Cadeia de Tavira Biblioteca"
   },
   "cabanas": {
     "candidates": [
@@ -142,11 +142,6 @@
     ],
     "name": "Fortaleza de Sagres",
     "search": "Fortaleza de Sagres fortress Portugal"
-  },
-  "igreja-santa-luzia-tavira": {
-    "candidates": [],
-    "name": "Igreja de Santa Luzia",
-    "search": "Igreja de Santa Luzia Algarve"
   },
   "lagos-altstadt": {
     "candidates": [
