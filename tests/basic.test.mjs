@@ -284,6 +284,49 @@ test('destination and restaurant modals exist and open/close hooks are wired',()
   assert.equal(document.getElementById('foodModal').classList.contains('show'),false);
 });
 
+test('all 28 destinations have deepened facts and background text',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.DESTINATIONS.length,28);
+  for(const d of app.DESTINATIONS){
+    assert.ok(Array.isArray(d.facts),`${d.id} facts should be an array`);
+    assert.ok(d.facts.length>=1&&d.facts.length<=3,`${d.id} should have 1-3 fact chips`);
+    for(const f of d.facts)assert.ok(typeof f==='string'&&f.trim().length>0,`${d.id} fact chip should be non-empty`);
+    assert.equal(typeof d.deep,'string',`${d.id} should have a deep-dive text`);
+    const words=d.deep.trim().split(/\s+/).filter(Boolean);
+    assert.ok(words.length>=80&&words.length<=130,`${d.id} deep text should be ~80-130 words, got ${words.length}`);
+  }
+});
+
+test('destination modal detail section exists, is closed by default and reflects the opened destination',()=>{
+  assert.match(html,/id="modalDeepDetails"/);
+  assert.doesNotMatch(html,/id="modalDeepDetails"[^>]*\bopen\b/,'detail section markup must not default to open');
+  const {app,document}=buildSandbox();
+
+  app.openDestination('faro-altstadt');
+  const details=document.getElementById('modalDeepDetails');
+  assert.equal(details.open,false,'details must be closed after opening a destination');
+  assert.equal(document.getElementById('modalDeepText').textContent,app.DESTINATIONS.find(d=>d.id==='faro-altstadt').deep);
+  const factsHtml=document.getElementById('modalFacts').innerHTML;
+  for(const f of app.DESTINATIONS.find(d=>d.id==='faro-altstadt').facts)assert.match(factsHtml,new RegExp(f.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+
+  details.open=true;
+  app.openDestination('arco-vila');
+  assert.equal(details.open,false,'switching destinations must close a previously open detail section');
+  assert.equal(document.getElementById('modalDeepText').textContent,app.DESTINATIONS.find(d=>d.id==='arco-vila').deep);
+});
+
+test('destination search finds new facts and deep-dive text',()=>{
+  const {app,document}=buildSandbox();
+  document.getElementById('destSearch').value='neoklassizismus';
+  app.renderDestinations();
+  const html2=document.getElementById('destGrid').innerHTML;
+  assert.match(html2,/Arco da Vila/);
+
+  document.getElementById('destSearch').value='syenit';
+  app.renderDestinations();
+  assert.match(document.getElementById('destGrid').innerHTML,/Fóia/);
+});
+
 test('visited toggle persists per destination and updates the progress counter',()=>{
   const {app,storage}=buildSandbox();
   const id=app.DESTINATIONS[0].id;
