@@ -124,6 +124,12 @@ class Element {
   querySelector(selector){return this._queries?.[selector]||null;}
   closest(selector){return selector==='a[aria-disabled="true"]'&&this.getAttribute('aria-disabled')==='true'?this:null;}
   scrollIntoView(){}
+  // Minimal canvas stub: enough for archOptimizeImage() to run its transform math without a real renderer.
+  // toBlob is intentionally left unset so the code takes its documented "no blob" fallback branch.
+  getContext(type){
+    if(type!=='2d')return null;
+    return {save(){},restore(){},scale(){},transform(){},drawImage(){}};
+  }
 }
 
 function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
@@ -190,14 +196,16 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
     Intl,
     URL,
     URLSearchParams,
-    confirm:()=>true
+    confirm:()=>true,
+    prompt:()=>null
   };
   sandbox.confirm=opts.confirm||sandbox.confirm;
+  sandbox.prompt=opts.prompt||sandbox.prompt;
   sandbox.indexedDB=(opts.indexedDB||createFakeIndexedDB()).indexedDB;
   sandbox.createImageBitmap=opts.createImageBitmap;
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,destCardHtml};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -344,9 +352,9 @@ test('destination and restaurant modals exist and open/close hooks are wired',()
   assert.equal(document.getElementById('foodModal').classList.contains('show'),false);
 });
 
-test('all 35 destinations have deepened facts and background text',()=>{
+test('all 51 destinations have deepened facts and background text',()=>{
   const {app}=buildSandbox();
-  assert.equal(app.DESTINATIONS.length,35);
+  assert.equal(app.DESTINATIONS.length,51);
   for(const d of app.DESTINATIONS){
     assert.ok(Array.isArray(d.facts),`${d.id} facts should be an array`);
     assert.ok(d.facts.length>=1&&d.facts.length<=3,`${d.id} should have 1-3 fact chips`);
@@ -736,6 +744,23 @@ test('all 23 leading-number folder-to-destination-ID mappings resolve correctly'
   assert.equal(new Set(ids).size,23,'all 23 Ziel-IDs must be unique');
 });
 
+test('all 23 ARCH_FOLDER_MAPPING projects are visible destination cards, keeping existing alias mappings',()=>{
+  const {app}=buildSandbox();
+  for(const m of app.ARCH_FOLDER_MAPPING){
+    const cardId=app.archDestCardId(m.destinationId);
+    const dest=app.DESTINATIONS.find(d=>d.id===cardId);
+    assert.ok(dest,`project ${m.number} (${m.destinationId} → card ${cardId}) must exist as a visible destination card`);
+    assert.ok(dest.arch,`${cardId} should carry architecture metadata (arch block)`);
+    assert.ok(Array.isArray(dest.facts)&&dest.facts.length>=1,`${cardId} should have fact chips`);
+  }
+  // Pre-existing alias mappings must remain untouched.
+  assert.equal(app.ARCH_DEST_CARD_ALIAS['casa-em-tavira'],'casa-luz-tavira');
+  assert.equal(app.ARCH_DEST_CARD_ALIAS['casa-quinta-do-lago'],'casa-quinta-lago');
+  assert.equal(app.ARCH_DEST_CARD_ALIAS['faro-route-moderne'],'faro-route-moderna');
+  assert.equal(app.ARCH_DEST_CARD_ALIAS['biblioteca-alvaro-de-campos'],'biblioteca-tavira');
+  assert.equal(app.ARCH_DEST_CARD_ALIAS['igreja-santa-luzia'],'igreja-santa-luzia-tavira');
+});
+
 test('folder matching falls back to normalized name (accents, umlauts, dashes, spacing) when the number is missing',()=>{
   const {app}=buildSandbox();
   const m1=app.matchArchFolder('Biblioteca Municipal Álvaro de Campos');
@@ -813,6 +838,91 @@ test('a folder containing only ignored files (txt/pdf/Drive-share-link) is flagg
   ]);
   assert.equal(groups.length,1);
   assert.equal(groups[0].status,'gray');
+});
+
+test('"Zuordnung prüfen" always lists all 23 expected projects as red, even with no import at all',()=>{
+  const {app,document}=buildSandbox();
+  app.renderArchReview();
+  const html=document.getElementById('archReviewList').innerHTML;
+  for(const [number]of ARCH_EXPECTED_MAPPING){
+    assert.ok(html.includes(`>${number} ·`),`row for project ${number} must be listed even without any import`);
+  }
+  const redCount=(html.match(/archReviewDot red/g)||[]).length;
+  assert.equal(redCount,23,'all 23 rows must be red when no folders/images exist at all');
+});
+
+test('"Zuordnung prüfen" reflects locally stored images as green and missing ones as red',async()=>{
+  const {app,document}=buildSandbox();
+  await app.archStoreFile('convento-bernardas',makeImageFile('foto.jpg'),'01 Convento das Bernardas');
+  await app.refreshArchImageCache();
+  app.renderArchReview();
+  const rows=document.getElementById('archReviewList').innerHTML.split('<div class="archReviewRow">').slice(1);
+  const storedRow=rows.find(r=>r.includes('>01 ·'));
+  assert.match(storedRow,/archReviewDot green/);
+  const missingRow=rows.find(r=>r.includes('>02 ·'));
+  assert.match(missingRow,/archReviewDot red/);
+  assert.equal(rows.length,23,'exactly 23 rows must always be rendered');
+});
+
+test('"Zuordnung prüfen" flags multiple candidate images yellow and keeps them selectable',()=>{
+  const {app,document}=buildSandbox();
+  const groups=app.buildArchImportGroups([
+    {file:{name:'a.jpg'},relativeFolder:'02 Casa em Tavira – Souto de Moura'},
+    {file:{name:'b.png'},relativeFolder:'02 Casa em Tavira – Souto de Moura'}
+  ]);
+  app.setArchReviewGroups(groups);
+  const html=document.getElementById('archReviewList').innerHTML;
+  const rows=html.split('<div class="archReviewRow">').slice(1);
+  const yellowRow=rows.find(r=>r.includes('>02 ·'));
+  assert.match(yellowRow,/archReviewDot yellow/);
+  assert.match(yellowRow,/a\.jpg/);
+  assert.match(yellowRow,/b\.png/);
+});
+
+test('single-photo import without a folder path asks explicitly for the target number (01–23) instead of guessing from the filename',async()=>{
+  const {app}=buildSandbox();
+  const asked=[];
+  const file=makeImageFile('IMG_20260101_010101.jpg');
+  const res=await app.promptArchSinglePhotos([file],undefined);
+  // Without any prompt implementation returning a value (default sandbox prompt returns null), the photo must be skipped, not guessed.
+  assert.equal(res.stored,0);
+  assert.equal(res.skippedNoMatch,1);
+  assert.equal(app.archImageCache().size,0);
+});
+
+test('single-photo import stores the photo under the destination chosen by the explicit target-number prompt',async()=>{
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{prompt:()=>'9'});
+  const file=makeImageFile('random-name-that-must-not-be-guessed.jpg');
+  const res=await app.promptArchSinglePhotos([file],undefined);
+  assert.equal(res.stored,1);
+  await app.refreshArchImageCache();
+  assert.ok(app.archImageCache().has('casa-gago'),'number "9" must resolve to project 09 (casa-gago)');
+});
+
+test('single-photo import skips the photo when the user cancels the target-number prompt',async()=>{
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{prompt:()=>null});
+  const file=makeImageFile('foto.jpg');
+  const res=await app.promptArchSinglePhotos([file],undefined);
+  assert.equal(res.stored,0);
+  assert.equal(res.skippedNoMatch,1);
+});
+
+test('single-photo import skips the photo when the entered number is out of the 01–23 range',async()=>{
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{prompt:()=>'99'});
+  const file=makeImageFile('foto.jpg');
+  const res=await app.promptArchSinglePhotos([file],undefined);
+  assert.equal(res.stored,0);
+  assert.equal(res.skippedNoMatch,1);
+});
+
+test('archOptimizeImage requests createImageBitmap with imageOrientation:"none" to avoid double-applying EXIF rotation',async()=>{
+  let receivedOptions=null;
+  const fakeCreateImageBitmap=(file,options)=>{receivedOptions=options;return Promise.resolve({width:2,height:1,close(){}});};
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{createImageBitmap:fakeCreateImageBitmap});
+  const file=makeImageFile('foto.jpg');
+  await app.archOptimizeImage(file);
+  assert.ok(receivedOptions,'createImageBitmap must be called with an options object');
+  assert.equal(receivedOptions.imageOrientation,'none');
 });
 
 test('storing and reading back an architecture image from IndexedDB round-trips blob + metadata together',async()=>{
