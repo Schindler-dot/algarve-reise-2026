@@ -598,7 +598,7 @@ function renderDestFilters(){
   const el=document.getElementById('destFilters'); if(!el)return;
   el.innerHTML=DEST_VISITED_FILTERS.map(f=>`<button class="chip ${destVisitedFilter===f?'active':''}" aria-pressed="${destVisitedFilter===f}" onclick="setDestVisitedFilter('${f}')">${f}</button>`).join('');
   const catEl=document.getElementById('destCatFilters'); if(!catEl)return;
-  catEl.innerHTML=DEST_CATEGORY_FILTERS.map(f=>`<button class="chip ${destCategory===f?'active':''}" aria-pressed="${destCategory===f}" onclick="setDestCategoryFilter('${f.replace(/'/g,"\\'")}')">${f}</button>`).join('');
+  catEl.innerHTML=DEST_CATEGORY_FILTERS.map((f,i)=>`<button class="chip ${destCategory===f?'active':''}" aria-pressed="${destCategory===f}" onclick="setDestCategoryFilter(DEST_CATEGORY_FILTERS[${i}])">${f}</button>`).join('');
 }
 function visitedDestCount(){return DESTINATIONS.filter(d=>isVisited(d.id)).length;}
 function renderDestProgress(){
