@@ -137,7 +137,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
   };
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategory,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -284,9 +284,9 @@ test('destination and restaurant modals exist and open/close hooks are wired',()
   assert.equal(document.getElementById('foodModal').classList.contains('show'),false);
 });
 
-test('all 28 destinations have deepened facts and background text',()=>{
+test('all destinations have deepened facts and background text',()=>{
   const {app}=buildSandbox();
-  assert.equal(app.DESTINATIONS.length,28);
+  assert.equal(app.DESTINATIONS.length,33);
   for(const d of app.DESTINATIONS){
     assert.ok(Array.isArray(d.facts),`${d.id} facts should be an array`);
     assert.ok(d.facts.length>=1&&d.facts.length<=3,`${d.id} should have 1-3 fact chips`);
@@ -382,6 +382,31 @@ test('Alle/Offen/Besucht filter chips render and filter the destination grid',()
   gridHtml=document.getElementById('destGrid').innerHTML;
   assert.match(gridHtml,new RegExp(`data-id="${visitedId}"`));
   assert.match(gridHtml,new RegExp(`data-id="${openId}"`));
+});
+
+test('"Moderne & Gegenwart" category filter renders and restricts the destination grid',()=>{
+  const {app,document}=buildSandbox();
+  app.renderDestFilters();
+  const catFilterHtml=document.getElementById('destCatFilters').innerHTML;
+  assert.match(catFilterHtml,/Alle/);
+  assert.match(catFilterHtml,/Moderne &amp; Gegenwart|Moderne & Gegenwart/);
+
+  const modernDests=app.DESTINATIONS.filter(d=>d.cat==='Moderne & Gegenwart');
+  assert.ok(modernDests.length>=5,'expected at least 5 "Moderne & Gegenwart" destinations');
+  const otherDest=app.DESTINATIONS.find(d=>d.cat!=='Moderne & Gegenwart');
+  assert.ok(otherDest);
+
+  app.setDestCategory('Moderne & Gegenwart');
+  assert.equal(app.destCategory(),'Moderne & Gegenwart');
+  app.renderDestinations();
+  let gridHtml=document.getElementById('destGrid').innerHTML;
+  for(const d of modernDests)assert.match(gridHtml,new RegExp(`data-id="${d.id}"`));
+  assert.doesNotMatch(gridHtml,new RegExp(`data-id="${otherDest.id}"`));
+
+  app.setDestCategory('Alle');
+  app.renderDestinations();
+  gridHtml=document.getElementById('destGrid').innerHTML;
+  assert.match(gridHtml,new RegExp(`data-id="${otherDest.id}"`));
 });
 
 test('marker popup exposes a visited toggle that reflects and flips state',()=>{
