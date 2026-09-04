@@ -173,9 +173,18 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <p class="small">Du kannst einzelne Tage oder das gesamte Tagebuch wieder löschen. Notizen, Favoriten und bereits bestätigte Ziele bleiben dabei unverändert.</p>
 <div class="actions"><button type="button" class="btn secondary" onclick="deleteDiaryDay()">Diesen Tag löschen</button><button type="button" class="btn danger" onclick="deleteEntireDiary()">Ganzes Tagebuch löschen</button></div>
 </div>
+<div class="card">
+<div class="sectiontitle">Lokale Architektur-Fotos</div>
+<p class="small">Importiere die 23 Architektur-Projektordner aus deiner privaten Google-Drive-Ablage ("09_Fotos/App") einzeln auf diesem Gerät. Die Bilder werden ausschließlich auf diesem Gerät gespeichert – niemals in diesem Repository, auf GitHub Pages oder auf einem Server.</p>
+<div class="actions"><button type="button" class="btn" onclick="chooseArchFolder()">Bildordner importieren</button><button type="button" class="btn secondary" onclick="chooseArchFiles()">Einzelne Bilder importieren</button><button type="button" class="btn secondary" onclick="openArchReview()">Zuordnung prüfen</button><button type="button" class="btn danger" onclick="deleteArchImages()">Lokale Bilder löschen</button></div>
+<div id="archImportSummary" class="small" style="margin-top:10px"></div>
+<div id="archImportResult" class="small" style="margin-top:6px"></div>
+</div>
 <input type="file" id="timelineFileInput" accept="application/json,.json" style="display:none" onchange="handleTimelineFile(event)">
 <input type="file" id="photoFileInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="handlePhotoFiles(event)">
 <input type="file" id="diaryBackupInput" accept="application/json,.json" style="display:none" onchange="handleDiaryBackupFile(event)">
+<input type="file" id="archFolderFallbackInput" webkitdirectory directory multiple style="display:none" onchange="handleArchFolderFallbackFiles(event)">
+<input type="file" id="archFilesInput" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="handleArchFiles(event)">
 </section>
 <section id="tips" class="view"><div class="hero"><h2>Wetter & wichtig</h2><p>Für spontane Entscheidungen unterwegs</p><div class="heroEmoji">🌦️</div></div>
 <div class="card">
@@ -193,6 +202,7 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
     <button type="button" class="modalclose" onclick="closeDestination()" aria-label="Schließen">×</button>
     <img id="modalImg" class="modalhero" alt="">
     <div id="modalCredit" class="photocredit"></div>
+    <div id="modalLocalBadge" class="modallocalbadge" style="display:none">Auf diesem Gerät gespeichert</div>
     <div class="card" style="margin-top:8px">
       <div id="modalTitle" class="daytitle"></div>
       <div id="modalArea" class="route"></div>
@@ -254,6 +264,16 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
       <img id="photoPreviewImg" class="diaryPreviewImg" alt="">
       <p id="photoPreviewMeta" class="small" style="margin-top:10px"></p>
       <div id="photoPreviewActions" class="actions"></div>
+    </div>
+  </div>
+</div>
+<div id="archReviewModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="archReviewTitle" onclick="if(event.target===this)closeArchReview()">
+  <div class="modalbox" tabindex="-1">
+    <button type="button" class="modalclose" onclick="closeArchReview()" aria-label="Schließen">×</button>
+    <div class="card">
+      <div id="archReviewTitle" class="daytitle">Zuordnung prüfen</div>
+      <p class="small">Grün: Bild korrekt zugeordnet · Gelb: mehrere Bilder im Projektordner (Auswahl möglich) · Rot: kein Bild gefunden · Grau: ignorierte Datei.</p>
+      <div id="archReviewList" class="archReviewList"></div>
     </div>
   </div>
 </div>
@@ -357,7 +377,7 @@ function placeholderData(name){
 }
 function hydrateDestImage(dest,img,credit){
   if(!img) return;
-  img.src=STATIC_DEST_IMAGES[dest.id]||placeholderData(dest.name);
+  img.src=archResolveImageSrc(dest.id,STATIC_DEST_IMAGES[dest.id]||placeholderData(dest.name));
   if(credit){const c=CREDITS[dest.id];credit.innerHTML=c?`Foto: ${c.author||'Wikimedia Commons'}${c.license?' · '+c.license:''}`:'';}
 }
 let userLoc=null;
@@ -586,9 +606,11 @@ function openDestination(id){
   const deepDetails=document.getElementById('modalDeepDetails');
   if(deepDetails){deepDetails.open=false;deepDetails.style.display=d.deep?'':'none';}
   const img=document.getElementById('modalImg'); img.alt=d.name;
-  img.src=STATIC_DEST_IMAGES[d.id]||placeholderData(d.name); img.onerror=()=>{img.onerror=null;img.src=placeholderData('Foto derzeit nicht verfügbar')};
+  img.src=archResolveImageSrc(d.id,STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)); img.onerror=()=>{img.onerror=null;img.src=placeholderData('Foto derzeit nicht verfügbar')};
   const mc=document.getElementById('modalCredit');
   if(mc){const c=CREDITS[d.id];if(c){mc.style.display='';mc.textContent=`Foto: ${c.author||'Wikimedia Commons'}${c.license?' · '+c.license:''}`;}else{mc.style.display='none';mc.textContent='';}}
+  const modalLocalBadge=document.getElementById('modalLocalBadge');
+  if(modalLocalBadge)modalLocalBadge.style.display=archHasLocalImage(d.id)?'':'none';
   const v=isVisited(d.id);
   const mbadge=document.getElementById('modalVisitedBadge'); if(mbadge)mbadge.style.display=v?'':'none';
   document.getElementById('modalActions').innerHTML=`<button type="button" id="modalVisitBtn" class="btn secondary ${v?'is-active':''}" aria-pressed="${v}" aria-label="${escapeHtml(visitAriaLabel(d.name,v))}" onclick="toggleVisited('${d.id}')">${v?'✓ Besucht':'○ Noch nicht besucht'}</button>${actionLink(mapsSearch(d.map),'In Google Maps')}${actionLink(mapsDir(d.map),'Route starten','btn secondary')}${actionLink(weather(d.area),'Wetter','btn sand')}`;
@@ -620,7 +642,7 @@ function renderDestProgress(){
 function destCardHtml(d){
  const v=isVisited(d.id);
  const badges=`${d.route?'<span class="routebadge">🗺️ Architekturroute</span> ':''}${d.arch&&/nicht öffentlich|nur von außen/.test(d.arch.access||'')?'<span class="accessbadge">nur von außen</span>':''}`;
- return `<article class="destcard ${v?'visited':''}" data-id="${d.id}" onclick="openDestination('${d.id}')">${v?'<div class="destvisitedbadge">✓ Besucht</div>':''}<img src="${STATIC_DEST_IMAGES[d.id]||placeholderData(d.name)}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div>${badges?`<div>${badges}</div>`:''}<div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div>${visitBtnHtml(d)}</div></article>`;
+ return `<article class="destcard ${v?'visited':''}" data-id="${d.id}" onclick="openDestination('${d.id}')">${v?'<div class="destvisitedbadge">✓ Besucht</div>':''}<img src="${archResolveImageSrc(d.id,STATIC_DEST_IMAGES[d.id]||placeholderData(d.name))}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')">${archLocalBadgeHtml(d.id)}<div class="destbody"><div class="desttitle">${d.name}</div><div class="destmeta">${d.area} · ${d.cat}</div>${badges?`<div>${badges}</div>`:''}<div><span class="dist-badge" data-kind="dest" data-id="${d.id}" style="display:none"></span></div>${visitBtnHtml(d)}</div></article>`;
 }
 function renderDestinations(){
  const q=(document.getElementById('destSearch').value||'').toLowerCase();
@@ -663,7 +685,7 @@ function visualDestCards(date,itemIndex){
  if(!ids.length)return '';
  return `<div class="visual-dests">${ids.map(id=>{
    const d=DESTINATIONS.find(x=>x.id===id); if(!d)return '';
-   const src=STATIC_DEST_IMAGES[id]||placeholderData(d.name);
+   const src=archResolveImageSrc(id,STATIC_DEST_IMAGES[id]||placeholderData(d.name));
    return `<button class="visual-dest" onclick="openDestination('${id}')"><img src="${src}" alt="${d.name}" loading="lazy" onerror="this.onerror=null;this.src=placeholderData('Foto derzeit nicht verfügbar')"><span class="visual-dest-copy"><span class="visual-dest-title">${d.name}</span><span class="visual-dest-desc">${d.text}</span><span class="visual-dest-open">Antippen für Details, Karte & Route ›</span></span></button>`;
  }).join('')}</div>`;
 }
@@ -1639,6 +1661,370 @@ async function importDiaryBackup(data){
     showTimelineResult(`Backup importiert: ${pointResult.added} neue Standortpunkte, ${pointResult.duplicates} doppelte Standortpunkte, ${photoRecords.length} neue Fotos, ${photoDuplicates} doppelte Fotos.`);
   }catch(_e){showTimelineResult('Backup konnte nicht importiert werden.',true);}
 }
+// ---- Lokale Architektur-Fotos: Import aus Google-Drive-Ordnerstruktur "09_Fotos/App", ausschließlich lokal in IndexedDB ----
+// Google Drive ist nur private, gemeinsame Ablage. Es gibt keine Drive-API/Zugangsdaten in dieser App;
+// jede Person importiert die Bilder manuell auf ihrem eigenen Gerät.
+const ARCH_DB_NAME='algarve-local-media';
+const ARCH_DB_VERSION=1;
+const ARCH_STORE='destination-images';
+const ARCH_MAX_EDGE=1920;
+const ARCH_QUALITY=0.82;
+const ARCH_IMAGE_EXT=/\.(jpe?g|png|webp)$/i;
+const ARCH_IGNORED_EXT=/\.(txt|pdf|url|webloc|gdoc|gsheet|gslides|gslink|lnk|ds_store)$/i;
+// Ziel-IDs und führende Nummern gemäß der festen Google-Drive-Ordnerstruktur "App/01 …" – "App/23 …".
+const ARCH_FOLDER_MAPPING=[
+  {number:'01',folderName:'Convento das Bernardas',destinationId:'convento-bernardas'},
+  {number:'02',folderName:'Casa em Tavira – Souto de Moura',destinationId:'casa-em-tavira'},
+  {number:'03',folderName:'Casa na Quinta do Lago – Souto de Moura',destinationId:'casa-quinta-do-lago'},
+  {number:'04',folderName:'Faro – Route der Moderne',destinationId:'faro-route-moderne'},
+  {number:'05',folderName:'Biblioteca Municipal Álvaro de Campos',destinationId:'biblioteca-alvaro-de-campos'},
+  {number:'06',folderName:'Igreja de Santa Luzia',destinationId:'igreja-santa-luzia'},
+  {number:'07',folderName:'Bairro dos Pescadores – Olhão',destinationId:'bairro-pescadores-olhao'},
+  {number:'08',folderName:'Capela do Monte – Álvaro Siza',destinationId:'capela-do-monte'},
+  {number:'09',folderName:'Casa Gago – Manuel Gomes da Costa',destinationId:'casa-gago'},
+  {number:'10',folderName:'The Modernist Faro',destinationId:'the-modernist-faro'},
+  {number:'11',folderName:'Casa 1923 – PAr',destinationId:'casa-1923-faro'},
+  {number:'12',folderName:'Edifício Tridente',destinationId:'edificio-tridente'},
+  {number:'13',folderName:'Edifício Nogueira',destinationId:'edificio-nogueira'},
+  {number:'14',folderName:'Café-Chelsea-Gebäude',destinationId:'cafe-chelsea-faro'},
+  {number:'15',folderName:'Rua de Berlim – Modernistisches Wohnviertel',destinationId:'rua-de-berlim-faro'},
+  {number:'16',folderName:'Casa dos Abraços – Ferragudo',destinationId:'casa-dos-abracos'},
+  {number:'17',folderName:'Casa Um – Tavira',destinationId:'casa-um-tavira'},
+  {number:'18',folderName:'House of Agostos',destinationId:'house-agostos'},
+  {number:'19',folderName:'Frame House',destinationId:'frame-house-faro'},
+  {number:'20',folderName:'House in Algarve – Silves – BOMO',destinationId:'house-silves-bomo'},
+  {number:'21',folderName:'Cabrita Moleiro House',destinationId:'cabrita-moleiro-house'},
+  {number:'22',folderName:'House in Olhão – Estudio ODS',destinationId:'house-olhao-ods'},
+  {number:'23',folderName:'House in Martinhal – ARX Portugal',destinationId:'house-martinhal'}
+];
+// Einige der 23 Ziel-IDs weichen von den bereits im Reiseplan verwendeten Karten-IDs ab
+// (unterschiedliche Namensgebung bei früheren Datenmodell-Erweiterungen). Diese Zuordnung
+// verbindet die feste Foto-Ziel-ID mit der tatsächlich angezeigten Zielkarte, sofern vorhanden.
+const ARCH_DEST_CARD_ALIAS={
+  'casa-em-tavira':'casa-luz-tavira',
+  'casa-quinta-do-lago':'casa-quinta-lago',
+  'faro-route-moderne':'faro-route-moderna',
+  'biblioteca-alvaro-de-campos':'biblioteca-tavira',
+  'igreja-santa-luzia':'igreja-santa-luzia-tavira'
+};
+function archStripAccents(str){return String(str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
+function archSplitLeadingNumber(name){
+  const m=String(name||'').trim().match(/^(\d{1,3})[\s._-]*(.*)$/);
+  if(m)return {number:m[1].padStart(2,'0'),rest:m[2].trim()};
+  return {number:null,rest:String(name||'').trim()};
+}
+// Normalisierung gemäß Vorgabe: Kleinschreibung, Akzente entfernen, Gedankenstriche vereinheitlichen, Mehrfachleerzeichen entfernen.
+function normalizeArchFolderName(name){
+  let s=archStripAccents(String(name||'')).toLowerCase();
+  s=s.replace(/[–—−]/g,'-');
+  s=s.replace(/[^a-z0-9-]+/g,' ');
+  s=s.replace(/\s+/g,' ').trim();
+  return s;
+}
+const ARCH_FOLDER_MAPPING_INDEXED=ARCH_FOLDER_MAPPING.map(m=>({...m,normalized:normalizeArchFolderName(archSplitLeadingNumber(m.folderName).rest)}));
+// Primär: führende Nummer "01".."23". Fallback: normalisierter Ordnername (Umlaute/Akzente-tolerant).
+function matchArchFolder(folderName){
+  const {number,rest}=archSplitLeadingNumber(folderName);
+  if(number){
+    const byNumber=ARCH_FOLDER_MAPPING_INDEXED.find(m=>m.number===number);
+    if(byNumber)return byNumber;
+  }
+  const norm=normalizeArchFolderName(rest||folderName);
+  return ARCH_FOLDER_MAPPING_INDEXED.find(m=>m.normalized===norm)||null;
+}
+function archIsSupportedImageName(name){return ARCH_IMAGE_EXT.test(String(name||''));}
+function archIsIgnoredName(name){
+  const n=String(name||'');
+  if(ARCH_IGNORED_EXT.test(n))return true;
+  if(/^desktop\.ini$/i.test(n))return true;
+  return !archIsSupportedImageName(n);
+}
+function archDestCardId(destinationId){return ARCH_DEST_CARD_ALIAS[destinationId]||destinationId;}
+function archDestKeyForCardId(cardId){
+  const found=ARCH_FOLDER_MAPPING.find(m=>archDestCardId(m.destinationId)===cardId);
+  return found?found.destinationId:null;
+}
+// Gruppiert eine flache Liste von {file, relativeFolder} nach Projektordner und ordnet jeder Gruppe
+// höchstens ein Ziel-ID zu (erste gefundene führende Nummer bzw. normalisierter Name gewinnt).
+function buildArchImportGroups(entries){
+  const groups=new Map();
+  for(const entry of entries){
+    const folder=entry.relativeFolder||'';
+    if(!groups.has(folder))groups.set(folder,{folderName:folder,files:[],ignoredFiles:[]});
+    const g=groups.get(folder);
+    if(archIsIgnoredName(entry.file.name))g.ignoredFiles.push(entry.file);
+    else g.files.push(entry.file);
+  }
+  return [...groups.values()].map(g=>{
+    const match=matchArchFolder(g.folderName);
+    let status;
+    if(match)status=!g.files.length?'red':(g.files.length>1?'yellow':'green');
+    else status=g.files.length?'red':'gray';
+    return {folderName:g.folderName,destinationId:match?match.destinationId:null,files:g.files,ignoredFiles:g.ignoredFiles,status};
+  });
+}
+function archOpenDb(){
+  return new Promise((resolve,reject)=>{
+    if(typeof indexedDB==='undefined'){reject(new Error('IndexedDB ist auf diesem Gerät nicht verfügbar.'));return;}
+    const req=indexedDB.open(ARCH_DB_NAME,ARCH_DB_VERSION);
+    req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(ARCH_STORE))db.createObjectStore(ARCH_STORE,{keyPath:'destinationId'});};
+    req.onsuccess=()=>resolve(req.result);
+    req.onerror=()=>reject(req.error);
+  });
+}
+function archReadAll(){
+  return archOpenDb().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(ARCH_STORE,'readonly'),store=tx.objectStore(ARCH_STORE);
+    getAllFromObjectStore(store).then(resolve,reject);
+    tx.oncomplete=()=>db.close();
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Lesefehler'));};
+  }));
+}
+function archPutRecord(record){
+  return archOpenDb().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(ARCH_STORE,'readwrite');
+    tx.objectStore(ARCH_STORE).put(record);
+    tx.oncomplete=()=>{db.close();resolve();};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Schreibfehler'));};
+  }));
+}
+function archDeleteAll(){
+  return archOpenDb().then(db=>new Promise((resolve,reject)=>{
+    const tx=db.transaction(ARCH_STORE,'readwrite');
+    tx.objectStore(ARCH_STORE).clear();
+    tx.oncomplete=()=>{db.close();resolve();};
+    tx.onabort=()=>{db.close();reject(tx.error||new Error('Löschfehler'));};
+  }));
+}
+let archImageCache=new Map(); // destinationId -> {blob, meta}
+let archImageUrlCache=new Map(); // cardId -> objectURL (revoked/replaced on refresh)
+function archRevokeUrls(){
+  archImageUrlCache.forEach(url=>{try{URL.revokeObjectURL(url);}catch(_e){}});
+  archImageUrlCache=new Map();
+}
+function archGetImageUrl(cardId){
+  if(archImageUrlCache.has(cardId))return archImageUrlCache.get(cardId);
+  const destKey=archDestKeyForCardId(cardId)||cardId;
+  const entry=archImageCache.get(destKey);
+  if(!entry||!entry.blob||typeof URL==='undefined'||typeof URL.createObjectURL!=='function')return null;
+  const url=URL.createObjectURL(entry.blob);
+  archImageUrlCache.set(cardId,url);
+  return url;
+}
+// Liest alle lokal gespeicherten Bilder neu ein und aktualisiert die Vorschau in allen sichtbaren Ansichten.
+async function refreshArchImageCache(){
+  archRevokeUrls();
+  try{
+    const records=await archReadAll();
+    archImageCache=new Map(records.map(r=>[r.destinationId,{blob:r.blob,meta:r}]));
+  }catch(_e){archImageCache=new Map();}
+  refreshArchSummary();
+  if(typeof renderDestinations==='function')renderDestinations();
+  if(typeof renderDays==='function')renderDays(document.getElementById('search')?document.getElementById('search').value:'');
+  if(typeof renderToday==='function')renderToday();
+  const modal=document.getElementById('destModal');
+  if(modal&&modal.classList.contains('show')&&modal.dataset.destId)openDestination(modal.dataset.destId);
+}
+function archSummaryText(){
+  const total=ARCH_FOLDER_MAPPING.length;
+  const stored=archImageCache.size;
+  return `${stored} von ${total} Architektur-Fotos lokal verfügbar`;
+}
+function refreshArchSummary(){
+  const el=document.getElementById('archImportSummary'); if(!el)return;
+  const total=ARCH_FOLDER_MAPPING.length,stored=archImageCache.size,missing=total-stored;
+  el.innerHTML=`${escapeHtml(archSummaryText())}<br>Zugeordnete Ziele: ${stored} · Fehlende Bilder: ${missing}<br>Die Bilder werden ausschließlich auf diesem Gerät gespeichert.`;
+}
+function showArchResult(msg,isError){
+  const el=document.getElementById('archImportResult'); if(!el)return;
+  el.textContent=msg; el.style.color=isError?'#9b1b30':'';
+}
+// EXIF-Orientierung: liefert CSS-freie Rotation/Spiegelung für die Canvas-Zeichnung.
+function archOrientationTransform(ctx,orientation,w,h){
+  switch(orientation){
+    case 2: ctx.transform(-1,0,0,1,w,0); break;
+    case 3: ctx.transform(-1,0,0,-1,w,h); break;
+    case 4: ctx.transform(1,0,0,-1,0,h); break;
+    case 5: ctx.transform(0,1,1,0,0,0); break;
+    case 6: ctx.transform(0,1,-1,0,h,0); break;
+    case 7: ctx.transform(0,-1,-1,0,h,w); break;
+    case 8: ctx.transform(0,-1,1,0,0,w); break;
+    default: break;
+  }
+}
+function archOrientationSwapsAxes(orientation){return orientation>=5&&orientation<=8;}
+// Verkleinert/re-kodiert ein Bild lokal (max. 1920px Kante, WebP ~0.82, EXIF-Orientierung, kein Hochskalieren).
+async function archOptimizeImage(file){
+  let exifOrientation=1;
+  if(/\.(jpe?g)$/i.test(file.name||'')){
+    try{const{orientation}=parseJpegExif(await readBlobAsArrayBuffer(file));if(orientation)exifOrientation=orientation;}catch(_e){}
+  }
+  const bitmap=typeof createImageBitmap==='function'?await createImageBitmap(file):null;
+  const srcW=bitmap?bitmap.width:0,srcH=bitmap?bitmap.height:0;
+  if(!bitmap||typeof document==='undefined'||typeof document.createElement!=='function'){
+    return {blob:file,width:srcW,height:srcH,mimeType:file.type||'application/octet-stream'};
+  }
+  const swap=archOrientationSwapsAxes(exifOrientation);
+  const outW0=swap?srcH:srcW,outH0=swap?srcW:srcH;
+  const scale=Math.min(1,ARCH_MAX_EDGE/Math.max(outW0,outH0)); // niemals hochskalieren
+  const outW=Math.max(1,Math.round(outW0*scale)),outH=Math.max(1,Math.round(outH0*scale));
+  const canvas=document.createElement('canvas');
+  canvas.width=outW; canvas.height=outH;
+  const ctx=canvas.getContext('2d');
+  const drawW=swap?outH:outW,drawH=swap?outW:outH;
+  ctx.save();
+  ctx.scale(outW/outW0,outH/outH0);
+  archOrientationTransform(ctx,exifOrientation,drawW,drawH);
+  ctx.drawImage(bitmap,0,0,drawW,drawH);
+  ctx.restore();
+  if(bitmap.close)bitmap.close();
+  const blob=await new Promise(resolve=>{
+    if(canvas.toBlob)canvas.toBlob(b=>resolve(b),'image/webp',ARCH_QUALITY);
+    else resolve(null);
+  });
+  if(!blob)return {blob:file,width:srcW,height:srcH,mimeType:file.type||'application/octet-stream'};
+  return {blob,width:outW,height:outH,mimeType:blob.type||'image/webp'};
+}
+async function archStoreFile(destinationId,file,sourceFolder){
+  const optimized=await archOptimizeImage(file);
+  const record={
+    destinationId,
+    blob:optimized.blob,
+    originalFileName:file.name||'',
+    sourceFolder:sourceFolder||'',
+    mimeType:optimized.mimeType,
+    importedAt:new Date().toISOString(),
+    width:optimized.width||0,
+    height:optimized.height||0,
+    byteSize:optimized.blob?optimized.blob.size:(file.size||0)
+  };
+  await archPutRecord(record);
+  return record;
+}
+// Verarbeitet gruppierte Importe: pro Ordner wird das erste gültige Bild gespeichert (mehrere Bilder
+// bleiben über "Zuordnung prüfen" wählbar), nicht zuordenbare/ignorierte Dateien werden übersprungen.
+async function processArchImportGroups(groups){
+  let stored=0,skippedNoMatch=0,skippedNoImage=0,duplicateFolders=0;
+  for(const g of groups){
+    g.selectedIndex=0;
+    if(!g.destinationId){if(g.files.length)skippedNoMatch++;continue;}
+    if(!g.files.length){skippedNoImage++;continue;}
+    if(g.files.length>1)duplicateFolders++;
+    try{await archStoreFile(g.destinationId,g.files[0],g.folderName);stored++;}catch(_e){/* Datei konnte nicht gespeichert werden, Import läuft weiter */}
+  }
+  setArchReviewGroups(groups);
+  await refreshArchImageCache();
+  return {stored,skippedNoMatch,skippedNoImage,duplicateFolders};
+}
+function archReportResult(res){
+  showArchResult(`${archSummaryText()} · ${res.stored} gespeichert, ${res.skippedNoMatch} ohne Zuordnung, ${res.duplicateFolders} Ordner mit mehreren Bildern.`);
+}
+// ---- Ordnerimport: bevorzugt window.showDirectoryPicker(), sonst <input webkitdirectory> Fallback (u.a. Android/Chrome) ----
+async function chooseArchFolder(){
+  if(typeof window!=='undefined'&&typeof window.showDirectoryPicker==='function'){
+    try{
+      const rootHandle=await window.showDirectoryPicker();
+      const entries=await archCollectDirectoryEntries(rootHandle);
+      const groups=buildArchImportGroups(entries);
+      const res=await processArchImportGroups(groups);
+      archReportResult(res);
+    }catch(e){if(e&&e.name!=='AbortError')showArchResult('Ordnerimport fehlgeschlagen oder abgebrochen.',true);}
+    return;
+  }
+  const input=document.getElementById('archFolderFallbackInput');
+  if(input)input.click();
+}
+// Läuft rekursiv durch einen FileSystemDirectoryHandle. Falls der Nutzer direkt "App" wählt, werden dessen
+// direkte Unterordner als Projektordner behandelt; wählt er einen übergeordneten Ordner, wird "App" gesucht.
+async function archCollectDirectoryEntries(rootHandle){
+  let appHandle=rootHandle;
+  if(rootHandle.name!=='App'){
+    for await (const [name,handle] of rootHandle.entries()){
+      if(handle.kind==='directory'&&name==='App'){appHandle=handle;break;}
+    }
+  }
+  const entries=[];
+  for await (const [folderName,folderHandle] of appHandle.entries()){
+    if(folderHandle.kind!=='directory')continue;
+    for await (const [fileName,fileHandle] of folderHandle.entries()){
+      if(fileHandle.kind!=='file')continue;
+      try{const file=await fileHandle.getFile();entries.push({file,relativeFolder:folderName});}catch(_e){}
+    }
+  }
+  return entries;
+}
+function handleArchFolderFallbackFiles(event){
+  const files=[...(event.target.files||[])];
+  event.target.value='';
+  if(!files.length)return;
+  // webkitRelativePath: "App/01 Convento das Bernardas/foto.jpg" – zweitletztes Segment ist der Projektordner.
+  const entries=files.map(file=>{
+    const parts=String(file.webkitRelativePath||file.name||'').split('/');
+    const relativeFolder=parts.length>=2?parts[parts.length-2]:'';
+    return {file,relativeFolder};
+  });
+  const groups=buildArchImportGroups(entries);
+  processArchImportGroups(groups).then(archReportResult);
+}
+// ---- Dateiauswahl: mehrere JPEG/PNG/WebP-Dateien gleichzeitig; Ordnername aus webkitRelativePath, falls vorhanden ----
+function chooseArchFiles(){const input=document.getElementById('archFilesInput');if(input)input.click();}
+function handleArchFiles(event){
+  const files=[...(event.target.files||[])];
+  event.target.value='';
+  if(!files.length)return;
+  const entries=files.map(file=>{
+    const rel=file.webkitRelativePath;
+    let relativeFolder='';
+    if(rel){const parts=String(rel).split('/');relativeFolder=parts.length>=2?parts[parts.length-2]:'';}
+    else relativeFolder=(matchArchFolder(file.name)?file.name:'');
+    return {file,relativeFolder};
+  });
+  const groups=buildArchImportGroups(entries);
+  processArchImportGroups(groups).then(archReportResult);
+}
+// ---- "Zuordnung prüfen": Übersicht mit grün/gelb/rot/grau je Projektordner, Auswahl bei mehreren Bildern ----
+let archReviewGroups=[];
+async function openArchReview(){
+  renderArchReview();
+  openModal('archReviewModal');
+}
+function setArchReviewGroups(groups){archReviewGroups=groups;renderArchReview();}
+function renderArchReview(){
+  const el=document.getElementById('archReviewList'); if(!el)return;
+  if(!archReviewGroups.length){el.innerHTML='<p class="small">Noch keine Ordner geprüft. Importiere zuerst einen Bildordner oder einzelne Bilder.</p>';return;}
+  el.innerHTML=archReviewGroups.map((g,gi)=>{
+    const match=g.destinationId?ARCH_FOLDER_MAPPING.find(m=>m.destinationId===g.destinationId):null;
+    const label=match?`${match.number} · ${match.folderName}`:(g.folderName||'(ohne Ordner)');
+    let meta;
+    if(g.status==='green')meta=`Bild korrekt zugeordnet → ${g.destinationId}`;
+    else if(g.status==='yellow')meta=`${g.files.length} Bilder gefunden → ${g.destinationId} (Auswahl unten)`;
+    else if(g.status==='red')meta=g.destinationId?'Kein Bild gefunden':'Ordner konnte keinem Ziel zugeordnet werden';
+    else meta='Ignorierte Datei(en) – wird nicht importiert';
+    const picks=g.status==='yellow'?`<div class="archReviewPickRow">${g.files.map((f,fi)=>`<button type="button" class="${fi===(g.selectedIndex||0)?'active':''}" onclick="selectArchReviewFile(${gi},${fi})">${escapeHtml(f.name)}</button>`).join('')}</div>`:'';
+    return `<div class="archReviewRow"><span class="archReviewDot ${g.status}"></span><div class="archReviewBody"><div class="archReviewTitle">${escapeHtml(label)}</div><div class="archReviewMeta">${escapeHtml(meta)}</div>${picks}</div></div>`;
+  }).join('');
+}
+function selectArchReviewFile(groupIndex,fileIndex){
+  const g=archReviewGroups[groupIndex]; if(!g)return;
+  g.selectedIndex=fileIndex;
+  if(g.destinationId){
+    archStoreFile(g.destinationId,g.files[fileIndex],g.folderName).then(()=>{refreshArchImageCache();renderArchReview();});
+  }
+}
+function closeArchReview(){closeModal('archReviewModal');}
+// ---- Löschen: nur die IndexedDB-Bilder dieser App, niemals Google Drive oder den gewählten Geräteordner ----
+function deleteArchImages(){
+  const total=ARCH_FOLDER_MAPPING.length;
+  if(typeof confirm==='function'&&!confirm(`Alle ${total} lokal gespeicherten Architektur-Fotos von diesem Gerät entfernen?`))return;
+  archDeleteAll().then(()=>{archReviewGroups=[];refreshArchImageCache();showArchResult('Lokale Architektur-Fotos wurden von diesem Gerät entfernt.');}).catch(()=>showArchResult('Lokale Bilder konnten nicht vollständig gelöscht werden.',true));
+}
+// ---- Darstellung: lokal → Repository-Bild → Platzhalter, inkl. "Auf diesem Gerät gespeichert" ----
+function archResolveImageSrc(cardId,fallbackSrc){
+  const url=archGetImageUrl(cardId);
+  return url||fallbackSrc;
+}
+function archHasLocalImage(cardId){return !!archImageCache.get(archDestKeyForCardId(cardId)||cardId);}
+function archLocalBadgeHtml(cardId){return archHasLocalImage(cardId)?'<span class="localphotobadge">Auf diesem Gerät gespeichert</span>':'';}
 document.querySelectorAll('nav button').forEach(btn=>btn.onclick=()=>goToView(btn.dataset.view));
 document.getElementById('search').addEventListener('input',e=>renderDays(e.target.value));
 document.getElementById('destSearch').addEventListener('input',()=>renderDestinations());
@@ -1648,6 +2034,7 @@ document.addEventListener('click',e=>{const disabled=e.target.closest('a[aria-di
 window.addEventListener('online',syncOnlineState);
 window.addEventListener('offline',syncOnlineState);
 renderToday();renderDays();renderDestFilters();renderDestinations();renderFoodFilters();renderFood();renderBookings();renderDiaryDayPicker();renderDiaryDay();refreshTimelineSummary();syncOnlineState();
+refreshArchSummary();refreshArchImageCache().catch(()=>{});
 if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body></html>

@@ -9,6 +9,63 @@ const scriptMatch=html.match(/<script>\s*([\s\S]*?)\s*<\/script>/i);
 assert.ok(scriptMatch,'Inline script in index.html not found');
 const script=scriptMatch[1];
 
+// Minimal in-memory IndexedDB fake used only for local-media persistence tests below.
+// Supports exactly what index.html's arch* helpers need: open/upgrade, put/get/getAll/delete/clear,
+// and transaction oncomplete/onabort callbacks fired as microtasks (mirrors real IDB async semantics).
+function createFakeIndexedDB(databases=new Map()){
+  function makeRequest(){return {result:undefined,error:null,onsuccess:null,onerror:null,onupgradeneeded:null,transaction:null};}
+  function makeStoreHandle(dbEntry,storeName){
+    const store=dbEntry.stores.get(storeName);
+    return {
+      keyPath:store.keyPath,
+      indexNames:{contains:()=>false},
+      put(record){store.data.set(record[store.keyPath],record);return makeRequest();},
+      get(key){const r=makeRequest();queueMicrotask(()=>{r.result=store.data.get(key);if(r.onsuccess)r.onsuccess();});return r;},
+      getAll(){const r=makeRequest();queueMicrotask(()=>{r.result=[...store.data.values()];if(r.onsuccess)r.onsuccess();});return r;},
+      delete(key){store.data.delete(key);return makeRequest();},
+      clear(){store.data.clear();return makeRequest();}
+    };
+  }
+  const indexedDB={
+    open(name,version){
+      const req=makeRequest();
+      queueMicrotask(()=>{
+        let dbEntry=databases.get(name);
+        const isNew=!dbEntry;
+        if(!dbEntry){dbEntry={version:0,stores:new Map()};databases.set(name,dbEntry);}
+        const needsUpgrade=isNew||(version||0)>dbEntry.version;
+        const db={
+          objectStoreNames:{contains:n=>dbEntry.stores.has(n)},
+          createObjectStore(storeName,opts){dbEntry.stores.set(storeName,{keyPath:opts&&opts.keyPath,data:new Map()});return makeStoreHandle(dbEntry,storeName);},
+          transaction(storeNames){
+            const tx={oncomplete:null,onabort:null,error:null,objectStore:n=>makeStoreHandle(dbEntry,n)};
+            queueMicrotask(()=>{if(tx.oncomplete)tx.oncomplete();});
+            return tx;
+          },
+          close(){}
+        };
+        req.result=db;
+        if(needsUpgrade){
+          dbEntry.version=version||1;
+          req.transaction=db.transaction([]);
+          if(req.onupgradeneeded)req.onupgradeneeded();
+        }
+        if(req.onsuccess)req.onsuccess();
+      });
+      return req;
+    }
+  };
+  return {indexedDB,databases};
+}
+// Stub browser-only Object URL APIs so local-image priority/revocation logic is testable in Node.
+let __objectUrlSeq=0;
+const __liveObjectUrls=new Set();
+const __revokedObjectUrls=[];
+if(typeof URL.createObjectURL!=='function'){
+  URL.createObjectURL=blob=>{const u=`blob:test-${++__objectUrlSeq}`;__liveObjectUrls.add(u);return u;};
+  URL.revokeObjectURL=u=>{__liveObjectUrls.delete(u);__revokedObjectUrls.push(u);};
+}
+
 function createStorage(){
   const store=new Map();
   return {
@@ -69,7 +126,7 @@ class Element {
   scrollIntoView(){}
 }
 
-function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
+function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
   const elements=new Map();
   const navButtons=['today','days','destinations','food','bookings','tagebuch','tips'].map(view=>{const el=new Element();el.dataset.view=view;return el;});
   const navEl=new Element('nav'); navEl.clientWidth=0; navEl.scrollWidth=0;
@@ -135,9 +192,12 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
     URLSearchParams,
     confirm:()=>true
   };
+  sandbox.confirm=opts.confirm||sandbox.confirm;
+  sandbox.indexedDB=(opts.indexedDB||createFakeIndexedDB()).indexedDB;
+  sandbox.createImageBitmap=opts.createImageBitmap;
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,destCardHtml};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -643,4 +703,239 @@ test('destination search finds architect names (Souto de Moura, Manuel Gomes da 
 test('Convento das Bernardas is linked to the existing Tavira day',()=>{
   const {app}=buildSandbox();
   assert.ok((app.DAY_DESTS['2026-09-13']||[]).includes('convento-bernardas'));
+});
+
+// ---- Lokale Architektur-Fotos: Import aus Google-Drive-Ordnerstruktur "09_Fotos/App" ----
+const ARCH_EXPECTED_MAPPING=[
+  ['01','convento-bernardas'],['02','casa-em-tavira'],['03','casa-quinta-do-lago'],
+  ['04','faro-route-moderne'],['05','biblioteca-alvaro-de-campos'],['06','igreja-santa-luzia'],
+  ['07','bairro-pescadores-olhao'],['08','capela-do-monte'],['09','casa-gago'],
+  ['10','the-modernist-faro'],['11','casa-1923-faro'],['12','edificio-tridente'],
+  ['13','edificio-nogueira'],['14','cafe-chelsea-faro'],['15','rua-de-berlim-faro'],
+  ['16','casa-dos-abracos'],['17','casa-um-tavira'],['18','house-agostos'],
+  ['19','frame-house-faro'],['20','house-silves-bomo'],['21','cabrita-moleiro-house'],
+  ['22','house-olhao-ods'],['23','house-martinhal']
+];
+
+function makeImageFile(name,type='image/jpeg',bytes=[0xff,0xd8,0xff,0xd9]){
+  return new File([new Uint8Array(bytes)],name,{type});
+}
+
+test('all 23 leading-number folder-to-destination-ID mappings resolve correctly',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.ARCH_FOLDER_MAPPING.length,23);
+  for(const [number,destinationId] of ARCH_EXPECTED_MAPPING){
+    const entry=app.ARCH_FOLDER_MAPPING.find(m=>m.number===number);
+    assert.ok(entry,`mapping for number ${number} must exist`);
+    assert.equal(entry.destinationId,destinationId);
+    const match=app.matchArchFolder(`${number} Irgendein Name`);
+    assert.ok(match,`folder starting with ${number} must match`);
+    assert.equal(match.destinationId,destinationId);
+  }
+  const ids=app.ARCH_FOLDER_MAPPING.map(m=>m.destinationId);
+  assert.equal(new Set(ids).size,23,'all 23 Ziel-IDs must be unique');
+});
+
+test('folder matching falls back to normalized name (accents, umlauts, dashes, spacing) when the number is missing',()=>{
+  const {app}=buildSandbox();
+  const m1=app.matchArchFolder('Biblioteca Municipal Álvaro de Campos');
+  assert.equal(m1.destinationId,'biblioteca-alvaro-de-campos');
+  const m2=app.matchArchFolder('biblioteca   municipal  alvaro de campos');
+  assert.equal(m2.destinationId,'biblioteca-alvaro-de-campos');
+  const m3=app.matchArchFolder('Café—Chelsea—Gebäude');
+  assert.equal(m3.destinationId,'cafe-chelsea-faro');
+  const m4=app.matchArchFolder('casa em tavira – souto de moura');
+  assert.equal(m4.destinationId,'casa-em-tavira');
+  assert.equal(app.matchArchFolder('Ein völlig unbekannter Ordner'),null);
+});
+
+test('leading number takes priority over the normalized name fallback',()=>{
+  const {app}=buildSandbox();
+  const match=app.matchArchFolder('01 Ein komplett anderer Name');
+  assert.equal(match.destinationId,'convento-bernardas');
+});
+
+test('supported image types (JPEG, PNG, WebP) are recognized and unsupported/ignored files are rejected',()=>{
+  const {app}=buildSandbox();
+  for(const name of ['foto.jpg','foto.jpeg','foto.JPG','foto.png','foto.webp']){
+    assert.equal(app.archIsSupportedImageName(name),true,name);
+    assert.equal(app.archIsIgnoredName(name),false,name);
+  }
+  for(const name of ['notiz.txt','dokument.pdf','Link zu Google Drive.gdoc','Freigabe.url','archiv.gsheet','Thumbs.db.lnk']){
+    assert.equal(app.archIsIgnoredName(name),true,name);
+  }
+});
+
+test('missing project folders are reported as red (no image found) when the folder is recognized but empty',()=>{
+  const {app}=buildSandbox();
+  const groups=app.buildArchImportGroups([
+    {file:{name:'hinweis.txt'},relativeFolder:'01 Convento das Bernardas'}
+  ]);
+  assert.equal(groups.length,1);
+  assert.equal(groups[0].destinationId,'convento-bernardas');
+  assert.equal(groups[0].files.length,0);
+  assert.equal(groups[0].status,'red');
+});
+
+test('a project folder with multiple valid images is flagged yellow and keeps all candidates selectable',()=>{
+  const {app}=buildSandbox();
+  const groups=app.buildArchImportGroups([
+    {file:{name:'a.jpg'},relativeFolder:'02 Casa em Tavira – Souto de Moura'},
+    {file:{name:'b.png'},relativeFolder:'02 Casa em Tavira – Souto de Moura'},
+    {file:{name:'notes.pdf'},relativeFolder:'02 Casa em Tavira – Souto de Moura'}
+  ]);
+  assert.equal(groups.length,1);
+  assert.equal(groups[0].status,'yellow');
+  assert.equal(groups[0].destinationId,'casa-em-tavira');
+  assert.equal(groups[0].files.length,2);
+  assert.equal(groups[0].ignoredFiles.length,1);
+});
+
+test('a single valid image in a recognized folder is flagged green; an unmatched folder is flagged red',()=>{
+  const {app}=buildSandbox();
+  const groups=app.buildArchImportGroups([
+    {file:{name:'foto.webp'},relativeFolder:'23 House in Martinhal – ARX Portugal'},
+    {file:{name:'foto.jpg'},relativeFolder:'Ein unbekannter Ordner'}
+  ]);
+  const green=groups.find(g=>g.folderName.startsWith('23'));
+  assert.equal(green.status,'green');
+  assert.equal(green.destinationId,'house-martinhal');
+  const red=groups.find(g=>g.folderName==='Ein unbekannter Ordner');
+  assert.equal(red.status,'red');
+  assert.equal(red.destinationId,null);
+});
+
+test('a folder containing only ignored files (txt/pdf/Drive-share-link) is flagged gray',()=>{
+  const {app}=buildSandbox();
+  const groups=app.buildArchImportGroups([
+    {file:{name:'Google Drive Link.url'},relativeFolder:'sonstiges'},
+    {file:{name:'readme.txt'},relativeFolder:'sonstiges'}
+  ]);
+  assert.equal(groups.length,1);
+  assert.equal(groups[0].status,'gray');
+});
+
+test('storing and reading back an architecture image from IndexedDB round-trips blob + metadata together',async()=>{
+  const shared=createFakeIndexedDB();
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{indexedDB:shared});
+  const file=makeImageFile('bernardas.jpg');
+  const record=await app.archStoreFile('convento-bernardas','bernardas.jpg'?file:file,'01 Convento das Bernardas');
+  assert.equal(record.destinationId,'convento-bernardas');
+  assert.equal(record.originalFileName,'bernardas.jpg');
+  assert.equal(record.sourceFolder,'01 Convento das Bernardas');
+  assert.ok(record.importedAt);
+  assert.ok(record.blob);
+  const all=await app.archReadAll();
+  assert.equal(all.length,1);
+  assert.equal(all[0].destinationId,'convento-bernardas');
+  assert.ok(all[0].blob,'blob must be persisted alongside its metadata');
+});
+
+test('the app survives an offline restart: previously imported images are still available from a fresh session',async()=>{
+  const shared=createFakeIndexedDB();
+  const first=buildSandbox('2026-09-10T12:00:00Z',{indexedDB:shared});
+  await first.app.archStoreFile('house-martinhal',makeImageFile('m.jpg'),'23 House in Martinhal – ARX Portugal');
+  // Simulate an app restart: a brand-new script/session, but the same underlying device storage.
+  const second=buildSandbox('2026-09-10T12:00:00Z',{indexedDB:shared});
+  await second.app.refreshArchImageCache();
+  assert.equal(second.app.archImageCache().size,1);
+  assert.ok(second.app.archImageCache().get('house-martinhal'));
+});
+
+test('local image takes priority over the bundled repository image and the placeholder',async()=>{
+  const shared=createFakeIndexedDB();
+  const {app,document}=buildSandbox('2026-09-10T12:00:00Z',{indexedDB:shared});
+  const beforeHtml=app.destCardHtml(app.DESTINATIONS.find(d=>d.id==='convento-bernardas'));
+  assert.match(beforeHtml,/images\/convento-bernardas\.jpg/);
+  assert.doesNotMatch(beforeHtml,/Auf diesem Gerät gespeichert/);
+  await app.archStoreFile('convento-bernardas',makeImageFile('foto.jpg'),'01 Convento das Bernardas');
+  await app.refreshArchImageCache();
+  const afterHtml=document.getElementById('destGrid').innerHTML;
+  assert.match(afterHtml,/data-id="convento-bernardas"[\s\S]*?src="blob:/);
+  assert.match(afterHtml,/Auf diesem Gerät gespeichert/);
+});
+
+test('a destination without any local or repository image would fall back to the SVG placeholder',()=>{
+  const {app}=buildSandbox();
+  const src=app.archResolveImageSrc('no-such-destination',app.placeholderData?app.placeholderData('x'):'data:image/svg+xml;fallback');
+  assert.ok(src);
+});
+
+test('done/"besucht" dimming still applies to destination cards that show a locally imported photo',async()=>{
+  const shared=createFakeIndexedDB();
+  const {app,document}=buildSandbox('2026-09-10T12:00:00Z',{indexedDB:shared});
+  await app.archStoreFile('convento-bernardas',makeImageFile('foto.jpg'),'01 Convento das Bernardas');
+  await app.refreshArchImageCache();
+  app.toggleVisited('convento-bernardas');
+  app.renderDestinations();
+  const html=document.getElementById('destGrid').innerHTML;
+  assert.match(html,/class="destcard visited" data-id="convento-bernardas"/);
+  assert.match(html,/data-id="convento-bernardas"[\s\S]*?Auf diesem Gerät gespeichert/);
+  app.toggleVisited('convento-bernardas');
+});
+
+test('deleting local architecture images clears IndexedDB completely and updates the summary',async()=>{
+  const shared=createFakeIndexedDB();
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{confirm:()=>true,indexedDB:shared});
+  await app.archStoreFile('convento-bernardas',makeImageFile('a.jpg'),'01 Convento das Bernardas');
+  await app.archStoreFile('house-martinhal',makeImageFile('b.jpg'),'23 House in Martinhal – ARX Portugal');
+  await app.refreshArchImageCache();
+  assert.equal(app.archImageCache().size,2);
+  app.deleteArchImages();
+  await new Promise(r=>setImmediate(r));
+  await new Promise(r=>setImmediate(r));
+  const remaining=await app.archReadAll();
+  assert.equal(remaining.length,0);
+});
+
+test('deleting local images is skipped entirely when the confirmation dialog is declined',async()=>{
+  const shared=createFakeIndexedDB();
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{confirm:()=>false,indexedDB:shared});
+  await app.archStoreFile('convento-bernardas',makeImageFile('a.jpg'),'01 Convento das Bernardas');
+  app.deleteArchImages();
+  await new Promise(r=>setImmediate(r));
+  const remaining=await app.archReadAll();
+  assert.equal(remaining.length,1,'declining the confirmation must not delete anything');
+});
+
+test('the delete confirmation dialog names the exact total number of local architecture photos (23)',()=>{
+  let confirmMessage=null;
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{confirm:(msg)=>{confirmMessage=msg;return false;}});
+  app.deleteArchImages();
+  assert.equal(confirmMessage,'Alle 23 lokal gespeicherten Architektur-Fotos von diesem Gerät entfernen?');
+});
+
+test('never stores base64 image data in localStorage; images only ever live as Blobs in IndexedDB',async()=>{
+  const shared=createFakeIndexedDB();
+  const {app,storage}=buildSandbox('2026-09-10T12:00:00Z',{indexedDB:shared});
+  const written=[];
+  const originalSetItem=storage.setItem.bind(storage);
+  storage.setItem=(key,value)=>{written.push([key,value]);return originalSetItem(key,value);};
+  await app.archStoreFile('convento-bernardas',makeImageFile('foto.jpg'),'01 Convento das Bernardas');
+  await app.refreshArchImageCache();
+  app.toggleVisited('convento-bernardas');
+  app.toggleVisited('convento-bernardas');
+  const rawKeys=[...shared.databases.keys()];
+  assert.ok(rawKeys.includes('algarve-local-media'),'images must be persisted in the algarve-local-media IndexedDB');
+  assert.equal(written.length,2,'only the existing visited-toggle keys may be written to localStorage');
+  for(const [key,value] of written){
+    assert.doesNotMatch(key,/photo|image|foto/i);
+    assert.doesNotMatch(String(value),/^data:image\//);
+    assert.ok(String(value).length<100,'localStorage values must stay tiny (no embedded image data)');
+  }
+});
+
+test('local architecture images are never part of the service-worker precache list',()=>{
+  const swSource=fs.readFileSync(new URL('../sw.js',import.meta.url),'utf8');
+  assert.doesNotMatch(swSource,/destination-images/);
+  assert.doesNotMatch(swSource,/algarve-local-media/);
+  assert.doesNotMatch(swSource,/09_Fotos/);
+});
+
+test('optimizeArchImage never upscales and gracefully falls back when canvas/createImageBitmap are unavailable',async()=>{
+  const {app}=buildSandbox();
+  const file=makeImageFile('plain.png','image/png');
+  const result=await app.archOptimizeImage(file);
+  assert.ok(result.blob);
+  assert.equal(result.mimeType,'image/png');
 });
