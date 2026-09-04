@@ -54,12 +54,12 @@
   "bairro-pescadores-olhao": {
     "candidates": [],
     "name": "Bairro dos Pescadores",
-    "search": "Barreta Olhão casas cubistas"
+    "search": "Barreta Olhão"
   },
   "biblioteca-tavira": {
     "candidates": [],
     "name": "Biblioteca Municipal Álvaro de Campos",
-    "search": "Cadeia Tavira"
+    "search": "Biblioteca Municipal de Tavira"
   },
   "cabanas": {
     "candidates": [
@@ -146,7 +146,7 @@
   "igreja-santa-luzia-tavira": {
     "candidates": [],
     "name": "Igreja de Santa Luzia",
-    "search": "Igreja Santa Luzia Tavira"
+    "search": "Igreja Paroquial Santa Luzia Tavira"
   },
   "lagos-altstadt": {
     "candidates": [
