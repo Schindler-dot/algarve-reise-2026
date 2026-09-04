@@ -54,12 +54,12 @@
   "bairro-pescadores-olhao": {
     "candidates": [],
     "name": "Bairro dos Pescadores",
-    "search": "Bairro dos Pescadores Olhão Portugal fishermen houses"
+    "search": "Barreta Olhão casas cubistas"
   },
   "biblioteca-tavira": {
     "candidates": [],
     "name": "Biblioteca Municipal Álvaro de Campos",
-    "search": "Biblioteca Municipal Tavira Carrilho da Graça library"
+    "search": "Cadeia Tavira"
   },
   "cabanas": {
     "candidates": [
@@ -97,16 +97,6 @@
     ],
     "name": "Carvoeiro",
     "search": "Carvoeiro Portugal coast village cliffs"
-  },
-  "casa-luz-tavira": {
-    "candidates": [],
-    "name": "Casa em Tavira (Luz de Tavira)",
-    "search": "Luz de Tavira Portugal house"
-  },
-  "casa-quinta-lago": {
-    "candidates": [],
-    "name": "Casa na Quinta do Lago",
-    "search": "Quinta do Lago Portugal house Souto de Moura"
   },
   "convento-bernardas": {
     "candidates": [
@@ -156,7 +146,7 @@
   "igreja-santa-luzia-tavira": {
     "candidates": [],
     "name": "Igreja de Santa Luzia",
-    "search": "Igreja de Santa Luzia Tavira Portugal church"
+    "search": "Igreja Santa Luzia Tavira"
   },
   "lagos-altstadt": {
     "candidates": [
