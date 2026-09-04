@@ -137,7 +137,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z'){
   };
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -284,9 +284,9 @@ test('destination and restaurant modals exist and open/close hooks are wired',()
   assert.equal(document.getElementById('foodModal').classList.contains('show'),false);
 });
 
-test('all 28 destinations have deepened facts and background text',()=>{
+test('all 35 destinations have deepened facts and background text',()=>{
   const {app}=buildSandbox();
-  assert.equal(app.DESTINATIONS.length,28);
+  assert.equal(app.DESTINATIONS.length,35);
   for(const d of app.DESTINATIONS){
     assert.ok(Array.isArray(d.facts),`${d.id} facts should be an array`);
     assert.ok(d.facts.length>=1&&d.facts.length<=3,`${d.id} should have 1-3 fact chips`);
@@ -524,4 +524,123 @@ test('Tagebuch: compact JPEG EXIF parser reads capture time, GPS and orientation
   assert.ok(exif.gps);
   assert.ok(Math.abs(exif.gps.lat-37.1233333)<1e-4);
   assert.ok(Math.abs(exif.gps.lng-(-8.65))<1e-4);
+});
+
+test('all destination ids are unique',()=>{
+  const {app}=buildSandbox();
+  const ids=app.DESTINATIONS.map(d=>d.id);
+  assert.equal(new Set(ids).size,ids.length,'destination ids must be unique');
+});
+
+test('"Moderne & Gegenwart" filter shows only modern architecture destinations and combines with search/visited filters',()=>{
+  const {app,document}=buildSandbox();
+  app.renderDestinations();
+  const allCount=document.getElementById('destGrid').innerHTML.match(/class="destcard/g).length;
+
+  app.setDestCategoryFilter('Moderne & Gegenwart');
+  assert.equal(app.destCategory(),'Moderne & Gegenwart');
+  app.renderDestinations();
+  const modernIds=app.DESTINATIONS.filter(d=>d.modern===true).map(d=>d.id);
+  assert.ok(modernIds.length>=7,'expected at least 7 modern architecture destinations');
+  const gridHtml=document.getElementById('destGrid').innerHTML;
+  for(const id of modernIds)assert.match(gridHtml,new RegExp(`data-id="${id}"`));
+  assert.doesNotMatch(gridHtml,/data-id="faro-altstadt"/);
+  assert.ok(gridHtml.match(/class="destcard/g).length<allCount);
+
+  document.getElementById('destSearch').value='souto de moura';
+  app.renderDestinations();
+  const combinedHtml=document.getElementById('destGrid').innerHTML;
+  assert.match(combinedHtml,/data-id="convento-bernardas"/);
+  assert.doesNotMatch(combinedHtml,/data-id="biblioteca-tavira"/);
+  document.getElementById('destSearch').value='';
+
+  app.toggleVisited('convento-bernardas');
+  app.setDestVisitedFilter('Besucht');
+  app.renderDestinations();
+  const visitedModernHtml=document.getElementById('destGrid').innerHTML;
+  assert.match(visitedModernHtml,/data-id="convento-bernardas"/);
+  assert.doesNotMatch(visitedModernHtml,/data-id="casa-luz-tavira"/);
+
+  app.setDestVisitedFilter('Alle');
+  app.setDestCategoryFilter('Alle');
+});
+
+test('architecture metadata is rendered for architecture destinations and hidden otherwise',()=>{
+  const {app,document}=buildSandbox();
+  app.openDestination('convento-bernardas');
+  const archHtml=document.getElementById('modalArchBlock').innerHTML;
+  assert.match(archHtml,/Eduardo Souto de Moura/);
+  assert.match(archHtml,/2012/);
+  assert.match(archHtml,/Zisterzienserinnenkloster/);
+  assert.equal(document.getElementById('modalArchBlock').style.display,'');
+
+  app.openDestination('faro-altstadt');
+  assert.equal(document.getElementById('modalArchBlock').style.display,'none');
+});
+
+test('private/restricted architecture destinations show their access hint',()=>{
+  const {app}=buildSandbox();
+  for(const id of ['casa-luz-tavira','casa-quinta-lago','bairro-pescadores-olhao']){
+    const d=app.DESTINATIONS.find(x=>x.id===id);
+    assert.ok(d.arch&&/nur von außen|nicht öffentlich/.test(d.arch.access),`${id} should state a restrictive access hint`);
+  }
+});
+
+test('"Faro – Route der Moderne" is flagged as an architecture route with multiple verified stations',()=>{
+  const {app,document}=buildSandbox();
+  const route=app.DESTINATIONS.find(d=>d.id==='faro-route-moderna');
+  assert.equal(route.route,true);
+  assert.ok(Array.isArray(route.stations)&&route.stations.length>=5);
+  for(const s of route.stations){
+    assert.ok(typeof s.name==='string'&&s.name.trim().length>0);
+    assert.ok(typeof s.lat!=='number'||typeof s.lng!=='number'||(!Number.isNaN(s.lat)&&!Number.isNaN(s.lng)));
+  }
+  app.openDestination('faro-route-moderna');
+  const stationsHtml=document.getElementById('modalStations').innerHTML;
+  assert.match(stationsHtml,/THE MODERNIST/);
+  assert.match(stationsHtml,/Casa Gago/);
+  assert.match(stationsHtml,/Rua de Berlim/);
+});
+
+test('deep-dive sections for new architecture destinations remain closed by default',()=>{
+  const {app,document}=buildSandbox();
+  for(const id of ['convento-bernardas','faro-route-moderna','biblioteca-tavira','igreja-santa-luzia-tavira']){
+    app.openDestination(id);
+    assert.equal(document.getElementById('modalDeepDetails').open,false,`${id} deep-dive must be closed by default`);
+  }
+});
+
+test('visited status and map marker toggling work for new architecture destinations',()=>{
+  const {app}=buildSandbox();
+  const id='convento-bernardas';
+  assert.equal(app.isVisited(id),false);
+  app.toggleVisited(id);
+  assert.equal(app.isVisited(id),true);
+  const popup=app.markerPopupHtml(app.DESTINATIONS.find(d=>d.id===id));
+  assert.match(popup,/aria-pressed="true"/);
+  app.toggleVisited(id);
+});
+
+test('destination search finds architect names (Souto de Moura, Manuel Gomes da Costa, Carrilho da Graça)',()=>{
+  const {app,document}=buildSandbox();
+  document.getElementById('destSearch').value='Souto de Moura';
+  app.renderDestinations();
+  let html2=document.getElementById('destGrid').innerHTML;
+  assert.match(html2,/Convento das Bernardas/);
+
+  document.getElementById('destSearch').value='Manuel Gomes da Costa';
+  app.renderDestinations();
+  html2=document.getElementById('destGrid').innerHTML;
+  assert.match(html2,/Faro – Route der Moderne/);
+
+  document.getElementById('destSearch').value='Carrilho da Graça';
+  app.renderDestinations();
+  html2=document.getElementById('destGrid').innerHTML;
+  assert.match(html2,/Biblioteca Municipal/);
+  document.getElementById('destSearch').value='';
+});
+
+test('Convento das Bernardas is linked to the existing Tavira day',()=>{
+  const {app}=buildSandbox();
+  assert.ok((app.DAY_DESTS['2026-09-13']||[]).includes('convento-bernardas'));
 });
