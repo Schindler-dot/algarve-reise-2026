@@ -126,6 +126,13 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <div id="destFilters" class="destfilter"></div>
 <div id="destCatFilters" class="destfilter"></div>
 <div id="destProgress" class="destprogress"></div>
+<div class="card">
+<div class="sectiontitle">Architektur-Fotos auf diesem Gerät</div>
+<p class="small">Importiere die 23 Architektur-Projektordner aus deiner privaten Google-Drive-Ablage ("09_Fotos/App") auf diesem Gerät. Die Bilder werden ausschließlich auf diesem Gerät gespeichert – niemals in diesem Repository, auf GitHub Pages oder auf einem Server.</p>
+<div class="actions"><button type="button" class="btn" onclick="chooseArchFolder()">Fotoordner importieren</button><button type="button" class="btn secondary" onclick="chooseArchFiles()">Einzelne Bilder auswählen</button><button type="button" class="btn secondary" onclick="openArchReview()">Zuordnung prüfen</button></div>
+<div id="archImportSummaryDest" class="small archImportSummary" style="margin-top:10px"></div>
+<div id="archImportResultDest" class="small archImportResult" style="margin-top:6px"></div>
+</div>
 <div id="destGrid" class="destgrid"></div>
 <div class="notice" style="margin-top:10px">Alle Fotos sind lokal in der App enthalten (Quelle: Wikimedia Commons) und stehen dadurch zuverlässig auch offline zur Verfügung.</div>
 </section>
@@ -177,8 +184,8 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <div class="sectiontitle">Lokale Architektur-Fotos</div>
 <p class="small">Importiere die 23 Architektur-Projektordner aus deiner privaten Google-Drive-Ablage ("09_Fotos/App") einzeln auf diesem Gerät. Die Bilder werden ausschließlich auf diesem Gerät gespeichert – niemals in diesem Repository, auf GitHub Pages oder auf einem Server.</p>
 <div class="actions"><button type="button" class="btn" onclick="chooseArchFolder()">Bildordner importieren</button><button type="button" class="btn secondary" onclick="chooseArchFiles()">Einzelne Bilder importieren</button><button type="button" class="btn secondary" onclick="openArchReview()">Zuordnung prüfen</button><button type="button" class="btn danger" onclick="deleteArchImages()">Lokale Bilder löschen</button></div>
-<div id="archImportSummary" class="small" style="margin-top:10px"></div>
-<div id="archImportResult" class="small" style="margin-top:6px"></div>
+<div id="archImportSummary" class="small archImportSummary" style="margin-top:10px"></div>
+<div id="archImportResult" class="small archImportResult" style="margin-top:6px"></div>
 </div>
 <input type="file" id="timelineFileInput" accept="application/json,.json" style="display:none" onchange="handleTimelineFile(event)">
 <input type="file" id="photoFileInput" accept="image/*,.heic,.heif,.jpg,.jpeg,.png,.webp" multiple style="display:none" onchange="handlePhotoFiles(event)">
@@ -1847,13 +1854,14 @@ function archSummaryText(){
   return `${stored} von ${total} Architektur-Fotos lokal verfügbar`;
 }
 function refreshArchSummary(){
-  const el=document.getElementById('archImportSummary'); if(!el)return;
+  const ids=['archImportSummary','archImportSummaryDest'];
   const total=ARCH_FOLDER_MAPPING.length,stored=archImageCache.size,missing=total-stored;
-  el.innerHTML=`${escapeHtml(archSummaryText())}<br>Zugeordnete Ziele: ${stored} · Fehlende Bilder: ${missing}<br>Die Bilder werden ausschließlich auf diesem Gerät gespeichert.`;
+  const html=`${escapeHtml(archSummaryText())}<br>Zugeordnete Ziele: ${stored} · Fehlende Bilder: ${missing}<br>Die Bilder werden ausschließlich auf diesem Gerät gespeichert.`;
+  ids.forEach(id=>{const el=document.getElementById(id); if(el)el.innerHTML=html;});
 }
 function showArchResult(msg,isError){
-  const el=document.getElementById('archImportResult'); if(!el)return;
-  el.textContent=msg; el.style.color=isError?'#9b1b30':'';
+  const ids=['archImportResult','archImportResultDest'];
+  ids.forEach(id=>{const el=document.getElementById(id); if(el){el.textContent=msg; el.style.color=isError?'#9b1b30':'';}});
 }
 // EXIF-Orientierung: liefert CSS-freie Rotation/Spiegelung für die Canvas-Zeichnung.
 function archOrientationTransform(ctx,orientation,w,h){
