@@ -205,7 +205,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
   sandbox.createImageBitmap=opts.createImageBitmap;
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,destLinksHtml,DEST_LINK_TYPES,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -706,6 +706,85 @@ test('destination search finds architect names (Souto de Moura, Manuel Gomes da 
   html2=document.getElementById('destGrid').innerHTML;
   assert.match(html2,/Biblioteca Municipal/);
   document.getElementById('destSearch').value='';
+});
+
+test('destLinksHtml renders compact, safe external link buttons and escapes HTML',()=>{
+  const {app}=buildSandbox();
+  const html2=app.destLinksHtml({links:[{label:'A & <b>Büro</b> "Test"',url:'https://example.com/?q="x"&y=<1>',type:'website'}]});
+  assert.match(html2,/target="_blank"/);
+  assert.match(html2,/rel="noopener noreferrer"/);
+  assert.doesNotMatch(html2,/<b>Büro<\/b>/,'label must be HTML-escaped');
+  assert.match(html2,/A &amp; &lt;b&gt;Büro&lt;\/b&gt; &quot;Test&quot;/);
+  assert.doesNotMatch(html2,/href="https:\/\/example\.com\/\?q="x"/,'url must be HTML-escaped in the href attribute');
+  assert.match(html2,/href="https:\/\/example\.com\/\?q=&quot;x&quot;&amp;y=&lt;1&gt;"/);
+});
+
+test('destLinksHtml orders links by priority: website, architect, publication, maps',()=>{
+  const {app}=buildSandbox();
+  const html2=app.destLinksHtml({links:[
+    {label:'Maps',url:'https://maps.example.com',type:'maps'},
+    {label:'Publikation',url:'https://pub.example.com',type:'publication'},
+    {label:'Architekt',url:'https://arch.example.com',type:'architect'},
+    {label:'Website',url:'https://site.example.com',type:'website'}
+  ]});
+  const order=['Website','Architekt','Publikation','Maps'].map(l=>html2.indexOf(l));
+  assert.ok(order.every((v,i)=>i===0||v>order[i-1]),'links must appear in website/architect/publication/maps priority order');
+});
+
+test('DEST_LINK_TYPES only allows the four defined categories and every destination link uses one',()=>{
+  const {app}=buildSandbox();
+  assert.equal(Array.from(app.DEST_LINK_TYPES).join(','),'website,architect,publication,maps');
+  for(const d of app.DESTINATIONS){
+    if(!Array.isArray(d.links))continue;
+    for(const l of d.links){
+      assert.ok(app.DEST_LINK_TYPES.includes(l.type),`${d.id}: link type "${l.type}" must be one of ${app.DEST_LINK_TYPES.join(', ')}`);
+      assert.ok(typeof l.label==='string'&&l.label.trim().length>0,`${d.id}: link label must be non-empty`);
+    }
+  }
+});
+
+test('all destination links use verified https:// addresses (no http, no other protocols)',()=>{
+  const {app}=buildSandbox();
+  for(const d of app.DESTINATIONS){
+    if(!Array.isArray(d.links))continue;
+    for(const l of d.links){
+      assert.match(l.url,/^https:\/\//,`${d.id}: link "${l.label}" (${l.url}) must be a secure https:// URL`);
+    }
+  }
+});
+
+test('destination cards never render "Weiterführende Links" / external destination links; only the opened detail view does',()=>{
+  const {app,document}=buildSandbox();
+  const withLinks=app.DESTINATIONS.find(d=>Array.isArray(d.links)&&d.links.length>0);
+  assert.ok(withLinks,'at least one destination should carry a links array for this test to be meaningful');
+
+  const cardHtml=app.destCardHtml(withLinks);
+  assert.doesNotMatch(cardHtml,/linkbtn/,'destination card must not render link buttons');
+  for(const l of withLinks.links)assert.doesNotMatch(cardHtml,new RegExp(l.url.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')),'destination card must not expose link URLs');
+
+  app.renderDestinations();
+  const gridHtml=document.getElementById('destGrid').innerHTML;
+  assert.doesNotMatch(gridHtml,/linkbtn/,'the destination overview grid must never render link buttons');
+
+  app.openDestination(withLinks.id);
+  const linksHtml=document.getElementById('modalLinks').innerHTML;
+  assert.match(linksHtml,/linkbtn/,'the opened destination detail view must render the link buttons');
+  assert.equal(document.getElementById('modalLinksSection').style.display,'');
+});
+
+test('"Weiterführende Links" section is hidden for destinations without a links array',()=>{
+  const {app,document}=buildSandbox();
+  const withoutLinks=app.DESTINATIONS.find(d=>!Array.isArray(d.links)||d.links.length===0);
+  assert.ok(withoutLinks);
+  app.openDestination(withoutLinks.id);
+  assert.equal(document.getElementById('modalLinksSection').style.display,'none');
+  assert.equal(document.getElementById('modalLinks').innerHTML,'');
+});
+
+test('destination modal markup includes a "Weiterführende Links" section',()=>{
+  assert.match(html,/Weiterführende Links/);
+  assert.match(html,/id="modalLinksSection"/);
+  assert.match(html,/id="modalLinks"/);
 });
 
 test('Convento das Bernardas is linked to the existing Tavira day',()=>{
