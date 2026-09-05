@@ -205,7 +205,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
   sandbox.createImageBitmap=opts.createImageBitmap;
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -1048,4 +1048,98 @@ test('optimizeArchImage never upscales and gracefully falls back when canvas/cre
   const result=await app.archOptimizeImage(file);
   assert.ok(result.blob);
   assert.equal(result.mimeType,'image/png');
+});
+
+// ---- Tagesrouten-Karte (day routes overview map on the "Tage" tab) ------------------------
+
+test('every trip day resolves to at least one route stop with valid coordinates (fehlende Koordinaten)',()=>{
+  const {app}=buildSandbox();
+  for(const day of app.DAYS){
+    const stops=app.dayRouteStops(day.date);
+    assert.ok(stops.length>0,`day ${day.date} must resolve at least one map stop`);
+    for(const stop of stops){
+      assert.equal(typeof stop.lat,'number',`stop ${stop.id||stop.name} of ${day.date} needs a numeric lat`);
+      assert.equal(typeof stop.lng,'number',`stop ${stop.id||stop.name} of ${day.date} needs a numeric lng`);
+      assert.ok(Number.isFinite(stop.lat)&&Number.isFinite(stop.lng));
+      assert.ok(stop.name);
+    }
+  }
+});
+
+test('days with a DAY_DESTS route produce stops in the exact DAY_DESTS order (Reihenfolge der Zwischenziele)',()=>{
+  const {app}=buildSandbox();
+  for(const [date,ids] of Object.entries(app.DAY_DESTS)){
+    const stops=app.dayRouteStops(date);
+    assert.deepEqual(stops.map(s=>s.id),ids,`route order for ${date} must follow DAY_DESTS`);
+  }
+});
+
+test('days without a DAY_DESTS route (rest/arrival/flex/departure days) get exactly one location marker',()=>{
+  const {app}=buildSandbox();
+  const noRouteDates=app.DAYS.map(d=>d.date).filter(date=>!(app.DAY_DESTS[date]&&app.DAY_DESTS[date].length));
+  assert.ok(noRouteDates.length>0);
+  for(const date of noRouteDates){
+    assert.equal(app.dayMapMarkerCount(date),1,`${date} should render as a single-location day`);
+  }
+});
+
+test('the departure day (19.09.) resolves to the explicit Faro-Airport coordinates (no entry in DESTINATIONS)',()=>{
+  const {app}=buildSandbox();
+  const stops=app.dayRouteStops('2026-09-19');
+  assert.equal(stops.length,1);
+  assert.equal(stops[0].id,'faro-airport');
+  assert.ok(!app.DESTINATIONS.some(d=>d.id==='faro-airport'),'Faro Airport must not be added to DESTINATIONS / the Ziele tab');
+  assert.equal(app.DAY_EXTRA_LOCATIONS['faro-airport'].lat,stops[0].lat);
+  assert.equal(app.DAY_EXTRA_LOCATIONS['faro-airport'].lng,stops[0].lng);
+});
+
+test('total marker count across all 14 days matches the sum of each day\'s resolved stops (Markerzahl)',()=>{
+  const {app}=buildSandbox();
+  const expected=app.DAYS.reduce((sum,d)=>sum+app.dayRouteStops(d.date).length,0);
+  assert.equal(app.totalDayMapMarkerCount(),expected);
+  assert.ok(app.totalDayMapMarkerCount()>=app.DAYS.length,'at least one marker per day');
+});
+
+test('every trip day gets a distinct, defined route color',()=>{
+  const {app}=buildSandbox();
+  const colors=app.DAYS.map(d=>app.dayColor(d.date));
+  colors.forEach(c=>assert.ok(/^#[0-9a-f]{6}$/i.test(c)));
+  assert.equal(new Set(colors).size,app.DAYS.length,'all 14 day colors must be unique');
+});
+
+test('focusDay() selects a single day and showAllDayRoutes() resets the focus back to "all"',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.dayMapFocus(),'all');
+  app.focusDay('2026-09-13');
+  assert.equal(app.dayMapFocus(),'2026-09-13');
+  app.showAllDayRoutes();
+  assert.equal(app.dayMapFocus(),'all');
+});
+
+test('focusDay() ignores dates that cannot be resolved to any stop',()=>{
+  const {app}=buildSandbox();
+  app.focusDay('2026-09-13');
+  app.focusDay('not-a-real-date');
+  assert.equal(app.dayMapFocus(),'2026-09-13','focus must stay unchanged for an unresolvable date');
+});
+
+test('showCurrentDayRoute() focuses the selected/today trip day',()=>{
+  const {app}=buildSandbox('2026-09-10T12:00:00Z'); // fake "today" is a trip day
+  app.showCurrentDayRoute();
+  assert.equal(app.dayMapFocus(),'2026-09-10');
+});
+
+test('stopTimeLabel() derives the day-part/time label from ITEM_DESTS for mapped destinations',()=>{
+  const {app}=buildSandbox();
+  const label=app.stopTimeLabel('2026-09-08','foia');
+  assert.equal(label,'Später Nachmittag');
+});
+
+test('resolveLocation() returns null for unknown ids and never invents coordinates',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.resolveLocation('does-not-exist'),null);
+  const loc=app.resolveLocation('monchique');
+  const dest=app.DESTINATIONS.find(d=>d.id==='monchique');
+  assert.equal(loc.lat,dest.lat);
+  assert.equal(loc.lng,dest.lng);
 });

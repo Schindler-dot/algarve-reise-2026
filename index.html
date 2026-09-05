@@ -37,6 +37,25 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 @media(max-width:430px){nav{display:flex;gap:6px;justify-content:flex-start;scroll-snap-type:x proximity}nav button{min-width:70px;scroll-snap-align:center}}@media(min-width:431px){nav{display:grid;grid-template-columns:repeat(7,minmax(0,1fr))}}
 .destgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
 #destMapWrap{position:relative;height:330px;border-radius:17px;overflow:hidden;margin-bottom:12px;border:1px solid var(--line);background:var(--accent2)}
+.daymapdetails{padding:14px}.daymapsummary{display:flex;align-items:center;justify-content:space-between;gap:8px}.daymapbody{margin-top:12px}
+.daymaptoolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.daybtnrow{display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;margin-bottom:10px;scrollbar-width:thin}
+.daybtn{flex:0 0 auto;min-width:84px;min-height:52px;padding:8px 12px;border-radius:14px;border:1px solid var(--line);background:#fff;text-align:left;font-size:12px;font-weight:750;color:var(--ink);cursor:pointer}
+.daybtn .daybtndate{display:block;font-weight:850;font-size:13px}
+.daybtn .daybtnname{display:block;color:var(--muted);font-weight:650;margin-top:2px;font-size:11px}
+.daybtn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.daybtn.active .daybtnname{color:rgba(255,255,255,.85)}
+#dayMapWrap{position:relative;height:60vh;min-height:280px;max-height:520px;border-radius:17px;overflow:hidden;border:1px solid var(--line);background:var(--accent2)}
+#dayMap{width:100%;height:100%}
+@media(min-width:620px){#dayMapWrap{height:380px}}
+.offlinenotice{display:none;position:absolute;left:8px;right:8px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}
+.daymaplegend{display:flex;flex-wrap:wrap;gap:6px 10px;margin-top:10px}
+.daymaplegenditem{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.daymaplegenddot{width:11px;height:11px;border-radius:50%;flex:0 0 auto}
+.daymarker{display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:#fff;font-size:12px;font-weight:850;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.3)}
+.daymarker.visited{filter:grayscale(100%) opacity(.75)}
+.daymarker.singlemarker{border-radius:50% 50% 50% 0;transform:rotate(-45deg);width:28px;height:28px}
+.daymarker.singlemarker span{transform:rotate(45deg)}
 #destMap{width:100%;height:100%}
 #destMapOffline{display:none;position:absolute;left:8px;right:8px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}
 .leaflet-popup-content{margin:8px 10px}.leaflet-popup-content .destpill{padding:6px 9px}
@@ -118,7 +137,17 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <div id="offlineBanner" class="offline-banner" role="status" aria-live="polite" hidden>Reiseprogramm und Bilder sind verfügbar. Karten, Routen und Wetter benötigen Internet.</div>
 <main>
 <section id="today" class="view active"></section>
-<section id="days" class="view"><input id="search" class="search" placeholder="Tag, Ort oder Restaurant suchen …"><div class="notice">Fahrzeiten sind Näherungswerte ab Monchique/Quinta und können je nach Route und Verkehr abweichen.</div><div id="daysList"></div></section>
+<section id="days" class="view"><input id="search" class="search" placeholder="Tag, Ort oder Restaurant suchen …"><div class="notice">Fahrzeiten sind Näherungswerte ab Monchique/Quinta und können je nach Route und Verkehr abweichen.</div>
+<details id="dayMapDetails" class="card daymapdetails" ontoggle="onDayMapToggle(this)">
+<summary class="daymapsummary"><div><div class="daytitle">🗺️ Tagesrouten-Karte</div><div class="small">Alle Tagesrouten vom 06.–19.09. auf einer Karte · Tag antippen für Details</div></div><span class="chev">›</span></summary>
+<div class="daymapbody">
+<div class="daymaptoolbar"><button type="button" class="btn secondary" onclick="showAllDayRoutes()">Alle Routen anzeigen</button><button type="button" class="btn secondary" onclick="showCurrentDayRoute()">Aktuellen Tag anzeigen</button></div>
+<div id="dayButtonsRow" class="daybtnrow"></div>
+<div id="dayMapWrap" class="daymapwrap"><div id="dayMap"></div><div id="dayMapOffline" class="offlinenotice">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div></div>
+<div id="dayMapLegend" class="daymaplegend"></div>
+</div>
+</details>
+<div id="daysList"></div></section>
 <section id="destinations" class="view">
 <div class="hero"><h2>Alle Ziele</h2><p>Antippen → Foto, Kurzinfo, Karte und Route</p><div class="heroEmoji">🗺️</div></div>
 <div id="destMapWrap"><div id="destMap"></div><div id="destMapOffline">📡 Keine Verbindung – Kartenausschnitt kann gerade nicht geladen werden.</div><div id="destLocateMsg" class="locate-msg"></div><button id="destLocateBtn" type="button" class="locate-btn" title="Meinen Standort anzeigen" aria-label="Meinen Standort anzeigen" onclick="requestLocation('dest')">📍</button></div>
@@ -697,6 +726,176 @@ const DAYPART_DESTS={
 '2026-09-17':{Vormittag:['ferragudo'],Nachmittag:['carvoeiro','algar-seco']}
 };
 const ITEM_DESTS={"2026-09-07":{"0":["faro-altstadt","arco-vila","se-faro"],"3":["monchique"]},"2026-09-08":{"0":["monchique"],"1":["caldas"],"2":["foia"]},"2026-09-09":{"0":["lagos-altstadt"],"1":["ponta"],"2":["dona-ana"]},"2026-09-10":{"0":["aljezur"],"1":["arrifana","amoreira"]},"2026-09-12":{"0":["silves","silves-castle"],"1":["arade"]},"2026-09-13":{"1":["tavira"],"2":["caco","ria-formosa"],"3":["cabanas"]},"2026-09-14":{"0":["sagres","fortaleza"],"1":["cabo"]},"2026-09-16":{"0":["loule","mercado-loule"],"1":["alte"]},"2026-09-17":{"0":["ferragudo"],"1":["carvoeiro","algar-seco"]}};
+// ---- Tagesrouten-Karte: expandable overview map of all day routes (06.–19.09.2026) --------
+// Explicit coordinates for day-route endpoints that are not sightseeing entries in DESTINATIONS
+// (kept separate from DESTINATIONS so the "Ziele" tab / destination map stay unaffected).
+// Verified against airport/mapping references.
+const DAY_EXTRA_LOCATIONS={
+  'faro-airport':{lat:37.0159,lng:-7.9709,name:'Flughafen Faro (FAO)'}
+};
+// Single-location fallback for trip days without a driving route (arrival/rest/flex/departure).
+// Resolution order in dayRouteStops(): DAY_DESTS (multi-stop route) → DAY_DEST_MAIN (single
+// representative destination) → this table (id from DESTINATIONS or DAY_EXTRA_LOCATIONS) →
+// finally a match of the day's own map_dest text against DESTINATIONS. No coordinates are
+// duplicated: every id here is resolved against the single source of truth in resolveLocation().
+const DAY_SINGLE_LOCATION={
+  '2026-09-11':'monchique',
+  '2026-09-15':'monchique',
+  '2026-09-18':'lagos-altstadt',
+  '2026-09-19':'faro-airport'
+};
+// One visually distinct color per trip day (14 days, 06.–19.09.2026) for route lines, numbered
+// markers and the map legend.
+const DAY_ROUTE_COLORS=['#c0392b','#d68910','#7d6608','#229954','#17a589','#2874a6','#5b2c6f','#a04000','#117864','#1f618d','#8e44ad','#943126','#196f3d','#b03a2e'];
+function dayColor(date){
+  const idx=DAYS.findIndex(d=>d.date===date);
+  return DAY_ROUTE_COLORS[idx>=0?idx%DAY_ROUTE_COLORS.length:0];
+}
+// Resolves a location id (DESTINATIONS id or DAY_EXTRA_LOCATIONS id) to {id,name,lat,lng}.
+function resolveLocation(id){
+  const dest=DESTINATIONS.find(x=>x.id===id);
+  if(dest&&typeof dest.lat==='number'&&typeof dest.lng==='number')return {id,name:dest.name,lat:dest.lat,lng:dest.lng,isDestination:true};
+  const extra=DAY_EXTRA_LOCATIONS[id];
+  if(extra&&typeof extra.lat==='number'&&typeof extra.lng==='number')return {id,name:extra.name,lat:extra.lat,lng:extra.lng,isDestination:false};
+  return null;
+}
+// Time / day-part label for a destination id within a trip day, derived from ITEM_DESTS (which
+// ties destinations to a specific Tagesablauf item and its time label).
+function stopTimeLabel(date,id){
+  const itemMap=ITEM_DESTS[date]||{};
+  const day=DAYS.find(d=>d.date===date);
+  const indexes=Object.keys(itemMap).map(Number).sort((a,b)=>a-b);
+  for(const idx of indexes){
+    if((itemMap[idx]||[]).includes(id)){
+      const item=day&&day.items[idx];
+      return item?item[1]:'';
+    }
+  }
+  return '';
+}
+// Builds the ordered list of route stops (start, waypoints, end) for a trip day: start, then
+// every intermediate destination, then the end. Returns [] only if the day cannot be resolved
+// at all (should not happen for the 14 trip days).
+function dayRouteStops(date){
+  const day=DAYS.find(d=>d.date===date);
+  if(!day)return [];
+  const ids=DAY_DESTS[date];
+  if(ids&&ids.length){
+    return ids.map(id=>{
+      const loc=resolveLocation(id); if(!loc)return null;
+      return {...loc,time:stopTimeLabel(date,id)};
+    }).filter(Boolean);
+  }
+  const mainId=DAY_DEST_MAIN[date];
+  if(mainId){
+    const loc=resolveLocation(mainId);
+    if(loc)return [{...loc,time:day.route||day.title}];
+  }
+  const overrideId=DAY_SINGLE_LOCATION[date];
+  if(overrideId){
+    const loc=resolveLocation(overrideId);
+    if(loc)return [{...loc,time:day.route||day.title}];
+  }
+  const fallback=DESTINATIONS.find(x=>x.map&&day.map_dest&&x.map.toLowerCase()===String(day.map_dest).toLowerCase());
+  if(fallback)return [{id:fallback.id,name:fallback.name,lat:fallback.lat,lng:fallback.lng,isDestination:true,time:day.route||day.title}];
+  return [];
+}
+function dayMapMarkerCount(date){return dayRouteStops(date).length;}
+function totalDayMapMarkerCount(){return DAYS.reduce((sum,d)=>sum+dayMapMarkerCount(d.date),0);}
+let dayMap=null;
+let dayMapLayers={};
+let dayMapFocus='all';
+function dayMapIcon(color,number,visited){
+  if(number==null){
+    return L.divIcon({className:'',html:`<div class="daymarker singlemarker${visited?' visited':''}" style="background:${color}"><span>📍</span></div>`,iconSize:[28,28],iconAnchor:[14,26]});
+  }
+  return L.divIcon({className:'',html:`<div class="daymarker${visited?' visited':''}" style="background:${color}">${number}</div>`,iconSize:[26,26],iconAnchor:[13,13]});
+}
+function dayPopupHtml(stop,number){
+  const label=stop.time?`<div class="small">${escapeHtml(stop.time)}</div>`:'';
+  const infoBtn=stop.isDestination?`<button type="button" class="destpill" onclick="openDestination('${stop.id}')">ℹ️ Zielinfos</button>`:'';
+  const mapsBtn=actionLink(mapsSearch(stop.name),'📍 Google Maps','btn secondary');
+  return `<div class="daypopup"><b>${number!=null?number+'. ':''}${escapeHtml(stop.name)}</b>${label}<div class="actions" style="margin-top:8px">${infoBtn}${mapsBtn}</div></div>`;
+}
+function buildDayMapLayer(date){
+  const stops=dayRouteStops(date);
+  const group=L.layerGroup();
+  const color=dayColor(date);
+  const latlngs=stops.map(s=>[s.lat,s.lng]);
+  if(stops.length>1)L.polyline(latlngs,{color,weight:3,opacity:.85,dashArray:'6,8'}).addTo(group);
+  stops.forEach((s,i)=>{
+    const visited=s.isDestination&&isVisited(s.id);
+    const icon=dayMapIcon(color,stops.length>1?i+1:null,visited);
+    L.marker([s.lat,s.lng],{icon}).addTo(group).bindPopup(dayPopupHtml(s,stops.length>1?i+1:null));
+  });
+  dayMapLayers[date]=group;
+  return group;
+}
+function allDayMapPoints(){return DAYS.flatMap(d=>dayRouteStops(d.date).map(s=>[s.lat,s.lng]));}
+function clearDayMapLayers(){Object.values(dayMapLayers).forEach(g=>{if(dayMap&&dayMap.hasLayer(g))dayMap.removeLayer(g);});}
+function updateDayButtonsActive(){document.querySelectorAll('.daybtn').forEach(btn=>btn.classList.toggle('active',dayMapFocus===btn.dataset.date));}
+function showAllDayRoutes(){
+  dayMapFocus='all';
+  updateDayButtonsActive();
+  if(!dayMap)return;
+  clearDayMapLayers();
+  DAYS.forEach(d=>(dayMapLayers[d.date]||buildDayMapLayer(d.date)).addTo(dayMap));
+  const pts=allDayMapPoints();
+  if(pts.length)dayMap.fitBounds(pts,{padding:[24,24]});
+}
+function focusDay(date){
+  if(!dayRouteStops(date).length)return;
+  dayMapFocus=date;
+  updateDayButtonsActive();
+  if(!dayMap)return;
+  clearDayMapLayers();
+  buildDayMapLayer(date).addTo(dayMap);
+  const pts=dayRouteStops(date).map(s=>[s.lat,s.lng]);
+  if(pts.length===1)dayMap.setView(pts[0],14);
+  else if(pts.length)dayMap.fitBounds(pts,{padding:[32,32]});
+}
+function showCurrentDayRoute(){
+  const key=localDateKey();
+  const date=isTodayInTrip()?key:(DAYS[selectedDayIndex]?DAYS[selectedDayIndex].date:DAYS[0].date);
+  focusDay(date);
+}
+function renderDayButtons(){
+  const el=document.getElementById('dayButtonsRow'); if(!el)return;
+  el.innerHTML=DAYS.map(d=>{
+    const parts=d.label.split(', ');
+    const weekday=parts[0]||d.label;
+    const dm=parts[1]||'';
+    return `<button type="button" class="daybtn${dayMapFocus===d.date?' active':''}" data-date="${d.date}" onclick="focusDay('${d.date}')" aria-pressed="${dayMapFocus===d.date}"><span class="daybtndate">${dm}</span><span class="daybtnname">${weekday} · ${d.title}</span></button>`;
+  }).join('');
+}
+function renderDayMapLegend(){
+  const el=document.getElementById('dayMapLegend'); if(!el)return;
+  el.innerHTML=DAYS.map(d=>`<div class="daymaplegenditem"><span class="daymaplegenddot" style="background:${dayColor(d.date)}"></span>${d.label}</div>`).join('');
+}
+function ensureDayMap(){
+  if(dayMap||typeof L==='undefined')return;
+  const wrap=document.getElementById('dayMapWrap'); if(!wrap)return;
+  dayMap=L.map('dayMap',{scrollWheelZoom:false});
+  const tiles=L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap-Mitwirkende'});
+  tiles.addTo(dayMap);
+  const offlineNotice=document.getElementById('dayMapOffline');
+  const showOffline=()=>{if(offlineNotice)offlineNotice.style.display='flex';};
+  const hideOffline=()=>{if(offlineNotice)offlineNotice.style.display='none';};
+  tiles.on('tileerror',showOffline);
+  tiles.on('tileload',hideOffline);
+  window.addEventListener('offline',showOffline);
+  window.addEventListener('online',()=>{hideOffline();dayMap.invalidateSize();});
+  if(!navigator.onLine)showOffline();
+  showAllDayRoutes();
+  setTimeout(()=>dayMap.invalidateSize(),50);
+}
+function onDayMapToggle(details){
+  renderDayButtons();
+  renderDayMapLegend();
+  if(!details||!details.open)return;
+  ensureDayMap();
+  if(dayMap)setTimeout(()=>dayMap.invalidateSize(),0);
+}
 function scheduleDestCards(date,part){
  const ids=((DAYPART_DESTS[date]||{})[part]||[]);
  return ids.length?`<div class="schedule-dests">${ids.map(id=>{const d=DESTINATIONS.find(x=>x.id===id);return d?`<button class="schedule-dest" onclick="openDestination('${id}')"><img data-dest="${id}" alt="${d.name}" loading="lazy"><span class="schedule-dest-body"><span class="schedule-dest-title">${d.name}</span><span class="schedule-dest-meta">${d.area} · ${d.cat}</span><span class="schedule-dest-hint">Antippen für Details & Karte ›</span></span></button>`:''}).join('')}</div>`:'';}
