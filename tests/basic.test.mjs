@@ -753,6 +753,24 @@ test('all destination links use verified https:// addresses (no http, no other p
   }
 });
 
+test('all 51 destinations carry a non-empty links array with only allowed types and https:// URLs',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.DESTINATIONS.length,51);
+  for(const d of app.DESTINATIONS){
+    assert.ok(Array.isArray(d.links)&&d.links.length>0,`${d.id}: must have a non-empty links array`);
+    for(const l of d.links){
+      assert.match(l.url,/^https:\/\//,`${d.id}: link "${l.label}" (${l.url}) must start with https://`);
+      assert.ok(app.DEST_LINK_TYPES.includes(l.type),`${d.id}: link type "${l.type}" must be one of ${app.DEST_LINK_TYPES.join(', ')}`);
+    }
+    const mapsLinks=d.links.filter(l=>l.type==='maps');
+    for(const l of mapsLinks){
+      assert.match(l.url,/^https:\/\/www\.google\.com\/maps\/search\/\?api=1&query=/,`${d.id}: maps link "${l.url}" must be a correctly url-encoded Google Maps search link`);
+      const query=new URL(l.url).searchParams.get('query');
+      assert.ok(query&&query.trim().length>0,`${d.id}: maps link must carry a non-empty query`);
+    }
+  }
+});
+
 test('destination cards never render "Weiterführende Links" / external destination links; only the opened detail view does',()=>{
   const {app,document}=buildSandbox();
   const withLinks=app.DESTINATIONS.find(d=>Array.isArray(d.links)&&d.links.length>0);
@@ -774,11 +792,18 @@ test('destination cards never render "Weiterführende Links" / external destinat
 
 test('"Weiterführende Links" section is hidden for destinations without a links array',()=>{
   const {app,document}=buildSandbox();
-  const withoutLinks=app.DESTINATIONS.find(d=>!Array.isArray(d.links)||d.links.length===0);
-  assert.ok(withoutLinks);
-  app.openDestination(withoutLinks.id);
-  assert.equal(document.getElementById('modalLinksSection').style.display,'none');
-  assert.equal(document.getElementById('modalLinks').innerHTML,'');
+  // All 51 real destinations now carry a links array; delete it from a copy in-place to
+  // still verify the hide-when-absent behavior of the destination modal.
+  const withoutLinks=app.DESTINATIONS[0];
+  const savedLinks=withoutLinks.links;
+  delete withoutLinks.links;
+  try{
+    app.openDestination(withoutLinks.id);
+    assert.equal(document.getElementById('modalLinksSection').style.display,'none');
+    assert.equal(document.getElementById('modalLinks').innerHTML,'');
+  }finally{
+    withoutLinks.links=savedLinks;
+  }
 });
 
 test('destination modal markup includes a "Weiterführende Links" section',()=>{
