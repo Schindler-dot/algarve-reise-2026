@@ -292,6 +292,23 @@ test('restaurant references are not dangling',()=>{
   app.DAYS.flatMap(day=>day.restaurants||[]).forEach(id=>assert.ok(restaurantIds.has(id),`missing restaurant id ${id}`));
 });
 
+test('restaurant websites are valid https:// URLs, render as safe external links and have unique ids',()=>{
+  const {app}=buildSandbox();
+  const seenIds=new Set();
+  for(const r of app.RESTAURANTS){
+    assert.ok(!seenIds.has(r.id),`duplicate restaurant id ${r.id}`);
+    seenIds.add(r.id);
+    if(r.website===undefined)continue;
+    assert.match(r.website,/^https:\/\//,`${r.id}: website "${r.website}" must be a secure https:// URL`);
+    assert.doesNotThrow(()=>new URL(r.website),`${r.id}: website "${r.website}" must be a valid URL`);
+    const link=app.actionLink(r.website,'Website','btn secondary');
+    assert.match(link,/target="_blank"/,`${r.id}: website link must open in a new tab`);
+    assert.match(link,/rel="noreferrer"/,`${r.id}: website link must use rel="noreferrer" for safe external linking`);
+    assert.match(link,new RegExp(`href="${r.website.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')}"`),`${r.id}: website link must point to the restaurant's website`);
+  }
+  assert.equal(seenIds.size,app.RESTAURANTS.length,'all restaurant ids must be unique');
+});
+
 test('route and map links avoid empty destinations and fixed origins',()=>{
   const {app}=buildSandbox('2026-09-07T14:30:00Z');
   const dir=app.mapsDir('Monchique Portugal');
