@@ -179,7 +179,6 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
     setTimeout:fn=>{if(typeof fn==='function')fn();return 1;},
     clearTimeout(){},
     Date:makeFakeDate(nowIso),
-    L:undefined,
     encodeURIComponent,
     decodeURIComponent,
     Promise,
@@ -197,7 +196,8 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
     URL,
     URLSearchParams,
     confirm:()=>true,
-    prompt:()=>null
+    prompt:()=>null,
+    L:opts.L
   };
   sandbox.confirm=opts.confirm||sandbox.confirm;
   sandbox.prompt=opts.prompt||sandbox.prompt;
@@ -205,7 +205,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
   sandbox.createImageBitmap=opts.createImageBitmap;
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,destLinksHtml,DEST_LINK_TYPES,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,destLinksHtml,DEST_LINK_TYPES,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle,ensureDiaryMap,diaryMap:()=>diaryMap};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -481,6 +481,43 @@ test('marker popup exposes a visited toggle that reflects and flips state',()=>{
   popup=app.markerPopupHtml(d);
   assert.match(popup,/aria-pressed="true"/);
   assert.match(popup,/✓ Besucht/);
+});
+
+function makeFakeLeaflet(){
+  const tileLayerCalls=[];
+  const mapCalls=[];
+  const L={
+    map(id,opts){
+      const mapObj={_id:id,_opts:opts,_layers:[],setView(){return this;},invalidateSize(){},on(){return this;},fitBounds(){return this;},removeLayer(layer){this._layers=this._layers.filter(l=>l!==layer);return this;}};
+      mapCalls.push(mapObj);
+      return mapObj;
+    },
+    tileLayer(url,opts){
+      const layer={_isTileLayer:true,url,opts,on(){return this;},addTo(map){map._layers.push(this);return this;}};
+      tileLayerCalls.push(layer);
+      return layer;
+    }
+  };
+  return {L,tileLayerCalls,mapCalls};
+}
+
+test('Tagebuch: ensureDiaryMap() creates exactly one tile layer with visible OpenStreetMap attribution and keeps it across repeated calls',()=>{
+  const {L,tileLayerCalls}=makeFakeLeaflet();
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{L});
+  app.ensureDiaryMap();
+  assert.equal(tileLayerCalls.length,1,'ensureDiaryMap() should create exactly one tile layer');
+  const tile=tileLayerCalls[0];
+  assert.equal(tile.url,'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png');
+  assert.equal(tile.opts.attribution,'© OpenStreetMap-Mitwirkende');
+  const map=app.diaryMap();
+  assert.ok(map,'diaryMap should have been created');
+  assert.ok(map._layers.includes(tile),'the tile layer must be added to the diary map');
+  assert.notEqual(map._opts&&map._opts.attributionControl,false,'attribution control must not be disabled so the OSM attribution stays visible');
+
+  // Calling ensureDiaryMap() again (e.g. on a day switch) must not recreate the map or tile layer.
+  app.ensureDiaryMap();
+  assert.equal(tileLayerCalls.length,1,'ensureDiaryMap() must not create a second tile layer on repeated calls');
+  assert.equal(app.diaryMap(),map,'the existing diary map instance must be reused across day switches');
 });
 
 test('Tagebuch: parses "lat, lng" style coordinate strings in various notations',()=>{

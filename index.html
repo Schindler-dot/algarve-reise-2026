@@ -1564,8 +1564,9 @@ function photoViewUrl(photo){
 function ensureDiaryMap(){
   if(diaryMap||typeof L==='undefined')return;
   const wrap=document.getElementById('diaryMapWrap'); if(!wrap)return;
-  diaryMap=L.map('diaryMap',{scrollWheelZoom:false,attributionControl:false,preferCanvas:true});
+  diaryMap=L.map('diaryMap',{scrollWheelZoom:false,preferCanvas:true});
   diaryMap.setView([37.2,-8.6],9);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:18,attribution:'© OpenStreetMap-Mitwirkende'}).addTo(diaryMap);
   setTimeout(()=>diaryMap.invalidateSize(),50);
 }
 function clearDiaryMapLayers(){
