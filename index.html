@@ -177,8 +177,10 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <div id="foodPriceFilters" class="destfilter pricefilter"></div>
 <div id="foodSortFilters" class="destfilter sortfilter" role="group" aria-label="Sortierung der Restaurantliste"></div>
 </div>
+<div id="foodRouteStatus" class="small routestatus" role="status" aria-live="polite" style="display:none"></div>
 <div id="foodList" class="foodlist"></div>
 <div class="notice" style="margin-top:10px">Angaben zu Telefon und Öffnungstagen basieren auf zuletzt verfügbaren Quellen und können sich ändern – bitte vor dem Besuch kurz prüfen bzw. reservieren.</div>
+<div class="notice" style="margin-top:6px">🚗-Angaben sind geschätzte Pkw-Straßenentfernungen und Fahrzeiten ohne aktuelle Verkehrslage (Quelle: OSRM). Wenn keine Route berechnet werden kann, wird die Luftlinie angezeigt. Für die tatsächliche Navigation bitte weiterhin Google Maps nutzen.</div>
 </section>
 <section id="bookings" class="view"><div class="hero"><h2>Buchungen</h2><p>Die wichtigsten Daten ohne Suchen</p><div class="heroEmoji">🎫</div></div><div id="bookingList"></div></section>
 <section id="tagebuch" class="view"><div class="hero"><h2>Tagebuch</h2><p>Standortverlauf und Fotos bleiben komplett lokal auf diesem Gerät</p><div class="heroEmoji">📓</div></div>
@@ -452,13 +454,91 @@ function formatDistance(km){
   if(km<1)return Math.round(km*1000)+' m';
   return km.toFixed(km<10?1:0)+' km';
 }
+// ---- Essen-Tab: echte Pkw-Straßenentfernung & Fahrzeit über OSRM Table API ----
+const OSRM_TABLE_URL='https://router.project-osrm.org/table/v1/driving/';
+const ROUTE_CACHE_PRECISION=1000; // Standort auf ca. 3 Nachkommastellen (~110 m) runden, nur im Speicher, nicht persistiert
+let roadRoute={key:null,status:'idle',data:new Map()}; // status: idle|loading|ready|error
+function roundLocForRouteCache(loc){
+  return {lat:Math.round(loc.lat*ROUTE_CACHE_PRECISION)/ROUTE_CACHE_PRECISION,lng:Math.round(loc.lng*ROUTE_CACHE_PRECISION)/ROUTE_CACHE_PRECISION};
+}
+function roadRouteCacheKey(loc,ids){
+  const r=roundLocForRouteCache(loc);
+  return r.lat+','+r.lng+'|'+ids.slice().sort().join(',');
+}
+function buildOsrmTableUrl(loc,list){
+  const coords=[loc.lng+','+loc.lat].concat(list.map(r=>r.lng+','+r.lat)).join(';');
+  const destinations=list.map((_,i)=>i+1).join(';');
+  return OSRM_TABLE_URL+coords+'?sources=0&destinations='+destinations+'&annotations=distance,duration';
+}
+async function fetchRoadDistances(loc,list){
+  const resp=await fetch(buildOsrmTableUrl(loc,list));
+  if(!resp||!resp.ok)throw new Error('OSRM-Anfrage fehlgeschlagen');
+  const json=await resp.json();
+  if(!json||json.code!=='Ok'||!Array.isArray(json.distances)||!Array.isArray(json.durations))throw new Error('OSRM-Antwort ungültig');
+  const distRow=json.distances[0]||[],durRow=json.durations[0]||[];
+  const data=new Map();
+  list.forEach((r,i)=>{
+    const distM=distRow[i],durS=durRow[i];
+    if(typeof distM==='number'&&typeof durS==='number')data.set(r.id,{km:distM/1000,minutes:durS/60});
+  });
+  return data;
+}
+function resetRoadRoute(){roadRoute={key:null,status:'idle',data:new Map()};}
+// Löst bei Bedarf eine einzelne OSRM-Table-Anfrage für alle aktuell gefilterten Restaurants aus
+// und liefert die zuletzt bekannten Straßenentfernungen (Map id->{km,minutes}), sofern schon vorhanden.
+function getRoadDistanceMap(list){
+  if(!userLoc||!list.length){
+    if(roadRoute.status!=='idle')resetRoadRoute();
+    return null;
+  }
+  const ids=list.map(r=>r.id);
+  const key=roadRouteCacheKey(userLoc,ids);
+  if(roadRoute.key===key)return roadRoute.status==='ready'?roadRoute.data:null;
+  roadRoute={key,status:'loading',data:new Map()};
+  fetchRoadDistances(userLoc,list).then(data=>{
+    if(roadRoute.key!==key)return;
+    roadRoute={key,status:'ready',data};
+    renderFood();
+  }).catch(()=>{
+    if(roadRoute.key!==key)return;
+    roadRoute={key,status:'error',data:new Map()};
+    renderFood();
+  });
+  return null;
+}
+function formatRoadDistance(km){
+  if(km<1)return Math.round(km*1000)+' m';
+  return km.toFixed(km<10?1:0).replace('.',',')+' km';
+}
+function formatRoadDuration(minutes){
+  return 'ca. '+Math.max(1,Math.round(minutes))+' Min.';
+}
+function formatRoadInfo(km,minutes){
+  return '🚗 '+formatRoadDistance(km)+' · '+formatRoadDuration(minutes);
+}
+function updateRouteStatusMsg(){
+  const el=document.getElementById('foodRouteStatus'); if(!el)return;
+  if(userLoc&&roadRoute.status==='loading'){el.textContent='🚗 Fahrstrecken werden berechnet …';el.style.display='block';}
+  else{el.textContent='';el.style.display='none';}
+}
 function updateDistances(){
   document.querySelectorAll('.dist-badge').forEach(el=>{
     const kind=el.dataset.kind,id=el.dataset.id;
-    if(!userLoc){el.style.display='none';el.textContent='';return;}
+    if(!userLoc){el.style.display='none';el.textContent='';el.removeAttribute('title');return;}
     const arr=kind==='dest'?DESTINATIONS:RESTAURANTS;
     const item=arr.find(x=>x.id===id);
     if(!item||typeof item.lat!=='number'||typeof item.lng!=='number'){el.style.display='none';return;}
+    if(kind==='food'){
+      if(roadRoute.status==='loading'){el.style.display='none';el.textContent='';return;}
+      const road=roadRoute.status==='ready'?roadRoute.data.get(id):null;
+      if(road){
+        el.textContent=formatRoadInfo(road.km,road.minutes);
+        el.title='Geschätzte Fahrzeit ohne aktuelle Verkehrslage';
+        el.style.display='inline-block';
+        return;
+      }
+    }
+    el.removeAttribute('title');
     el.textContent='📍 Luftlinie '+formatDistance(distanceKm(userLoc.lat,userLoc.lng,item.lat,item.lng));
     el.style.display='inline-block';
   });
@@ -509,7 +589,7 @@ function requestLocation(which){
     if(foodMap)updateUserMarker('food');
     fitMapToUser(which);
     updateDistances();
-    if(foodSort==='entfernung')renderFood();
+    renderFood();
     showLocateMsg(which,which==='today'?'Standort aktiv – Entfernungen sind eingeblendet.':'Standort aktiv.');
   },err=>{
     if(btn)btn.disabled=false;
@@ -1114,7 +1194,7 @@ let foodMap=null;
 let foodMarkersLayer=null;
 const FOOD_SORT_OPTIONS=[{id:'empfohlen',label:'Empfohlen'},{id:'entfernung',label:'Entfernung'},{id:'preis',label:'Preis'}];
 let foodSort='empfohlen';
-function sortRestaurants(list,sort,loc){
+function sortRestaurants(list,sort,loc,roadDistances){
   if(sort==='preis'){
     return list.map((r,i)=>({r,i})).sort((a,b)=>{
       const pa=(a.r.price||'').length,pb=(b.r.price||'').length;
@@ -1123,8 +1203,11 @@ function sortRestaurants(list,sort,loc){
   }
   if(sort==='entfernung'){
     return list.map((r,i)=>{
-      const hasLoc=!!loc&&typeof r.lat==='number'&&typeof r.lng==='number';
-      return {r,i,d:hasLoc?distanceKm(loc.lat,loc.lng,r.lat,r.lng):null};
+      const road=roadDistances&&roadDistances.get?roadDistances.get(r.id):null;
+      let d=null;
+      if(road&&typeof road.km==='number')d=road.km;
+      else if(loc&&typeof r.lat==='number'&&typeof r.lng==='number')d=distanceKm(loc.lat,loc.lng,r.lat,r.lng);
+      return {r,i,d};
     }).sort((a,b)=>{
       if(a.d==null&&b.d==null)return a.i-b.i;
       if(a.d==null)return 1;
@@ -1142,7 +1225,8 @@ function filterRestaurants(){
     const hay=(r.name+' '+r.place+' '+r.area+' '+r.why+' '+r.dishes).toLowerCase();
     return hay.includes(q);
   });
-  return sortRestaurants(filtered,foodSort,userLoc);
+  const roadDistances=getRoadDistanceMap(filtered);
+  return sortRestaurants(filtered,foodSort,userLoc,roadDistances);
 }
 function updateFoodMapMarkers(list){
   if(!foodMap)return;
@@ -1200,6 +1284,7 @@ function renderFood(){
       <div class="foodwhy">${r.why}</div>
     </button>`).join('');
   }
+  updateRouteStatusMsg();
   updateDistances();
   updateFoodMapMarkers(list);
   syncOnlineState();
@@ -1213,8 +1298,9 @@ function openRestaurant(id){
   document.getElementById('foodModalDishes').textContent=r.dishes;
   document.getElementById('foodModalInfo').textContent=plainTextLines([r.phone?`Telefon: ${r.phone}`:'Telefon: nicht verifiziert',`Öffnungstage: ${r.days||'nicht verifiziert – bitte vor Ort/telefonisch prüfen'}`]);
   const site=r.website?actionLink(r.website,'Website','btn secondary'):'';
+  const info=r.infoUrl?actionLink(r.infoUrl,r.infoLabel||'Weitere Infos','btn secondary'):'';
   const phone=r.phone?`<a class="btn sand" href="tel:${r.phone.replace(/\s/g,'')}">Anrufen</a>`:'';
-  document.getElementById('foodModalActions').innerHTML=`${actionLink(mapsSearch(r.maps),'In Google Maps')}${site}${phone}`;
+  document.getElementById('foodModalActions').innerHTML=`${actionLink(mapsSearch(r.maps),'In Google Maps')}${site}${info}${phone}`;
   openModal('foodModal');
 }
 function closeRestaurant(){closeModal('foodModal');}
