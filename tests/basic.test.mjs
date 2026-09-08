@@ -205,7 +205,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
   sandbox.createImageBitmap=opts.createImageBitmap;
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,destLinksHtml,DEST_LINK_TYPES,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle,ensureDiaryMap,diaryMap:()=>diaryMap};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,destLinksHtml,DEST_LINK_TYPES,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle,ensureDiaryMap,diaryMap:()=>diaryMap,filterRestaurants,sortRestaurants,setFoodCat,setFoodPrice,setFoodSort,foodCat:()=>foodCat,foodPrice:()=>foodPrice,foodSort:()=>foodSort,renderFood,renderFoodFilters,requestLocation,formatDistance,userLoc:()=>userLoc,setUserLoc:loc=>{userLoc=loc;}};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -1300,4 +1300,63 @@ test('resolveLocation() returns null for unknown ids and never invents coordinat
   const dest=app.DESTINATIONS.find(d=>d.id==='monchique');
   assert.equal(loc.lat,dest.lat);
   assert.equal(loc.lng,dest.lng);
+});
+
+test('Essen-Sortierung „Entfernung“: gültige Luftlinien-Distanzen zuerst, nächstgelegen oben, Lokale ohne Standortdaten ans Ende',()=>{
+  const {app}=buildSandbox();
+  const list=[
+    {id:'a',lat:37.0,lng:-8.0,price:'€€'},
+    {id:'b',lat:37.01,lng:-8.0,price:'€'},
+    {id:'c',price:'€€€'},
+    {id:'d',lat:37.05,lng:-8.0,price:'€€€€'}
+  ];
+  const sorted=app.sortRestaurants(list,'entfernung',{lat:37.0,lng:-8.0});
+  assert.deepEqual(sorted.map(r=>r.id),['a','b','d','c']);
+});
+
+test('Essen-Sortierung „Entfernung“ ohne Standort: alle Lokale gelten als ohne Standortdaten und behalten die ursprüngliche Reihenfolge',()=>{
+  const {app}=buildSandbox();
+  const list=[{id:'a',lat:1,lng:1},{id:'b',lat:2,lng:2},{id:'c'}];
+  const sorted=app.sortRestaurants(list,'entfernung',null);
+  assert.deepEqual(sorted.map(r=>r.id),['a','b','c']);
+});
+
+test('Essen-Sortierung „Preis“ ordnet aufsteigend günstig → teuer und ist stabil bei Gleichstand',()=>{
+  const {app}=buildSandbox();
+  const list=[{id:'a',price:'€€€'},{id:'b',price:'€'},{id:'c',price:'€€'},{id:'d',price:'€'}];
+  const sorted=app.sortRestaurants(list,'preis',null);
+  assert.deepEqual(sorted.map(r=>r.id),['b','d','c','a']);
+});
+
+test('Essen-Sortierung „Empfohlen“ behält die bisherige Reihenfolge unverändert bei',()=>{
+  const {app}=buildSandbox();
+  const list=[{id:'z'},{id:'a'},{id:'m'}];
+  assert.deepEqual(app.sortRestaurants(list,'empfohlen',null).map(r=>r.id),['z','a','m']);
+  assert.deepEqual(app.sortRestaurants(list,'unbekannt',null).map(r=>r.id),['z','a','m']);
+});
+
+test('Essen: Kategorie- und Preisfilter funktionieren weiterhin gemeinsam mit der Entfernungssortierung',()=>{
+  const {app}=buildSandbox();
+  app.setUserLoc({lat:37.0,lng:-8.0});
+  app.setFoodCat('fisch');
+  app.setFoodPrice('€€');
+  app.setFoodSort('entfernung');
+  const list=app.filterRestaurants();
+  assert.ok(list.length>1,'expected multiple matching fisch/€€ restaurants for a meaningful order check');
+  assert.ok(list.every(r=>r.cats.includes('fisch')&&r.price==='€€'));
+  const distances=list.map(r=>app.distanceKm(37.0,-8.0,r.lat,r.lng));
+  for(let i=1;i<distances.length;i++)assert.ok(distances[i]>=distances[i-1],'distances must be non-decreasing');
+  app.setFoodCat('Alle');app.setFoodPrice('Alle');app.setFoodSort('empfohlen');app.setUserLoc(null);
+});
+
+test('Essen: „Standort verwenden“ aktualisiert eine aktive Entfernungssortierung automatisch',()=>{
+  const {app,sandbox}=buildSandbox();
+  app.setFoodSort('entfernung');
+  assert.equal(app.userLoc(),null);
+  sandbox.navigator.geolocation.getCurrentPosition=success=>success({coords:{latitude:37.298332,longitude:-8.629654,accuracy:20}});
+  app.requestLocation('food');
+  assert.ok(app.userLoc(),'userLoc should be set after requestLocation succeeds');
+  const list=app.filterRestaurants();
+  assert.equal(list[0].id,'petrol','the restaurant at the exact coordinates should sort first');
+  app.setFoodSort('empfohlen');app.setUserLoc(null);
 });
