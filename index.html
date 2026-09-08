@@ -107,6 +107,8 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 #foodMapOffline{display:none;position:absolute;left:8px;right:8px;bottom:8px;z-index:1000;align-items:center;gap:6px;background:rgba(18,63,74,.92);color:#fff;font-size:12px;font-weight:700;padding:8px 10px;border-radius:12px;pointer-events:none}
 .foodfilters{display:flex;flex-direction:column;gap:7px;margin-bottom:10px}
 .pricefilter{display:flex;gap:7px}
+.sortfilter{display:flex;gap:6px}
+.sortfilter .chip{padding:6px 10px;font-size:11px}
 .foodlist{display:flex;flex-direction:column;gap:9px}
 .foodcard{background:#fff;border:1px solid var(--line);border-radius:16px;padding:12px 13px;cursor:pointer;text-align:left;width:100%}
 .foodcard .fname{font-size:15px;font-weight:900;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
@@ -173,6 +175,7 @@ details summary{cursor:pointer;list-style:none}details summary::-webkit-details-
 <div class="foodfilters">
 <div id="foodCatFilters" class="destfilter"></div>
 <div id="foodPriceFilters" class="destfilter pricefilter"></div>
+<div id="foodSortFilters" class="destfilter sortfilter" role="group" aria-label="Sortierung der Restaurantliste"></div>
 </div>
 <div id="foodList" class="foodlist"></div>
 <div class="notice" style="margin-top:10px">Angaben zu Telefon und Öffnungstagen basieren auf zuletzt verfügbaren Quellen und können sich ändern – bitte vor dem Besuch kurz prüfen bzw. reservieren.</div>
@@ -456,7 +459,7 @@ function updateDistances(){
     const arr=kind==='dest'?DESTINATIONS:RESTAURANTS;
     const item=arr.find(x=>x.id===id);
     if(!item||typeof item.lat!=='number'||typeof item.lng!=='number'){el.style.display='none';return;}
-    el.textContent='📍 '+formatDistance(distanceKm(userLoc.lat,userLoc.lng,item.lat,item.lng));
+    el.textContent='📍 Luftlinie '+formatDistance(distanceKm(userLoc.lat,userLoc.lng,item.lat,item.lng));
     el.style.display='inline-block';
   });
 }
@@ -506,6 +509,7 @@ function requestLocation(which){
     if(foodMap)updateUserMarker('food');
     fitMapToUser(which);
     updateDistances();
+    if(foodSort==='entfernung')renderFood();
     showLocateMsg(which,which==='today'?'Standort aktiv – Entfernungen sind eingeblendet.':'Standort aktiv.');
   },err=>{
     if(btn)btn.disabled=false;
@@ -1108,14 +1112,37 @@ function renderToday(){
 function renderDays(filter=''){const q=filter.toLowerCase();document.getElementById('daysList').innerHTML=DAYS.filter(d=>JSON.stringify(d).toLowerCase().includes(q)).map(d=>dayCard(d,false)).join('');syncOnlineState();}
 let foodMap=null;
 let foodMarkersLayer=null;
+const FOOD_SORT_OPTIONS=[{id:'empfohlen',label:'Empfohlen'},{id:'entfernung',label:'Entfernung'},{id:'preis',label:'Preis'}];
+let foodSort='empfohlen';
+function sortRestaurants(list,sort,loc){
+  if(sort==='preis'){
+    return list.map((r,i)=>({r,i})).sort((a,b)=>{
+      const pa=(a.r.price||'').length,pb=(b.r.price||'').length;
+      return pa!==pb?pa-pb:a.i-b.i;
+    }).map(x=>x.r);
+  }
+  if(sort==='entfernung'){
+    return list.map((r,i)=>{
+      const hasLoc=!!loc&&typeof r.lat==='number'&&typeof r.lng==='number';
+      return {r,i,d:hasLoc?distanceKm(loc.lat,loc.lng,r.lat,r.lng):null};
+    }).sort((a,b)=>{
+      if(a.d==null&&b.d==null)return a.i-b.i;
+      if(a.d==null)return 1;
+      if(b.d==null)return -1;
+      return a.d-b.d||a.i-b.i;
+    }).map(x=>x.r);
+  }
+  return list;
+}
 function filterRestaurants(){
   const q=(document.getElementById('foodSearch').value||'').toLowerCase();
-  return RESTAURANTS.filter(r=>{
+  const filtered=RESTAURANTS.filter(r=>{
     if(foodCat!=='Alle'){if(foodCat==='star'){if(!r.star)return false;}else if(!r.cats.includes(foodCat))return false;}
     if(foodPrice!=='Alle'&&r.price!==foodPrice)return false;
     const hay=(r.name+' '+r.place+' '+r.area+' '+r.why+' '+r.dishes).toLowerCase();
     return hay.includes(q);
   });
+  return sortRestaurants(filtered,foodSort,userLoc);
 }
 function updateFoodMapMarkers(list){
   if(!foodMap)return;
@@ -1155,9 +1182,12 @@ function renderFoodFilters(){
   document.getElementById('foodCatFilters').innerHTML=cats.map(c=>`<button class="chip ${foodCat===c?'active':''}" onclick="setFoodCat('${c}')">${c==='Alle'?'Alle':FOOD_CAT_LABELS[c]}</button>`).join('');
   const prices=['Alle','€','€€','€€€','€€€€'];
   document.getElementById('foodPriceFilters').innerHTML=prices.map(p=>`<button class="chip ${foodPrice===p?'active':''}" onclick="setFoodPrice('${p}')">${p}</button>`).join('');
+  const sortEl=document.getElementById('foodSortFilters');
+  if(sortEl)sortEl.innerHTML=FOOD_SORT_OPTIONS.map(s=>`<button class="chip ${foodSort===s.id?'active':''}" aria-pressed="${foodSort===s.id}" onclick="setFoodSort('${s.id}')">${s.label}</button>`).join('');
 }
 function setFoodCat(c){foodCat=c;renderFoodFilters();renderFood();}
 function setFoodPrice(p){foodPrice=p;renderFoodFilters();renderFood();}
+function setFoodSort(s){foodSort=s;renderFoodFilters();renderFood();}
 function renderFood(){
   const list=filterRestaurants();
   const el=document.getElementById('foodList');
