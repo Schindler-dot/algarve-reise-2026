@@ -175,7 +175,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
     localStorage:storage,
     navigator:{onLine:true,serviceWorker:{register:()=>Promise.resolve()},geolocation:{getCurrentPosition(){}}},
     window:{addEventListener(){},scrollY:0,pageYOffset:0,location:{href:''},scrollTo(x,y){this.scrollY=y;this.pageYOffset=y;}},
-    fetch:()=>Promise.resolve({ok:false,json:()=>Promise.resolve({})}),
+    fetch:opts.fetch||(()=>Promise.resolve({ok:false,json:()=>Promise.resolve({})})),
     setTimeout:fn=>{if(typeof fn==='function')fn();return 1;},
     clearTimeout(){},
     Date:makeFakeDate(nowIso),
@@ -205,7 +205,7 @@ function buildSandbox(nowIso='2026-09-10T12:00:00Z',opts={}){
   sandbox.createImageBitmap=opts.createImageBitmap;
   sandbox.window.document=document;
   sandbox.globalThis=sandbox;
-  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,destLinksHtml,DEST_LINK_TYPES,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle,ensureDiaryMap,diaryMap:()=>diaryMap,filterRestaurants,sortRestaurants,setFoodCat,setFoodPrice,setFoodSort,foodCat:()=>foodCat,foodPrice:()=>foodPrice,foodSort:()=>foodSort,renderFood,renderFoodFilters,requestLocation,formatDistance,userLoc:()=>userLoc,setUserLoc:loc=>{userLoc=loc;}};`,sandbox,{filename:'index-inline.js'});
+  vm.runInNewContext(`${script}\n;globalThis.__app={DAYS,DESTINATIONS,DAY_DESTS,DAY_DEST_MAIN,ITEM_DESTS,RESTAURANTS,FOOD_BY_ID,escapeHtml,mapsDir,mapsNav,mapsSearch,weather,actionLink,plainTextLines,parseItemTime,fallbackRouteTarget,nextRouteTarget,defaultDayIndex,selectDay,shiftDay,jumpToToday,isTodayInTrip,dayCard,openDestination,closeDestination,openRestaurant,closeRestaurant,selectedDayIndex:()=>selectedDayIndex,isVisited,toggleVisited,visitedDestCount,renderDestFilters,renderDestProgress,renderDestinations,setDestVisitedFilter,setDestCategoryFilter,markerPopupHtml,destVisitedFilter:()=>destVisitedFilter,destCategory:()=>destCategory,parseLatLngPair,extractTimelinePoints,inTripRange,timelinePointId,lisbonDateKey,normalizeTimelinePoint,prepareTimelinePoints,mergeTimelinePoints,distanceKm,simplifyRoutePoints,routeDistanceKm,parseJpegExif,parseExifDateString,STATIC_DEST_IMAGES,ARCH_DB_NAME,ARCH_STORE,ARCH_MAX_EDGE,ARCH_QUALITY,ARCH_FOLDER_MAPPING,ARCH_DEST_CARD_ALIAS,normalizeArchFolderName,archSplitLeadingNumber,matchArchFolder,archIsSupportedImageName,archIsIgnoredName,buildArchImportGroups,archDestCardId,archDestKeyForCardId,archOrientationSwapsAxes,archOptimizeImage,archStoreFile,archReadAll,archPutRecord,archDeleteAll,archOpenDb,refreshArchImageCache,archImageCache:()=>archImageCache,archGetImageUrl,archResolveImageSrc,archHasLocalImage,archLocalBadgeHtml,archSummaryText,deleteArchImages,processArchImportGroups,setArchReviewGroups,archReviewGroups:()=>archReviewGroups,renderArchReview,promptArchSinglePhotos,handleArchFiles,destCardHtml,destLinksHtml,DEST_LINK_TYPES,DAY_EXTRA_LOCATIONS,DAY_SINGLE_LOCATION,DAY_ROUTE_COLORS,dayColor,resolveLocation,stopTimeLabel,dayRouteStops,dayMapMarkerCount,totalDayMapMarkerCount,showAllDayRoutes,focusDay,showCurrentDayRoute,dayMapFocus:()=>dayMapFocus,renderDayButtons,renderDayMapLegend,onDayMapToggle,ensureDiaryMap,diaryMap:()=>diaryMap,filterRestaurants,sortRestaurants,setFoodCat,setFoodPrice,setFoodSort,foodCat:()=>foodCat,foodPrice:()=>foodPrice,foodSort:()=>foodSort,renderFood,renderFoodFilters,requestLocation,formatDistance,userLoc:()=>userLoc,setUserLoc:loc=>{userLoc=loc;},buildOsrmTableUrl,fetchRoadDistances,getRoadDistanceMap,roadRouteCacheKey,roundLocForRouteCache,formatRoadDistance,formatRoadDuration,formatRoadInfo,resetRoadRoute,updateRouteStatusMsg,roadRoute:()=>roadRoute};`,sandbox,{filename:'index-inline.js'});
   return {app:sandbox.__app,sandbox,document,elements,storage};
 }
 
@@ -1359,4 +1359,183 @@ test('Essen: „Standort verwenden“ aktualisiert eine aktive Entfernungssortie
   const list=app.filterRestaurants();
   assert.equal(list[0].id,'petrol','the restaurant at the exact coordinates should sort first');
   app.setFoodSort('empfohlen');app.setUserLoc(null);
+});
+
+// ---- Essen-Tab: echte Pkw-Straßenentfernung & Fahrzeit über eine gebündelte OSRM-Table-Anfrage ----
+async function flushMicrotasks(){
+  await new Promise(r=>setImmediate(r));
+  await new Promise(r=>setImmediate(r));
+  await new Promise(r=>setImmediate(r));
+}
+const OSRM_PREFIX='https://router.project-osrm.org/table/';
+// Wraps an OSRM-only fetch handler; requests to other URLs (e.g. the app's images/SOURCES.json
+// startup fetch) are answered with a harmless ok:false and are never counted as OSRM calls.
+function makeOsrmFetch(handler){
+  const calls=[];
+  const fetchFn=async url=>{
+    if(typeof url==='string'&&url.startsWith(OSRM_PREFIX)){
+      calls.push(url);
+      return handler(url,calls.length);
+    }
+    return {ok:false,json:async()=>({})};
+  };
+  fetchFn.calls=calls;
+  return fetchFn;
+}
+function okOsrmFetch(distancesRow,durationsRow){
+  return makeOsrmFetch(async()=>({ok:true,json:async()=>({code:'Ok',distances:[distancesRow],durations:[durationsRow]})}));
+}
+
+test('Restaurante A Charrete (Monchique) ist mit allen Pflichtangaben und ohne erfundene Homepage hinterlegt',()=>{
+  const {app}=buildSandbox();
+  const r=app.FOOD_BY_ID['a-charrete'];
+  assert.ok(r,'a-charrete muss in RESTAURANTS enthalten sein');
+  assert.equal(r.area,'Monchique');
+  assert.equal(r.lat,37.320088);
+  assert.equal(r.lng,-8.555813);
+  assert.equal(r.price,'€€');
+  assert.ok(r.cats.includes('regional')&&r.cats.includes('tasca'));
+  assert.equal(r.phone,'+351 282 912 142');
+  assert.equal(r.website,undefined,'keine erfundene eigene Homepage vortäuschen');
+  assert.equal(r.infoUrl,'https://visitmonchique.com/en/');
+  assert.equal(r.infoLabel,'Visit Monchique');
+});
+
+test('Essen-Detail zeigt für A Charrete einen „Visit Monchique“-Link statt einer erfundenen Homepage, Google Maps bleibt verfügbar',()=>{
+  const {app,elements}=buildSandbox();
+  app.openRestaurant('a-charrete');
+  const html=elements.get('foodModalActions').innerHTML;
+  assert.match(html,/Visit Monchique/);
+  assert.match(html,/visitmonchique\.com/);
+  assert.match(html,/google\.com\/maps/);
+});
+
+test('buildOsrmTableUrl baut eine einzelne OSRM-Table-Anfrage vom Standort zu allen übergebenen Restaurants',()=>{
+  const {app}=buildSandbox();
+  const loc={lat:37.1,lng:-8.2};
+  const list=[{id:'a',lat:37.0,lng:-8.0},{id:'b',lat:37.05,lng:-8.1}];
+  const url=app.buildOsrmTableUrl(loc,list);
+  assert.equal(url,'https://router.project-osrm.org/table/v1/driving/-8.2,37.1;-8,37;-8.1,37.05?sources=0&destinations=1;2&annotations=distance,duration');
+});
+
+test('fetchRoadDistances liest Straßenentfernung (km) und geschätzte Fahrzeit (Minuten) aus der OSRM-Antwort',async()=>{
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{fetch:okOsrmFetch([7600,15000],[720,1800])});
+  const loc={lat:37.0,lng:-8.0};
+  const list=[{id:'a',lat:37.05,lng:-8.05},{id:'b',lat:37.1,lng:-8.1}];
+  const data=await app.fetchRoadDistances(loc,list);
+  assert.equal(data.get('a').km,7.6);
+  assert.equal(data.get('a').minutes,12);
+  assert.equal(data.get('b').km,15);
+  assert.equal(data.get('b').minutes,30);
+});
+
+test('formatRoadInfo zeigt Straßenentfernung mit Komma und Fahrzeit als Schätzung ohne aktuelle Verkehrslage',()=>{
+  const {app}=buildSandbox();
+  assert.equal(app.formatRoadInfo(7.6,12.3),'🚗 7,6 km · ca. 12 Min.');
+  assert.equal(app.formatRoadDuration(0.4),'ca. 1 Min.','Fahrzeit wird auf mindestens 1 Minute gerundet');
+  assert.equal(app.formatRoadDistance(0.4),'400 m');
+});
+
+test('Sortierung „Entfernung“ richtet sich nach der Straßenentfernung, auch wenn sie von der Luftlinie abweicht',()=>{
+  const {app}=buildSandbox();
+  const list=[{id:'a',lat:37.0,lng:-8.0},{id:'b',lat:37.001,lng:-8.0}];
+  const roadDistances=new Map([['a',{km:5,minutes:10}],['b',{km:1,minutes:2}]]);
+  const sorted=app.sortRestaurants(list,'entfernung',{lat:37.0,lng:-8.0},roadDistances);
+  assert.deepEqual(sorted.map(r=>r.id),['b','a'],'die per Straße nähere Adresse steht vorn, obwohl sie per Luftlinie weiter entfernt wäre');
+});
+
+test('Ohne aktiven Standort wird keine OSRM-Anfrage ausgelöst („Standort verwenden“ ist Voraussetzung)',()=>{
+  const fetch=makeOsrmFetch(async()=>({ok:true,json:async()=>({code:'Ok',distances:[[]],durations:[[]]})}));
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{fetch});
+  const list=[{id:'petrol',lat:37.298332,lng:-8.629654}];
+  assert.equal(app.getRoadDistanceMap(list),null);
+  assert.equal(fetch.calls.length,0,'vor "Standort verwenden" darf keine Anfrage erfolgen');
+});
+
+test('getRoadDistanceMap cached das Ergebnis im Speicher und fragt bei unverändertem Standort/Filter nicht erneut an',async()=>{
+  const fetch=okOsrmFetch([1000],[60]);
+  const {app,elements}=buildSandbox('2026-09-10T12:00:00Z',{fetch});
+  elements.get('foodSearch').value='Tasca do Petrol'; // filtert die aktuell gefilterte Liste auf genau ein Restaurant
+  app.setUserLoc({lat:37.0,lng:-8.0});
+  const list=app.filterRestaurants();
+  assert.deepEqual(Array.from(list,r=>r.id),['petrol'],'während des Ladens greift der Fallback, die Liste bleibt aber vollständig gefiltert');
+  await flushMicrotasks();
+  assert.equal(fetch.calls.length,1,'genau eine gebündelte OSRM-Table-Anfrage für alle gefilterten Restaurants');
+  const data=app.getRoadDistanceMap(app.filterRestaurants());
+  assert.ok(data,'nach Abschluss liefert der Cache die Daten sofort');
+  assert.equal(data.get('petrol').km,1);
+  assert.equal(data.get('petrol').minutes,1);
+  assert.equal(fetch.calls.length,1,'bei unverändertem Standort und Restaurantliste erfolgt keine erneute Anfrage');
+  app.setUserLoc(null);
+});
+
+test('Standort wird für den Cache sinnvoll gerundet: minimale GPS-Abweichungen lösen keine erneute Anfrage aus',async()=>{
+  const fetch=okOsrmFetch([1000],[60]);
+  const {app,elements}=buildSandbox('2026-09-10T12:00:00Z',{fetch});
+  elements.get('foodSearch').value='Tasca do Petrol';
+  app.setUserLoc({lat:37.100001,lng:-8.200002});
+  app.filterRestaurants();
+  await flushMicrotasks();
+  app.setUserLoc({lat:37.100049,lng:-8.200049}); // rundet auf denselben Cache-Schlüssel
+  app.filterRestaurants();
+  await flushMicrotasks();
+  assert.equal(fetch.calls.length,1,'gerundet auf denselben Cache-Schlüssel darf keine zweite Anfrage entstehen');
+  app.setUserLoc(null);
+});
+
+test('Ändert sich der Standort spürbar, wird die Fahrstrecke neu abgefragt',async()=>{
+  const fetch=okOsrmFetch([1000],[60]);
+  const {app,elements}=buildSandbox('2026-09-10T12:00:00Z',{fetch});
+  elements.get('foodSearch').value='Tasca do Petrol';
+  app.setUserLoc({lat:37.0,lng:-8.0});
+  app.filterRestaurants();
+  await flushMicrotasks();
+  app.setUserLoc({lat:37.5,lng:-8.5});
+  app.filterRestaurants();
+  await flushMicrotasks();
+  assert.equal(fetch.calls.length,2,'ein deutlich anderer Standort muss eine neue OSRM-Anfrage auslösen');
+  app.setUserLoc(null);
+});
+
+test('Fehlgeschlagene Routinganfrage (HTTP-Fehler) blockiert die App nicht und fällt auf Luftlinie zurück',async()=>{
+  const fetch=makeOsrmFetch(async()=>({ok:false,json:async()=>({})}));
+  const {app,elements}=buildSandbox('2026-09-10T12:00:00Z',{fetch});
+  elements.get('foodSearch').value='Tasca do Petrol';
+  app.setUserLoc({lat:37.0,lng:-8.0});
+  assert.equal(app.getRoadDistanceMap(app.filterRestaurants()),null);
+  await flushMicrotasks();
+  assert.equal(app.roadRoute().status,'error');
+  const list=app.filterRestaurants();
+  assert.equal(app.getRoadDistanceMap(list),null,'nach einem Fehler stehen keine Straßendaten zur Verfügung');
+  const sorted=app.sortRestaurants(list,'entfernung',{lat:37.0,lng:-8.0},app.getRoadDistanceMap(list));
+  assert.equal(sorted[0].id,'petrol','Sortierung fällt bei fehlender Straßenentfernung auf die Luftlinie zurück');
+  app.setUserLoc(null);
+});
+
+test('Netzwerkfehler bei der OSRM-Anfrage werden abgefangen, ohne die App zu blockieren',async()=>{
+  const fetch=makeOsrmFetch(async()=>{throw new Error('network down');});
+  const {app,elements}=buildSandbox('2026-09-10T12:00:00Z',{fetch});
+  elements.get('foodSearch').value='Tasca do Petrol';
+  app.setUserLoc({lat:37.0,lng:-8.0});
+  assert.doesNotThrow(()=>app.getRoadDistanceMap(app.filterRestaurants()));
+  await flushMicrotasks();
+  assert.equal(app.roadRoute().status,'error');
+  app.setUserLoc(null);
+});
+
+test('filterRestaurants() löst genau eine OSRM-Table-Anfrage für die aktuell gefilterten Restaurants aus (nicht für alle)',async()=>{
+  const fetch=makeOsrmFetch(async url=>{
+    const n=(url.match(/destinations=([^&]+)/)||['',''])[1].split(';').filter(Boolean).length;
+    return {ok:true,json:async()=>({code:'Ok',distances:[Array(n).fill(1000)],durations:[Array(n).fill(60)]})};
+  });
+  const {app}=buildSandbox('2026-09-10T12:00:00Z',{fetch});
+  app.setUserLoc({lat:37.0,lng:-8.0});
+  app.setFoodCat('fisch');
+  const expectedCount=app.RESTAURANTS.filter(r=>r.cats.includes('fisch')).length;
+  const list=app.filterRestaurants();
+  assert.equal(list.length,expectedCount);
+  await flushMicrotasks();
+  assert.equal(fetch.calls.length,1,'genau eine gebündelte Anfrage statt einer pro Restaurant');
+  assert.ok(fetch.calls[0].includes('destinations='+Array.from({length:expectedCount},(_,i)=>i+1).join(';')));
+  app.setFoodCat('Alle');app.setUserLoc(null);
 });
